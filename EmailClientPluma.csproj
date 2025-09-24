@@ -8,4 +8,15 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.13.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Core\Models\" />
+    <Folder Include="MVVM\Models\" />
+  </ItemGroup>
+
 </Project>
