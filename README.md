@@ -1,1 +1,58 @@
 # EmailClientPluma
+An email client (like Google mails, Outlook) for a school project.
+
+## Developing
+### Dependencies
+
+- git
+- c# with WPF
+- Visual Studio
+
+### Cloning the project
+
+```bash
+git clone https://github.com/thaiminh2022/EmailClientPluma.git
+```
+After cloning the project, checkout development branch
+```bash
+git checkout dev
+```
+### Adding features
+
+To start developing, create a branch of your feature through GUI or through commands, then checkout the branch you just create
+```bash
+git checkout -b <MY-BRANCH-NAME>
+```
+Happy developing!!! 😏
+
+### Uploading your branh (Create a pull request)
+
+- When you finish developing, create a pull request to the github repository for code review
+>[!IMPORTANT]
+>PLEASE CREATE A PULL REQUEST TO THE DEV BRANCH
+
+>[!Note]
+>Make sure your are in your branch and commit before push
+
+#### Commiting
+```bash
+git add .
+git commit -m "QUICK_DESCRIPTION"
+```
+
+#### Pull request
+```bash
+git push origin <YOUR_BRANCH>
+```
+- Go to github repo and create a pull request to DEV branch
+- Notify __me (thaiminh2022)__ when you do so.
+
+### (optional) Resolve merge conflict
+
+- Your code may conflict with others 
+- Resolve manually in your editor or through github GUI
+
+## Authorization feature
+
+- Oauth2 for google needs a __secret.json__ to function which will not be included in the repository
+- Request yours after auth feature finished.
