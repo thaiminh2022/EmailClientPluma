@@ -1,5 +1,5 @@
 # EmailClientPluma
-An email client (like Google mails, Outlook) for a school project.
+An email client (like Gmail, Outlook) for a school project.
 
 ## Developing
 ### Dependencies
@@ -13,28 +13,29 @@ An email client (like Google mails, Outlook) for a school project.
 ```bash
 git clone https://github.com/thaiminh2022/EmailClientPluma.git
 ```
-After cloning the project, checkout development branch
+After cloning the project, check out the development branch
 ```bash
+cd EmailClientPluma
 git checkout dev
 ```
 ### Adding features
 
-To start developing, create a branch of your feature through GUI or through commands, then checkout the branch you just create
+To start developing, create a branch of your feature through the GUI or through commands, then check out the branch you just created
 ```bash
 git checkout -b <MY-BRANCH-NAME>
 ```
 Happy developing!!! 😏
 
-### Uploading your branh (Create a pull request)
+### Uploading your branch (Create a pull request)
 
-- When you finish developing, create a pull request to the github repository for code review
+- When you finish developing, create a pull request to the GitHub repository for code review
 >[!IMPORTANT]
 >PLEASE CREATE A PULL REQUEST TO THE DEV BRANCH
 
 >[!Note]
->Make sure your are in your branch and commit before push
+>Make sure you are in your branch and commit before pushing
 
-#### Commiting
+#### Committing
 ```bash
 git add .
 git commit -m "QUICK_DESCRIPTION"
@@ -44,15 +45,15 @@ git commit -m "QUICK_DESCRIPTION"
 ```bash
 git push origin <YOUR_BRANCH>
 ```
-- Go to github repo and create a pull request to DEV branch
+- Go to the GitHub repo and create a pull request to the DEV branch
 - Notify __me (thaiminh2022)__ when you do so.
 
 ### (optional) Resolve merge conflict
 
 - Your code may conflict with others 
-- Resolve manually in your editor or through github GUI
+- Resolve manually in your editor or through GitHub GUI
 
 ## Authorization feature
 
-- Oauth2 for google needs a __secret.json__ to function which will not be included in the repository
-- Request yours after auth feature finished.
+- In the secret folder, you need a secret.json file
+- Get yours on the team's Google Drive
