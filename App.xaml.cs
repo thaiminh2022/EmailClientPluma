@@ -1,4 +1,5 @@
-﻿using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -25,8 +26,10 @@ namespace EmailClientPluma
         public App()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<IAuthenticationService, AuthenticationService>();
+            services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
             services.AddSingleton<IStorageService, StorageService>();
+            services.AddSingleton<IAccountService, AccountService>();
+
 
             // Might change this later, it's singleton due to aplication design
             services.AddSingleton<MainViewModel>();
