@@ -55,5 +55,5 @@ git push origin <YOUR_BRANCH>
 
 ## Authorization feature
 
-- In the secret folder, you need a secret.json file
-- Get yours on the team's Google Drive
+- Create a secret folder in the project's root, inside put the secret.json file
+- Get your secret.json on the team's Google Drive
