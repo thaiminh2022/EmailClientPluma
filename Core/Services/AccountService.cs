@@ -67,8 +67,9 @@ namespace EmailClientPluma.Core.Services
             // If not, add it to database
             if (!haveAcc)
             {
+                var row = await _storageService.StoreAccountAsync(acc);
+                acc.AccountID = row;
                 _accounts.Add(acc);
-                await _storageService.StoreAccountAsync(acc);
 
             }
         }

@@ -58,11 +58,12 @@ namespace EmailClientPluma.Core.Services
                     return null;
                 }
 
-
                 await _dataStore.DeleteAsync<UserCredential>(tempID);
-                await _dataStore.StoreAsync(userInfo.Email, credentials);
-                var newUserCredentials = new UserCredential(credentials.Flow, userInfo.Email, credentials.Token);
-                return new Account(userInfo.Name, Provider.Google, userInfo.Email, newUserCredentials);
+                await _dataStore.StoreAsync(userInfo.Id, credentials);
+
+
+                var newUserCredentials = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
+                return new Account(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, newUserCredentials);
             }
             catch (GoogleApiException ex)
             {
@@ -94,7 +95,7 @@ namespace EmailClientPluma.Core.Services
                 var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     scopes,
-                    acc.Email,
+                    acc.ProviderUID,
                     CancellationToken.None,
                     _dataStore);
 

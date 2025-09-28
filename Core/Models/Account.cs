@@ -11,8 +11,8 @@ namespace EmailClientPluma.Core.Models
     /// </summary>
     internal class Account
     {
-        public int AccountID { get; set; }
-        public string ProviderID { get; set;}
+        public int AccountID { get; set; } // auto created in database
+        public string ProviderUID { get; set;}
         public string Email { get; set; }
 
         public string DisplayName { get; set; }
@@ -20,10 +20,10 @@ namespace EmailClientPluma.Core.Models
         
         readonly public UserCredential Credentials;
 
-        public Account(int accountID, string providerID, string email, string displayName, Provider provider, UserCredential credentials)
+        public Account(string providerUID, string email, string displayName, Provider provider, UserCredential credentials)
         {
-            AccountID = accountID;
-            ProviderID = providerID;
+            AccountID = 0;
+            ProviderUID = providerUID;
             Email = email;
             DisplayName = displayName;
             Provider = provider;

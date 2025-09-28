@@ -22,8 +22,7 @@ namespace EmailClientPluma.Core.Models
             var command = connection.CreateCommand();
             command.CommandText =@" CREATE TABLE IF NOT EXISTS GOOGLE_STORE (
                                     KEY TEXT PRIMARY KEY,
-                                    VALUE TEXT NOT NULL,
-                                    FOREIGN KEY(KEY) REFERENCES ACCOUNTS(EMAIL)
+                                    VALUE TEXT NOT NULL
                                    );
                                   ";
             command.ExecuteNonQuery();
