@@ -1,23 +1,32 @@
 ﻿using EmailClientPluma.Core.Services;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Util;
+using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2.Responses;
+using System.Net;
 
 namespace EmailClientPluma.Core.Models
 {
     /// <summary>
     /// Store account infos lol
     /// </summary>
-    internal record Account
+    internal class Account
     {
-        public string DisplayName { get; set; }
+        public int AccountID { get; set; }
+        public string ProviderID { get; set;}
         public string Email { get; set; }
+
+        public string DisplayName { get; set; }
         public Provider Provider { get; set; }
-        public UserCredential Credentials { get; set; }
-        public Account(string displayName, Provider provider, string email, UserCredential credentials)
+        
+        readonly public UserCredential Credentials;
+
+        public Account(int accountID, string providerID, string email, string displayName, Provider provider, UserCredential credentials)
         {
-            Provider = provider;
-            DisplayName = displayName;
+            AccountID = accountID;
+            ProviderID = providerID;
             Email = email;
+            DisplayName = displayName;
+            Provider = provider;
             Credentials = credentials;
         }
 

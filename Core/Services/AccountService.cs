@@ -1,15 +1,10 @@
 ﻿using EmailClientPluma.Core.Models;
-using Google.Apis.Auth.OAuth2;
-using System;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace EmailClientPluma.Core.Services
 {
-
     enum Provider
     {
         Google,
@@ -27,8 +22,10 @@ namespace EmailClientPluma.Core.Services
     internal class AccountService : IAccountService
     {
         readonly List<IAuthenticationService> _authServices;
+        readonly IStorageService _storageService;
 
-        private readonly ObservableCollection<Account> _accounts;    
+        readonly ObservableCollection<Account> _accounts;
+
 
         /// <summary>
         /// Helper function, get the first authentication service base on the provider
@@ -54,9 +51,25 @@ namespace EmailClientPluma.Core.Services
         {
             var acc = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
 
-            if (acc is not null)
+            if (acc is null)
+                return;
+
+            // Check if account already exists
+            bool haveAcc = false;
+            foreach (var v in _accounts)
+            {
+                if (v.Email == acc.Email)
+                {
+                    haveAcc = true;
+                    break;
+                }
+            }
+            // If not, add it to database
+            if (!haveAcc)
             {
                 _accounts.Add(acc);
+                await _storageService.StoreAccountAsync(acc);
+
             }
         }
         /// <summary>
@@ -89,10 +102,22 @@ namespace EmailClientPluma.Core.Services
             return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);  
         }
 
-        public AccountService(IEnumerable<IAuthenticationService> authServices)
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService)
         {
             _authServices = [.. authServices];
+            _storageService = storageService;
             _accounts = [];
+            var _ = Initialize();
+        }
+
+        // Call the storage service to get all the saved account
+        async  Task Initialize()
+        {
+            var accs = await _storageService.GetAccountsAsync();
+            foreach (var acc in accs)
+            {
+                _accounts.Add(acc);
+            }
         }
     }
 }

@@ -16,14 +16,15 @@ namespace EmailClientPluma.Core.Services
     /// </summary>
     internal class GoogleAuthenticationService : IAuthenticationService
     {
+        readonly SQLiteDataStore _dataStore = new(@"C:\dev\CSharpProjects\EmailClientPluma\pluma.db");
+
         // Ask user permissions (gmail, profile)
-        readonly string[] scopes = [
+        public static readonly string[] scopes = [
             @"https://mail.google.com/",
             Oauth2Service.Scope.UserinfoEmail,
             Oauth2Service.Scope.UserinfoProfile,
-         ];
-        const string SECRET_PATH = @"secrets\secret.json";
-        const string CRED_PATH = @"EmailClientPluma\tokens";
+        ];
+        public const string CLIENT_SECRET = @"secrets\secret.json";
 
 
         /// <summary>
@@ -37,12 +38,12 @@ namespace EmailClientPluma.Core.Services
             {
                 // Credentials will autosave to %AppData%\EmailClientPluma\tokens
                 // prompt user to login
-                var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromFile(SECRET_PATH).Secrets,
+                UserCredential credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     scopes,
                     tempID,
                     CancellationToken.None,
-                    new FileDataStore(CRED_PATH, false));
+                    _dataStore);
 
 
                 var oauth2 = new Oauth2Service(new BaseClientService.Initializer()
@@ -57,7 +58,11 @@ namespace EmailClientPluma.Core.Services
                     return null;
                 }
 
-                return new Account(userInfo.Name, Provider.Google,  userInfo.Email, credentials);
+
+                await _dataStore.DeleteAsync<UserCredential>(tempID);
+                await _dataStore.StoreAsync(userInfo.Email, credentials);
+                var newUserCredentials = new UserCredential(credentials.Flow, userInfo.Email, credentials.Token);
+                return new Account(userInfo.Name, Provider.Google, userInfo.Email, newUserCredentials);
             }
             catch (GoogleApiException ex)
             {
@@ -87,11 +92,11 @@ namespace EmailClientPluma.Core.Services
             try
             {
                 var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromFile(SECRET_PATH).Secrets,
+                    GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     scopes,
-                    acc.Credentials.UserId,
+                    acc.Email,
                     CancellationToken.None,
-                    new FileDataStore(CRED_PATH, false));
+                    _dataStore);
 
                 if (credentials != null)
                 {
