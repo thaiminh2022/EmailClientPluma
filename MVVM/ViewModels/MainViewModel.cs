@@ -2,7 +2,6 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -11,18 +10,21 @@ namespace EmailClientPluma.MVVM.ViewModels
         readonly IAccountService _accountService;
 
         // A list of logined account
-        public ObservableCollection<Account> Accounts { get;private  set; }
+        public ObservableCollection<Account> Accounts { get; private set; }
         // Account selected in the list view
 
         private Account? _selectedAccount;
         public Account? SelectedAccount
         {
             get { return _selectedAccount; }
-            set {
+            set
+            {
                 _selectedAccount = value;
                 var _ = ValidateSelected();
+                OnPropertyChanges();
             }
         }
+
         async Task ValidateSelected()
         {
             bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
@@ -30,11 +32,23 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedAccount = null;
                 //MessageBox.Show("Not valid");
-            }else
+            }
+            else
             {
                 //MessageBox.Show("Valid");
             }
-            
+
+        }
+        private Email? _selectedEmail;
+
+        public Email? SelectedEmail
+        {
+            get { return _selectedEmail; }
+            set
+            {
+                _selectedEmail = value;
+                OnPropertyChanges();
+            }
         }
 
 
@@ -44,7 +58,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             _accountService = accountService;
             Accounts = _accountService.GetAccounts();
 
-            AddAccount = new RelayCommand(async _ => {
+            AddAccount = new RelayCommand(async _ =>
+            {
                 // TODO: ADd more provider
                 await _accountService.AddAccountAsync(Provider.Google);
             });

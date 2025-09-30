@@ -1,6 +1,5 @@
 ﻿using Google.Apis.Util.Store;
 using Microsoft.Data.Sqlite;
-using System;
 using System.Text.Json;
 
 namespace EmailClientPluma.Core.Models
@@ -8,7 +7,7 @@ namespace EmailClientPluma.Core.Models
     internal class SQLiteDataStore : IDataStore
     {
         readonly string _connectionString;
-        public SQLiteDataStore(string dbPath = "pluma.db")
+        public SQLiteDataStore(string dbPath)
         {
             _connectionString = $"Data Source={dbPath}";
             Initialize();
@@ -20,7 +19,7 @@ namespace EmailClientPluma.Core.Models
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText =@" CREATE TABLE IF NOT EXISTS GOOGLE_STORE (
+            command.CommandText = @" CREATE TABLE IF NOT EXISTS GOOGLE_STORE (
                                     KEY TEXT PRIMARY KEY,
                                     VALUE TEXT NOT NULL
                                    );

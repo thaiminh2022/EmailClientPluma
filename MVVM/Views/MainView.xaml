@@ -44,7 +44,13 @@
             </Grid>
 
             <!--  Account email view  -->
-            <ListView Grid.Row="1" />
+            <ListView Grid.Row="1" ItemsSource="{Binding SelectedAccount.Emails}" SelectedItem="{Binding SelectedEmail}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Subject}"/>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </Grid>
 
         <Grid Grid.Column="1">
@@ -61,7 +67,7 @@
             </StackPanel>
 
             <!--  Show mail  -->
-            <TextBlock Grid.Row="1" />
+            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}"/>
         </Grid>
 
     </Grid>

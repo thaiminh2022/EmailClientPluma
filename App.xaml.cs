@@ -29,6 +29,7 @@ namespace EmailClientPluma
             services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
             services.AddSingleton<IStorageService, StorageService>();
             services.AddSingleton<IAccountService, AccountService>();
+            services.AddSingleton<IEmailService, EmailService>();
 
 
             // Might change this later, it's singleton due to aplication design

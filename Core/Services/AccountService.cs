@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 
 using System.Collections.ObjectModel;
+using System.Windows;
 
 
 namespace EmailClientPluma.Core.Services
@@ -23,6 +24,8 @@ namespace EmailClientPluma.Core.Services
     {
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
+        readonly IEmailService _emailService;
+
 
         readonly ObservableCollection<Account> _accounts;
 
@@ -36,8 +39,9 @@ namespace EmailClientPluma.Core.Services
         private IAuthenticationService GetAuthServiceByProvider(Provider provider)
         {
             var iAuth = _authServices.Find(p => p.GetProvider().Equals(provider));
-            if (iAuth is null) { 
-                throw new NotImplementedException("Provider not exists");    
+            if (iAuth is null)
+            {
+                throw new NotImplementedException("Provider not exists");
             }
             return iAuth;
         }
@@ -67,10 +71,14 @@ namespace EmailClientPluma.Core.Services
             // If not, add it to database
             if (!haveAcc)
             {
-                var row = await _storageService.StoreAccountAsync(acc);
-                acc.AccountID = row;
-                _accounts.Add(acc);
+                var accountID = await _storageService.StoreAccountAsync(acc);
+                var emails = await _emailService.FetchEmailAsync(acc);
 
+                acc.Emails = emails;
+                acc.AccountID = accountID;
+
+                await _storageService.StoreEmailAsync(acc);
+                _accounts.Add(acc);
             }
         }
         /// <summary>
@@ -89,7 +97,7 @@ namespace EmailClientPluma.Core.Services
         /// <returns>true if valid else false</returns>
         public async Task<bool> ValidateAccountAsync(Account? acc)
         {
-            if (acc is null) 
+            if (acc is null)
                 return true;
 
             if (!acc.IsTokenExpired())
@@ -100,25 +108,36 @@ namespace EmailClientPluma.Core.Services
             {
                 return true;
             }
-            return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);  
+            return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
 
-        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService)
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
         {
             _authServices = [.. authServices];
             _storageService = storageService;
+            _emailService = emailService;
             _accounts = [];
             var _ = Initialize();
         }
 
         // Call the storage service to get all the saved account
-        async  Task Initialize()
+        async Task Initialize()
         {
-            var accs = await _storageService.GetAccountsAsync();
-            foreach (var acc in accs)
+            try
             {
-                _accounts.Add(acc);
+                var accs = await _storageService.GetAccountsAsync();
+                foreach (var acc in accs)
+                {
+                    var emails = await _storageService.GetEmailsAsync(acc);
+                    acc.Emails = emails;
+                    _accounts.Add(acc);
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
         }
     }
 }

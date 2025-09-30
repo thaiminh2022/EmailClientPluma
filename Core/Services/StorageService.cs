@@ -11,6 +11,9 @@ namespace EmailClientPluma.Core.Services
     {
         Task<IEnumerable<Account>> GetAccountsAsync();
         Task<int> StoreAccountAsync(Account account);
+        Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
+        Task StoreEmailAsync(Account acc);
+
     }
     internal class StorageService : IStorageService
     {
@@ -31,7 +34,7 @@ namespace EmailClientPluma.Core.Services
             connection.Open();
             var command = connection.CreateCommand();
             command.CommandText = @"SELECT * FROM ACCOUNTS";
-            var reader = await command.ExecuteReaderAsync();
+            using var reader = await command.ExecuteReaderAsync();
 
             List<Account> accounts = [];
             while (reader.Read())
@@ -71,11 +74,10 @@ namespace EmailClientPluma.Core.Services
 
             return accounts;
         }
-
         public async Task<int> StoreAccountAsync(Account account)
         {
             using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+            await connection.OpenAsync();
             var command = connection.CreateCommand();
             command.CommandText = @"INSERT INTO ACCOUNTS (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME) 
                                     VALUES ($provider_uid, $provider, $email, $display_name)
@@ -85,10 +87,11 @@ namespace EmailClientPluma.Core.Services
             command.Parameters.AddWithValue("$display_name", account.DisplayName);
             command.Parameters.AddWithValue("$provider", account.Provider.ToString());
 
-
             var row = await command.ExecuteNonQueryAsync();
+
             return row;
         }
+
 
         private void Initialize()
         {
@@ -106,6 +109,71 @@ namespace EmailClientPluma.Core.Services
                                     );
                                   ";
             command.ExecuteNonQuery();
+
+            command.CommandText = @"CREATE TABLE IF NOT EXISTS EMAILS (
+	                                EMAIL_ID	INTEGER,
+	                                OWNER_ID	INTEGER,
+	                                SUBJECT	    TEXT,
+	                                BODY	    TEXT,
+	                                ""FROM""	TEXT,
+	                                ""TO""	    TEXT,
+	                                PRIMARY KEY(EMAIL_ID AUTOINCREMENT),
+	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(ACCOUNT_ID)
+                                );";
+
+            command.ExecuteNonQuery();
+        }
+
+
+        public async Task StoreEmailAsync(Account acc)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+            var command = connection.CreateCommand();
+
+            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY, ""FROM"", ""TO"") 
+                                    VALUES ($owner_id, $subject, $body, $from, $to)";
+            foreach (var item in acc.Emails)
+            {
+                command.Parameters.AddWithValue("$owner_id", acc.AccountID);
+                command.Parameters.AddWithValue("$subject", item.Subject);
+                command.Parameters.AddWithValue("$body", item.Body);
+                command.Parameters.AddWithValue("$from", item.From);
+                command.Parameters.AddWithValue("$to", string.Join(';', item.To));
+
+                await command.ExecuteNonQueryAsync();
+                command.Parameters.Clear();
+            }
+        }
+        public async Task<IEnumerable<Email>> GetEmailsAsync(Account acc)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+            var command = connection.CreateCommand();
+
+            command.CommandText = @"SELECT * FROM EMAILS WHERE OWNER_ID = $ownerid";
+            command.Parameters.AddWithValue("$ownerid", acc.AccountID);
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            List<Email> emails = [];
+
+            while (reader.Read())
+            {
+                var emailID = reader.GetInt32(0);
+                var emailAccountOwnerID = reader.GetInt32(1);
+                var subject = reader.GetString(2);
+                var body = reader.GetString(3);
+                var from = reader.GetString(4);
+                var to = reader.GetString(5);
+
+                var email = new Email(emailAccountOwnerID, subject, body, from, to, [])
+                {
+                    EmailID = emailID,
+                };
+                emails.Add(email);
+            }
+            return emails;
         }
     }
 }
