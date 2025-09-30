@@ -18,10 +18,10 @@ namespace EmailClientPluma.Core.Services
         readonly SQLiteDataStore _tokenStore;
 
 
-        public StorageService(string dbPath = @"C:\dev\CSharpProjects\EmailClientPluma\pluma.db")
+        public StorageService()
         {
-            _connectionString = $"Data Source={dbPath}";
-            _tokenStore = new SQLiteDataStore(dbPath);
+            _connectionString = $"Data Source={AppPaths.DatabasePath}";
+            _tokenStore = new SQLiteDataStore(AppPaths.DatabasePath);
             Initialize();
         }
 
@@ -33,8 +33,9 @@ namespace EmailClientPluma.Core.Services
             command.CommandText = @"SELECT * FROM ACCOUNTS";
             var reader = await command.ExecuteReaderAsync();
 
-            List<Account> accounts = [];  
-            while (reader.Read()) {
+            List<Account> accounts = [];
+            while (reader.Read())
+            {
 
                 var accountID = reader.GetInt32(0);
                 var providerUID = reader.GetString(1);
@@ -61,8 +62,9 @@ namespace EmailClientPluma.Core.Services
 
                     accounts.Add(acc);
                 }
-                catch (Exception ex) { 
-                    MessageBox.Show(ex.Message);    
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
                 }
 
             }
@@ -84,7 +86,7 @@ namespace EmailClientPluma.Core.Services
             command.Parameters.AddWithValue("$provider", account.Provider.ToString());
 
 
-            var row  = await command.ExecuteNonQueryAsync();
+            var row = await command.ExecuteNonQueryAsync();
             return row;
         }
 

@@ -4,7 +4,6 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -16,7 +15,7 @@ namespace EmailClientPluma.Core.Services
     /// </summary>
     internal class GoogleAuthenticationService : IAuthenticationService
     {
-        readonly SQLiteDataStore _dataStore = new(@"C:\dev\CSharpProjects\EmailClientPluma\pluma.db");
+        readonly SQLiteDataStore _dataStore = new(AppPaths.DatabasePath);
 
         // Ask user permissions (gmail, profile)
         public static readonly string[] scopes = [
