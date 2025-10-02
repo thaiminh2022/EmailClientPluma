@@ -4,7 +4,6 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.Windows;
 
 
 
@@ -54,14 +53,11 @@ namespace EmailClientPluma.Core.Services
         {
             // Constructing the email
             var message = ConstructEmail(email);
-
-
-
             using var smtp = new SmtpClient();
 
             await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
             var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
-            MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
+            //MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
