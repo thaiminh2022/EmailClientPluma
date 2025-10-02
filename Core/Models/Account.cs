@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Services;
 using Google.Apis.Auth.OAuth2;
+using System.Net;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -8,30 +9,47 @@ namespace EmailClientPluma.Core.Models
     /// </summary>
     internal class Account
     {
-        public int AccountID { get; set; } // auto created in database
         public string ProviderUID { get; set; }
         public string Email { get; set; }
-
         public string DisplayName { get; set; }
         public Provider Provider { get; set; }
-
         public IEnumerable<Email> Emails { get; set; } = [];
 
-        readonly public UserCredential Credentials;
+        public Credentials Credentials { get; set; }
 
-        public Account(string providerUID, string email, string displayName, Provider provider, UserCredential credentials)
+
+        public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
         {
-            AccountID = 0;
             ProviderUID = providerUID;
             Email = email;
             DisplayName = displayName;
             Provider = provider;
             Credentials = credentials;
         }
+        public Account(AuthResponce authResponce)
+        {
+            ProviderUID = authResponce.ProviderUID;
+            Email = authResponce.Email;
+            DisplayName = authResponce.DisplayName;
+            Provider = authResponce.Provider;
+            Credentials= authResponce.Credentials;
+        }
 
         public bool IsTokenExpired()
         {
-            return Credentials.Token.IsStale;
+            return false;
+        }
+    }
+
+    public record Credentials
+    {
+        public string SessionToken { get; set; }
+        public string RefreshToken { get; set; }
+
+        public Credentials(string sessionToken, string refreshToken)
+        {
+            SessionToken = sessionToken;
+            RefreshToken = refreshToken;
         }
     }
 }

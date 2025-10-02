@@ -1,4 +1,15 @@
 ﻿using EmailClientPluma.Core.Models;
+using MailKit;
+using MailKit.Net.Imap;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+using MimeKit.Utils;
+using Org.BouncyCastle.Crypto;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+
 
 namespace EmailClientPluma.Core.Services
 {
@@ -11,23 +22,89 @@ namespace EmailClientPluma.Core.Services
     {
         public async Task<IEnumerable<Email>> FetchEmailAsync(Account acc)
         {
-            await Task.Delay(1000); // simulate network delay
+            using var imap = new ImapClient();
+            await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
+            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+            await imap.AuthenticateAsync(oauth2);
 
-            List<Email> emails = new List<Email>();
-            Random rand = new Random();
 
-            for (int i = 0; i < rand.Next(3, 10); i++)
+            var inbox = imap.Inbox;
+            await inbox.OpenAsync(FolderAccess.ReadOnly);
+            int takeAmount = Math.Min(10, inbox.Count);
+
+
+            var last = inbox.Count;
+            var start = System.Math.Max(0, last - takeAmount);
+            List<Email> emails = [];
+            for (int i = start; i < last; i++)
             {
-                emails.Add(new Email(acc.AccountID, $"subject {rand.Next(100)}", "body", "from", "to", []));
+                var msg = await inbox.GetMessageAsync(i);
+
+                if (msg is not null)
+                {
+                    var m = new Email(acc.ProviderUID, msg.Subject, msg.TextBody ?? "(no text body)", msg.From.ToString(), msg.To.ToString(), []);
+                    emails.Add(m);
+                }
+
             }
 
+            await imap.DisconnectAsync(true);
 
             return emails;
         }
 
-        public Task SendEmailAsync(Account acc, Email email)
+        public async Task SendEmailAsync(Account acc, Email email)
         {
-            throw new NotImplementedException();
+            // Constructing the email
+            var message = ConstructEmail(email);
+
+
+
+            using var smtp = new SmtpClient();
+
+            await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.SslOnConnect);
+            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+            await smtp.AuthenticateAsync(oauth2);
+
+            await smtp.SendAsync(message);
+            
+            
+            await smtp.DisconnectAsync(true);
+        }
+
+        MimeMessage ConstructEmail(Email email)
+        {
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(email.From));
+            InternetAddressList internetAddresses = new InternetAddressList();
+            foreach (var item in email.To)
+            {
+                internetAddresses.Add(InternetAddress.Parse(item));
+            }
+            message.To.AddRange(internetAddresses);
+            message.Subject = email.Subject;
+            message.Body = new BodyBuilder
+            {
+                TextBody = email.Body
+            }.ToMessageBody();
+            return message;
+        }
+
+        string GetSmtpHostByProvider(Provider prod)
+        {
+            return prod switch { 
+                Provider.Google => "smtp.gmail.com", 
+                _ => throw new NotImplementedException() 
+            };
+        }
+
+        string GetImapHostByProvider(Provider prod)
+        {
+            return prod switch
+            {
+                Provider.Google => "imap.gmail.com",
+                _ => throw new NotImplementedException()
+            };
         }
     }
 }

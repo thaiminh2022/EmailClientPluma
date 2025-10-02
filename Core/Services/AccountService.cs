@@ -53,33 +53,32 @@ namespace EmailClientPluma.Core.Services
         /// <returns></returns>
         public async Task AddAccountAsync(Provider prodiver)
         {
-            var acc = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
+            AuthResponce? res = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
 
-            if (acc is null)
+            if (res is null)
                 return;
 
             // Check if account already exists
             bool haveAcc = false;
             foreach (var v in _accounts)
             {
-                if (v.Email == acc.Email)
+                if (v.Email == res.Email)
                 {
                     haveAcc = true;
                     break;
                 }
             }
+            if (haveAcc) return;
+
             // If not, add it to database
-            if (!haveAcc)
-            {
-                var accountID = await _storageService.StoreAccountAsync(acc);
-                var emails = await _emailService.FetchEmailAsync(acc);
+            var acc = new Account(res);
+            await _storageService.StoreAccountAsync(acc);
+            var emails = await _emailService.FetchEmailAsync(acc);
 
-                acc.Emails = emails;
-                acc.AccountID = accountID;
+            acc.Emails = emails;
 
-                await _storageService.StoreEmailAsync(acc);
-                _accounts.Add(acc);
-            }
+            await _storageService.StoreEmailAsync(acc);
+            _accounts.Add(acc);
         }
         /// <summary>
         /// Get all the added accounts
@@ -103,11 +102,12 @@ namespace EmailClientPluma.Core.Services
             if (!acc.IsTokenExpired())
                 return true;
 
-            bool success = await acc.Credentials.RefreshTokenAsync(CancellationToken.None);
-            if (success)
-            {
-                return true;
-            }
+            //bool success = await acc.Credentials.RefreshTokenAsync(CancellationToken.None);
+            //if (success)
+            //{
+            //    return true;
+            //}
+
             return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
 
@@ -135,7 +135,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Email ex: "+ ex.Message);
             }
 
         }

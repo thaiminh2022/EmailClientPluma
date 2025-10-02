@@ -40,29 +40,17 @@ namespace EmailClientPluma.Core.Services
             while (reader.Read())
             {
 
-                var accountID = reader.GetInt32(0);
-                var providerUID = reader.GetString(1);
-                var provider = (Provider)Enum.Parse(typeof(Provider), reader.GetString(2));
-                var email = reader.GetString(3);
-                var displayName = reader.GetString(4);
+                var providerUID = reader.GetString(0);
+                var provider = (Provider)Enum.Parse(typeof(Provider), reader.GetString(1));
+                var email = reader.GetString(2);
+                var displayName = reader.GetString(3);
 
                 // query token reponse
                 try
                 {
                     var token = await _tokenStore.GetAsync<TokenResponse>(providerUID);
-                    GoogleAuthorizationCodeFlow flow = new(new GoogleAuthorizationCodeFlow.Initializer
-                    {
-                        ClientSecrets = GoogleClientSecrets.FromFile(GoogleAuthenticationService.CLIENT_SECRET).Secrets,
-                        Scopes = GoogleAuthenticationService.scopes,
-                        DataStore = _tokenStore,
-                    });
-                    var userCredentials = new UserCredential(flow, providerUID, token);
-
-                    var acc = new Account(providerUID, email, displayName, provider, userCredentials)
-                    {
-                        AccountID = accountID
-                    };
-
+                    var cred = new Credentials(token.AccessToken, token.RefreshToken);
+                    var acc = new Account(providerUID, email, displayName, provider, cred);
                     accounts.Add(acc);
                 }
                 catch (Exception ex)
@@ -100,8 +88,7 @@ namespace EmailClientPluma.Core.Services
 
             var command = connection.CreateCommand();
             command.CommandText = @"CREATE TABLE IF NOT EXISTS ACCOUNTS (
-                                    ACCOUNT_ID       INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    PROVIDER_UID     TEXT NOT NULL,             
+                                    PROVIDER_UID     TEXT PRIMARY KEY NOT NULL,             
                                     PROVIDER         TEXT NOT NULL,            
                                     EMAIL            TEXT NOT NULL,
                                     DISPLAY_NAME     TEXT,
@@ -111,14 +98,13 @@ namespace EmailClientPluma.Core.Services
             command.ExecuteNonQuery();
 
             command.CommandText = @"CREATE TABLE IF NOT EXISTS EMAILS (
-	                                EMAIL_ID	INTEGER,
-	                                OWNER_ID	INTEGER,
+                                    EMAIL_ID    INTEGER  PRIMARY KEY AUTOINCREMENT,
+	                                OWNER_ID	TEXT ,
 	                                SUBJECT	    TEXT,
 	                                BODY	    TEXT,
 	                                ""FROM""	TEXT,
 	                                ""TO""	    TEXT,
-	                                PRIMARY KEY(EMAIL_ID AUTOINCREMENT),
-	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(ACCOUNT_ID)
+	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID)
                                 );";
 
             command.ExecuteNonQuery();
@@ -135,11 +121,11 @@ namespace EmailClientPluma.Core.Services
                                     VALUES ($owner_id, $subject, $body, $from, $to)";
             foreach (var item in acc.Emails)
             {
-                command.Parameters.AddWithValue("$owner_id", acc.AccountID);
+                command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
                 command.Parameters.AddWithValue("$subject", item.Subject);
                 command.Parameters.AddWithValue("$body", item.Body);
                 command.Parameters.AddWithValue("$from", item.From);
-                command.Parameters.AddWithValue("$to", string.Join(';', item.To));
+                command.Parameters.AddWithValue("$to", string.Join(',', item.To));
 
                 await command.ExecuteNonQueryAsync();
                 command.Parameters.Clear();
@@ -152,7 +138,7 @@ namespace EmailClientPluma.Core.Services
             var command = connection.CreateCommand();
 
             command.CommandText = @"SELECT * FROM EMAILS WHERE OWNER_ID = $ownerid";
-            command.Parameters.AddWithValue("$ownerid", acc.AccountID);
+            command.Parameters.AddWithValue("$ownerid", acc.ProviderUID);
 
             using var reader = await command.ExecuteReaderAsync();
 
@@ -161,7 +147,7 @@ namespace EmailClientPluma.Core.Services
             while (reader.Read())
             {
                 var emailID = reader.GetInt32(0);
-                var emailAccountOwnerID = reader.GetInt32(1);
+                var emailAccountOwnerID = reader.GetString(1);
                 var subject = reader.GetString(2);
                 var body = reader.GetString(3);
                 var from = reader.GetString(4);

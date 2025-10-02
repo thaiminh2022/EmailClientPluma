@@ -30,7 +30,7 @@ namespace EmailClientPluma.Core.Services
         /// Try to ask for authentiocating a new account
         /// </summary>
         /// <returns>The account</returns>
-        public async Task<Account?> AuthenticateAsync()
+        public async Task<AuthResponce?> AuthenticateAsync()
         {
             string tempID = Guid.NewGuid().ToString();
             try
@@ -61,8 +61,9 @@ namespace EmailClientPluma.Core.Services
                 await _dataStore.StoreAsync(userInfo.Id, credentials);
 
 
-                var newUserCredentials = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
-                return new Account(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, newUserCredentials);
+                var cred = new Credentials(credentials.Token.AccessToken, credentials.Token.RefreshToken);
+
+                return new AuthResponce(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, cred);
             }
             catch (GoogleApiException ex)
             {
