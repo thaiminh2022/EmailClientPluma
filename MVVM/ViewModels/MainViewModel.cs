@@ -62,7 +62,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         {
             _accountService = accountService;
             _windowFactory = windowFactory;
-            
+
             Accounts = _accountService.GetAccounts();
 
             AddAccountCommand = new RelayCommand(async _ =>

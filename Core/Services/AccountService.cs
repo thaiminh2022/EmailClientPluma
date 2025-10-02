@@ -126,7 +126,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Email ex: "+ ex.Message);
+                MessageBox.Show("Email ex: " + ex.Message);
             }
 
         }

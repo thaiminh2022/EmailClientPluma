@@ -96,17 +96,19 @@ namespace EmailClientPluma.Core.Services
 
             if (tokenRes.IsStale)
             {
-                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer() {
+                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
+                {
                     ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     Scopes = scopes,
                 });
                 var usercred = new UserCredential(flow, acc.ProviderUID, tokenRes);
 
-                if(await usercred.RefreshTokenAsync(default))
+                if (await usercred.RefreshTokenAsync(default))
                 {
                     return true;
                 }
-            }else
+            }
+            else
             {
                 return true;
             }

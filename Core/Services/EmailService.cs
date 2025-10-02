@@ -87,9 +87,10 @@ namespace EmailClientPluma.Core.Services
 
         string GetSmtpHostByProvider(Provider prod)
         {
-            return prod switch { 
-                Provider.Google => "smtp.gmail.com", 
-                _ => throw new NotImplementedException() 
+            return prod switch
+            {
+                Provider.Google => "smtp.gmail.com",
+                _ => throw new NotImplementedException()
             };
         }
 

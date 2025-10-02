@@ -1,6 +1,4 @@
 ﻿using EmailClientPluma.Core.Services;
-using Google.Apis.Auth.OAuth2;
-using System.Security.Permissions;
 
 namespace EmailClientPluma.Core.Models
 {

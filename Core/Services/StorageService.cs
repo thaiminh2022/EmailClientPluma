@@ -1,6 +1,4 @@
 ﻿using EmailClientPluma.Core.Models;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
 using System.Windows;

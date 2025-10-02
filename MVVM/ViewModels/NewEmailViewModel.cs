@@ -1,12 +1,7 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
@@ -21,7 +16,9 @@ namespace EmailClientPluma.MVVM.ViewModels
         public Account? SelectedAccount
         {
             get { return _selectedAccount; }
-            set { _selectedAccount = value;
+            set
+            {
+                _selectedAccount = value;
                 OnPropertyChanges();
             }
         }
@@ -59,12 +56,14 @@ namespace EmailClientPluma.MVVM.ViewModels
                 try
                 {
                     var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
-                    if (validated) { 
+                    if (validated)
+                    {
                         await _emailService.SendEmailAsync(SelectedAccount, email);
                         MessageBox.Show("Message was sent");
                     }
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     MessageBox.Show(ex.Message);
                 }
 

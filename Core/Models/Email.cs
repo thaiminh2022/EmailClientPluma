@@ -20,7 +20,8 @@
             To = to.Split(',');
             Attachments = attachments;
         }
-        public Email() {
+        public Email()
+        {
             OwnerAccountID = "";
             Subject = "";
             Body = "";

@@ -1,6 +1,4 @@
 ﻿using EmailClientPluma.Core.Services;
-using Google.Apis.Auth.OAuth2;
-using System.Net;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -32,10 +30,10 @@ namespace EmailClientPluma.Core.Models
             Email = authResponce.Email;
             DisplayName = authResponce.DisplayName;
             Provider = authResponce.Provider;
-            Credentials= authResponce.Credentials;
+            Credentials = authResponce.Credentials;
         }
 
-       
+
     }
 
     public record Credentials
@@ -51,6 +49,6 @@ namespace EmailClientPluma.Core.Models
 
         }
 
- 
+
     }
 }
