@@ -99,15 +99,6 @@ namespace EmailClientPluma.Core.Services
             if (acc is null)
                 return true;
 
-            if (!acc.IsTokenExpired())
-                return true;
-
-            //bool success = await acc.Credentials.RefreshTokenAsync(CancellationToken.None);
-            //if (success)
-            //{
-            //    return true;
-            //}
-
             return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
 

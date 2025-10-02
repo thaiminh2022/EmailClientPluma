@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 using Google;
 using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
@@ -90,6 +91,26 @@ namespace EmailClientPluma.Core.Services
         /// <returns>true if is valid or failed</returns>
         public async Task<bool> ValidateAsync(Account acc)
         {
+            // reconstruct user credentials to check
+            var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
+
+            if (tokenRes.IsStale)
+            {
+                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer() {
+                    ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
+                    Scopes = scopes,
+                });
+                var usercred = new UserCredential(flow, acc.ProviderUID, tokenRes);
+
+                if(await usercred.RefreshTokenAsync(default))
+                {
+                    return true;
+                }
+            }else
+            {
+                return true;
+            }
+
             try
             {
                 var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(

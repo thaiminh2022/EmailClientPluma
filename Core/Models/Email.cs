@@ -20,6 +20,13 @@
             To = to.Split(',');
             Attachments = attachments;
         }
+        public Email() {
+            OwnerAccountID = "";
+            Subject = "";
+            Body = "";
+            From = "";
+            To = [];
+        }
     }
 
     internal class Attachment

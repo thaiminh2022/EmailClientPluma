@@ -4,11 +4,8 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using MimeKit.Utils;
-using Org.BouncyCastle.Crypto;
-using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
+
 
 
 namespace EmailClientPluma.Core.Services
@@ -62,13 +59,11 @@ namespace EmailClientPluma.Core.Services
 
             using var smtp = new SmtpClient();
 
-            await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.SslOnConnect);
-            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+            await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
+            var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
+            MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
-
             await smtp.SendAsync(message);
-            
-            
             await smtp.DisconnectAsync(true);
         }
 

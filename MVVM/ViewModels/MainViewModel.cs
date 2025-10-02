@@ -1,13 +1,16 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
+using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class MainViewModel : ObserableObject
     {
         readonly IAccountService _accountService;
+        readonly IWindowFactory _windowFactory;
 
         // A list of logined account
         public ObservableCollection<Account> Accounts { get; private set; }
@@ -52,19 +55,34 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
 
-        public RelayCommand AddAccount { get; set; }
-        public MainViewModel(IAccountService accountService)
+        public RelayCommand AddAccountCommand { get; set; }
+        public RelayCommand ComposeCommand { get; set; }
+
+        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory)
         {
             _accountService = accountService;
+            _windowFactory = windowFactory;
+            
             Accounts = _accountService.GetAccounts();
 
-            AddAccount = new RelayCommand(async _ =>
+            AddAccountCommand = new RelayCommand(async _ =>
             {
                 // TODO: ADd more provider
                 await _accountService.AddAccountAsync(Provider.Google);
             });
-        }
 
+            ComposeCommand = new RelayCommand(_ =>
+            {
+                var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
+                var confirmSend = newEmailWindow.ShowDialog();
+
+                if (confirmSend is not null && confirmSend == true)
+                {
+                    // start sending them emails
+                    MessageBox.Show("User wanna send emails");
+                }
+            });
+        }
         public MainViewModel() { }
     }
 }

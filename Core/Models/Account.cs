@@ -35,10 +35,7 @@ namespace EmailClientPluma.Core.Models
             Credentials= authResponce.Credentials;
         }
 
-        public bool IsTokenExpired()
-        {
-            return false;
-        }
+       
     }
 
     public record Credentials
@@ -46,10 +43,14 @@ namespace EmailClientPluma.Core.Models
         public string SessionToken { get; set; }
         public string RefreshToken { get; set; }
 
+
         public Credentials(string sessionToken, string refreshToken)
         {
             SessionToken = sessionToken;
             RefreshToken = refreshToken;
+
         }
+
+ 
     }
 }

@@ -40,14 +40,17 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <Button Grid.Row="1" Command="{Binding AddAccount}">Add account</Button>
+                <Button Grid.Row="1" Command="{Binding AddAccountCommand}">Add account</Button>
             </Grid>
 
             <!--  Account email view  -->
-            <ListView Grid.Row="1" ItemsSource="{Binding SelectedAccount.Emails}" SelectedItem="{Binding SelectedEmail}">
+            <ListView
+                Grid.Row="1"
+                ItemsSource="{Binding SelectedAccount.Emails}"
+                SelectedItem="{Binding SelectedEmail}">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Subject}"/>
+                        <TextBlock Text="{Binding Subject}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -61,13 +64,13 @@
 
             <!--  Helper button  -->
             <StackPanel Margin="5" Orientation="Horizontal">
-                <Button>New Email</Button>
+                <Button Command="{Binding ComposeCommand}">New Email</Button>
                 <ToggleButton>IsFlag</ToggleButton>
                 <Button>Reply</Button>
             </StackPanel>
 
             <!--  Show mail  -->
-            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}"/>
+            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}" />
         </Grid>
 
     </Grid>
