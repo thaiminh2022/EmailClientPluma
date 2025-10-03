@@ -9,22 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Apis" Version="1.71.0" />
-    <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
-    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869" />
     <PackageReference Include="MailKit" Version="4.13.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
   </ItemGroup>
 
-	<ItemGroup>
-		<None Update="secrets\secret.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="MVVM\Models\" />
-	</ItemGroup>
+  <ItemGroup>
+    <Folder Include="Core\Models\" />
+    <Folder Include="MVVM\Models\" />
+  </ItemGroup>
 
 </Project>

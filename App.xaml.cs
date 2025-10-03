@@ -1,5 +1,4 @@
-﻿using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -26,17 +25,10 @@ namespace EmailClientPluma
         public App()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
+            services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<IAccountService, AccountService>();
-            services.AddSingleton<IEmailService, EmailService>();
-            services.AddSingleton<IWindowFactory, WindowFactory>();
 
-            //window
-            services.AddTransient<NewEmailViewModel>();
-
-
-            // Might change this later, it's a singleton due to aplication design
+            // Might change this later, it's singleton due to aplication design
             services.AddSingleton<MainViewModel>();
 
             Services = services.BuildServiceProvider();

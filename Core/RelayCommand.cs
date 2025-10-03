@@ -8,8 +8,8 @@ namespace EmailClientPluma.Core
     /// </summary>
     internal class RelayCommand : ICommand
     {
-        protected readonly Action<object?> _execute;
-        protected readonly Predicate<object?>? _canExecute;
+        private Action<object?> _execute;
+        private Predicate<object?>? _canExecute;
 
         public event EventHandler? CanExecuteChanged
         {
