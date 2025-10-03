@@ -97,9 +97,9 @@ namespace EmailClientPluma.Core.Services
 
             command.CommandText = @"CREATE TABLE IF NOT EXISTS EMAILS (
                                     EMAIL_ID    INTEGER  PRIMARY KEY AUTOINCREMENT,
-	                                OWNER_ID	TEXT ,
+	                                OWNER_ID	TEXT,
 	                                SUBJECT	    TEXT,
-	                                BODY	    TEXT,
+	                                BODY	TEXT,
 	                                ""FROM""	TEXT,
 	                                ""TO""	    TEXT,
 	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID)
@@ -115,8 +115,8 @@ namespace EmailClientPluma.Core.Services
             await connection.OpenAsync();
             var command = connection.CreateCommand();
 
-            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY, ""FROM"", ""TO"") 
-                                    VALUES ($owner_id, $subject, $body, $from, $to)";
+            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY,""FROM"", ""TO"") 
+                                    VALUES ($owner_id, $subject, $body,$from, $to)";
             foreach (var item in acc.Emails)
             {
                 command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);

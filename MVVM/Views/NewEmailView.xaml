@@ -40,7 +40,12 @@
                 <TextBox Text="{Binding Subject}" />
             </StackPanel>
         </StackPanel>
-        <TextBox Grid.Row="1" Text="{Binding Body}" />
+        <TextBox Grid.Row="1" 
+                 Text="{Binding Body}" 
+                 AcceptsReturn="True" 
+                 AcceptsTab="True" 
+                 TextWrapping="Wrap" 
+                 VerticalScrollBarVisibility="Auto"/>
         <StackPanel
             Grid.Row="2"
             HorizontalAlignment="Center"

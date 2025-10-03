@@ -59,11 +59,12 @@ namespace EmailClientPluma.Core.Services
                 }
 
                 await _dataStore.DeleteAsync<UserCredential>(tempID);
-                await _dataStore.StoreAsync(userInfo.Id, credentials);
+
+                var newUserCred = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
+                await _dataStore.StoreAsync(userInfo.Id, newUserCred);
 
 
                 var cred = new Credentials(credentials.Token.AccessToken, credentials.Token.RefreshToken);
-
                 return new AuthResponce(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, cred);
             }
             catch (GoogleApiException ex)

@@ -5,8 +5,6 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 
-
-
 namespace EmailClientPluma.Core.Services
 {
     interface IEmailService
@@ -38,7 +36,10 @@ namespace EmailClientPluma.Core.Services
 
                 if (msg is not null)
                 {
-                    var m = new Email(acc.ProviderUID, msg.Subject, msg.TextBody ?? "(no text body)", msg.From.ToString(), msg.To.ToString(), []);
+                    var body = msg.HtmlBody ?? msg.TextBody;
+                    body ??= "(email have no body)";
+
+                    var m = new Email(acc.ProviderUID, msg.Subject, msg.TextBody, msg.From.ToString(), msg.To.ToString(), []);
                     emails.Add(m);
                 }
 

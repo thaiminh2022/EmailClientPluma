@@ -70,7 +70,7 @@
             </StackPanel>
 
             <!--  Show mail  -->
-            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}" />
+            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}" ScrollViewer.CanContentScroll="True" TextWrapping="WrapWithOverflow" />
         </Grid>
 
     </Grid>
