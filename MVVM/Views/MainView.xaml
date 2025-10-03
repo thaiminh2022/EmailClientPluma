@@ -66,7 +66,8 @@
             <StackPanel Margin="5" Orientation="Horizontal">
                 <Button Command="{Binding ComposeCommand}">New Email</Button>
                 <ToggleButton>IsFlag</ToggleButton>
-                <Button>Reply</Button>
+                <Button Command="{Binding ReplyCommand}">Reply</Button>
+                <Button Command="{Binding RemoveAccountCommand}">Remove selected account</Button>
             </StackPanel>
 
             <!--  Show mail  -->

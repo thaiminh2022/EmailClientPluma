@@ -58,10 +58,10 @@ namespace EmailClientPluma.Core.Services
                     return null;
                 }
 
-                await _dataStore.DeleteAsync<UserCredential>(tempID);
+                await _dataStore.DeleteAsync<TokenResponse>(tempID);
 
                 var newUserCred = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
-                await _dataStore.StoreAsync(userInfo.Id, newUserCred);
+                await _dataStore.StoreAsync(userInfo.Id, newUserCred.Token);
 
 
                 var cred = new Credentials(credentials.Token.AccessToken, credentials.Token.RefreshToken);
@@ -97,6 +97,7 @@ namespace EmailClientPluma.Core.Services
 
             if (tokenRes.IsStale)
             {
+                MessageBox.Show("Token is stale");
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
                 {
                     ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,

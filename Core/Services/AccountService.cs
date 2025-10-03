@@ -13,6 +13,7 @@ namespace EmailClientPluma.Core.Services
     interface IAccountService
     {
         Task AddAccountAsync(Provider prodiver);
+        Task RemoveAccountAsync(Account account);
         Task<bool> ValidateAccountAsync(Account? acc);
         ObservableCollection<Account> GetAccounts();
     }
@@ -29,6 +30,37 @@ namespace EmailClientPluma.Core.Services
 
         readonly ObservableCollection<Account> _accounts;
 
+
+
+
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
+        {
+            _authServices = [.. authServices];
+            _storageService = storageService;
+            _emailService = emailService;
+            _accounts = [];
+            var _ = Initialize();
+        }
+
+        // Call the storage service to get all the saved account
+        async Task Initialize()
+        {
+            try
+            {
+                var accs = await _storageService.GetAccountsAsync();
+                foreach (var acc in accs)
+                {
+                    var emails = await _storageService.GetEmailsAsync(acc);
+                    acc.Emails = emails;
+                    _accounts.Add(acc);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Email ex: " + ex.Message);
+            }
+
+        }
 
         /// <summary>
         /// Helper function, get the first authentication service base on the provider
@@ -101,34 +133,10 @@ namespace EmailClientPluma.Core.Services
 
             return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
-
-        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
+        public async Task RemoveAccountAsync(Account account)
         {
-            _authServices = [.. authServices];
-            _storageService = storageService;
-            _emailService = emailService;
-            _accounts = [];
-            var _ = Initialize();
-        }
-
-        // Call the storage service to get all the saved account
-        async Task Initialize()
-        {
-            try
-            {
-                var accs = await _storageService.GetAccountsAsync();
-                foreach (var acc in accs)
-                {
-                    var emails = await _storageService.GetEmailsAsync(acc);
-                    acc.Emails = emails;
-                    _accounts.Add(acc);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Email ex: " + ex.Message);
-            }
-
+            _accounts.Remove(account);
+            await _storageService.RemoveAccountAsync(account);
         }
     }
 }

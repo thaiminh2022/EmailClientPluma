@@ -57,6 +57,8 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public RelayCommand AddAccountCommand { get; set; }
         public RelayCommand ComposeCommand { get; set; }
+        public RelayCommand ReplyCommand { get; set; }
+        public RelayCommand RemoveAccountCommand { get; set; }
 
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory)
         {
@@ -81,7 +83,32 @@ namespace EmailClientPluma.MVVM.ViewModels
                     // start sending them emails
                     MessageBox.Show("User wanna send emails");
                 }
-            });
+            }, _ => Accounts.Count > 0);
+
+            RemoveAccountCommand = new RelayCommand(_ =>
+            {
+                if (SelectedAccount == null) return;
+
+                var result = MessageBox.Show($"Are you sure to remove {SelectedAccount.Email}?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                switch (result)
+                {
+                    case MessageBoxResult.Yes:
+                        _accountService.RemoveAccountAsync(SelectedAccount);
+                        SelectedAccount = null;
+                        break;
+                    default:
+                        return;
+                };
+
+            }, _ => SelectedAccount is not null);
+
+            ReplyCommand = new RelayCommand(_ =>
+            {
+                if (SelectedAccount == null || SelectedEmail == null) return;
+                // too lazy to implement for now
+
+            }, _ => SelectedAccount is not null && SelectedEmail is not null &&
+                    SelectedEmail.From != SelectedAccount.Email);
         }
         public MainViewModel() { }
     }

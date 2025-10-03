@@ -39,7 +39,7 @@ namespace EmailClientPluma.Core.Services
                     var body = msg.HtmlBody ?? msg.TextBody;
                     body ??= "(email have no body)";
 
-                    var m = new Email(acc.ProviderUID, msg.Subject, msg.TextBody, msg.From.ToString(), msg.To.ToString(), []);
+                    var m = new Email(acc.ProviderUID, msg.Subject, body, msg.From.ToString(), msg.To.ToString(), []);
                     emails.Add(m);
                 }
 

@@ -1,6 +1,6 @@
 ﻿using Google.Apis.Util.Store;
 using Microsoft.Data.Sqlite;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -61,14 +61,14 @@ namespace EmailClientPluma.Core.Models
 
             if (await cmd.ExecuteScalarAsync() is string result)
             {
-                return JsonSerializer.Deserialize<T>(result)!;
+                return JsonConvert.DeserializeObject<T>(result)!;
             }
             return default!;
         }
 
         public async Task StoreAsync<T>(string key, T value)
         {
-            var json = JsonSerializer.Serialize(value);
+            var json = JsonConvert.SerializeObject(value);
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 

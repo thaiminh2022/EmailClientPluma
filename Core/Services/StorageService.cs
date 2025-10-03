@@ -9,6 +9,8 @@ namespace EmailClientPluma.Core.Services
     {
         Task<IEnumerable<Account>> GetAccountsAsync();
         Task<int> StoreAccountAsync(Account account);
+        Task RemoveAccountAsync(Account account);
+
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
 
@@ -79,6 +81,30 @@ namespace EmailClientPluma.Core.Services
         }
 
 
+        public async Task RemoveAccountAsync(Account account)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+            var command = connection.CreateCommand();
+
+            // delete account and its emails since foreign keys
+            command.CommandText = @"DELETE FROM ACCOUNTS WHERE PROVIDER_UID = $provider_uid";
+            command.Parameters.AddWithValue("$provider_uid", account.ProviderUID);
+
+            // delete googleStoreData
+            switch (account.Provider)
+            {
+                case Provider.Google:
+                    await _tokenStore.DeleteAsync<TokenResponse>(account.ProviderUID);
+                    break;
+                default:
+                    throw new NotImplementedException("Deleting account for this provider isnt implemented yet");
+            }
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+
         private void Initialize()
         {
             using var connection = new SqliteConnection(_connectionString);
@@ -102,7 +128,7 @@ namespace EmailClientPluma.Core.Services
 	                                BODY	TEXT,
 	                                ""FROM""	TEXT,
 	                                ""TO""	    TEXT,
-	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID)
+	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
                                 );";
 
             command.ExecuteNonQuery();
@@ -159,5 +185,6 @@ namespace EmailClientPluma.Core.Services
             }
             return emails;
         }
+
     }
 }
