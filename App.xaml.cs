@@ -29,9 +29,14 @@ namespace EmailClientPluma
             services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
             services.AddSingleton<IStorageService, StorageService>();
             services.AddSingleton<IAccountService, AccountService>();
+            services.AddSingleton<IEmailService, EmailService>();
+            services.AddSingleton<IWindowFactory, WindowFactory>();
+
+            //window
+            services.AddTransient<NewEmailViewModel>();
 
 
-            // Might change this later, it's singleton due to aplication design
+            // Might change this later, it's a singleton due to aplication design
             services.AddSingleton<MainViewModel>();
 
             Services = services.BuildServiceProvider();

@@ -1,29 +1,38 @@
 ﻿using EmailClientPluma.Core.Services;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Util;
 
 namespace EmailClientPluma.Core.Models
 {
     /// <summary>
     /// Store account infos lol
     /// </summary>
-    internal record Account
+    internal class Account
     {
-        public string DisplayName { get; set; }
+        public string ProviderUID { get; set; }
         public string Email { get; set; }
+        public string DisplayName { get; set; }
         public Provider Provider { get; set; }
-        public UserCredential Credentials { get; set; }
-        public Account(string displayName, Provider provider, string email, UserCredential credentials)
+        public IEnumerable<Email> Emails { get; set; } = [];
+
+        public Credentials Credentials { get; set; }
+
+
+        public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
         {
-            Provider = provider;
-            DisplayName = displayName;
+            ProviderUID = providerUID;
             Email = email;
+            DisplayName = displayName;
+            Provider = provider;
             Credentials = credentials;
         }
-
-        public bool IsTokenExpired()
+        public Account(AuthResponce authResponce)
         {
-            return Credentials.Token.IsStale;
+            ProviderUID = authResponce.ProviderUID;
+            Email = authResponce.Email;
+            DisplayName = authResponce.DisplayName;
+            Provider = authResponce.Provider;
+            Credentials = authResponce.Credentials;
         }
+
+
     }
 }

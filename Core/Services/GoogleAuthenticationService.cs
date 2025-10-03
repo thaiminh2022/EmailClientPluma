@@ -1,10 +1,10 @@
 ﻿using EmailClientPluma.Core.Models;
 using Google;
 using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -16,33 +16,34 @@ namespace EmailClientPluma.Core.Services
     /// </summary>
     internal class GoogleAuthenticationService : IAuthenticationService
     {
+        readonly SQLiteDataStore _dataStore = new(AppPaths.DatabasePath);
+
         // Ask user permissions (gmail, profile)
-        readonly string[] scopes = [
+        public static readonly string[] scopes = [
             @"https://mail.google.com/",
             Oauth2Service.Scope.UserinfoEmail,
             Oauth2Service.Scope.UserinfoProfile,
-         ];
-        const string SECRET_PATH = @"secrets\secret.json";
-        const string CRED_PATH = @"EmailClientPluma\tokens";
+        ];
+        public const string CLIENT_SECRET = @"secrets\secret.json";
 
 
         /// <summary>
         /// Try to ask for authentiocating a new account
         /// </summary>
         /// <returns>The account</returns>
-        public async Task<Account?> AuthenticateAsync()
+        public async Task<AuthResponce?> AuthenticateAsync()
         {
             string tempID = Guid.NewGuid().ToString();
             try
             {
                 // Credentials will autosave to %AppData%\EmailClientPluma\tokens
                 // prompt user to login
-                var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromFile(SECRET_PATH).Secrets,
+                UserCredential credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     scopes,
                     tempID,
                     CancellationToken.None,
-                    new FileDataStore(CRED_PATH, false));
+                    _dataStore);
 
 
                 var oauth2 = new Oauth2Service(new BaseClientService.Initializer()
@@ -57,7 +58,14 @@ namespace EmailClientPluma.Core.Services
                     return null;
                 }
 
-                return new Account(userInfo.Name, Provider.Google,  userInfo.Email, credentials);
+                await _dataStore.DeleteAsync<TokenResponse>(tempID);
+
+                var newUserCred = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
+                await _dataStore.StoreAsync(userInfo.Id, newUserCred.Token);
+
+
+                var cred = new Credentials(credentials.Token.AccessToken, credentials.Token.RefreshToken);
+                return new AuthResponce(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, cred);
             }
             catch (GoogleApiException ex)
             {
@@ -84,14 +92,37 @@ namespace EmailClientPluma.Core.Services
         /// <returns>true if is valid or failed</returns>
         public async Task<bool> ValidateAsync(Account acc)
         {
+            // reconstruct user credentials to check
+            var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
+
+            if (tokenRes.IsStale)
+            {
+                MessageBox.Show("Token is stale");
+                var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
+                {
+                    ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
+                    Scopes = scopes,
+                });
+                var usercred = new UserCredential(flow, acc.ProviderUID, tokenRes);
+
+                if (await usercred.RefreshTokenAsync(default))
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+
             try
             {
                 var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromFile(SECRET_PATH).Secrets,
+                    GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                     scopes,
-                    acc.Credentials.UserId,
+                    acc.ProviderUID,
                     CancellationToken.None,
-                    new FileDataStore(CRED_PATH, false));
+                    _dataStore);
 
                 if (credentials != null)
                 {

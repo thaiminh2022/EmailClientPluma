@@ -1,15 +1,11 @@
 ﻿using EmailClientPluma.Core.Models;
-using Google.Apis.Auth.OAuth2;
-using System;
-using System.Collections.Generic;
+
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows;
+
 
 namespace EmailClientPluma.Core.Services
 {
-
     enum Provider
     {
         Google,
@@ -17,6 +13,7 @@ namespace EmailClientPluma.Core.Services
     interface IAccountService
     {
         Task AddAccountAsync(Provider prodiver);
+        Task RemoveAccountAsync(Account account);
         Task<bool> ValidateAccountAsync(Account? acc);
         ObservableCollection<Account> GetAccounts();
     }
@@ -27,8 +24,43 @@ namespace EmailClientPluma.Core.Services
     internal class AccountService : IAccountService
     {
         readonly List<IAuthenticationService> _authServices;
+        readonly IStorageService _storageService;
+        readonly IEmailService _emailService;
 
-        private readonly ObservableCollection<Account> _accounts;    
+
+        readonly ObservableCollection<Account> _accounts;
+
+
+
+
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
+        {
+            _authServices = [.. authServices];
+            _storageService = storageService;
+            _emailService = emailService;
+            _accounts = [];
+            var _ = Initialize();
+        }
+
+        // Call the storage service to get all the saved account
+        async Task Initialize()
+        {
+            try
+            {
+                var accs = await _storageService.GetAccountsAsync();
+                foreach (var acc in accs)
+                {
+                    var emails = await _storageService.GetEmailsAsync(acc);
+                    acc.Emails = emails;
+                    _accounts.Add(acc);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Email ex: " + ex.Message);
+            }
+
+        }
 
         /// <summary>
         /// Helper function, get the first authentication service base on the provider
@@ -39,8 +71,9 @@ namespace EmailClientPluma.Core.Services
         private IAuthenticationService GetAuthServiceByProvider(Provider provider)
         {
             var iAuth = _authServices.Find(p => p.GetProvider().Equals(provider));
-            if (iAuth is null) { 
-                throw new NotImplementedException("Provider not exists");    
+            if (iAuth is null)
+            {
+                throw new NotImplementedException("Provider not exists");
             }
             return iAuth;
         }
@@ -52,12 +85,32 @@ namespace EmailClientPluma.Core.Services
         /// <returns></returns>
         public async Task AddAccountAsync(Provider prodiver)
         {
-            var acc = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
+            AuthResponce? res = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
 
-            if (acc is not null)
+            if (res is null)
+                return;
+
+            // Check if account already exists
+            bool haveAcc = false;
+            foreach (var v in _accounts)
             {
-                _accounts.Add(acc);
+                if (v.Email == res.Email)
+                {
+                    haveAcc = true;
+                    break;
+                }
             }
+            if (haveAcc) return;
+
+            // If not, add it to database
+            var acc = new Account(res);
+            await _storageService.StoreAccountAsync(acc);
+            var emails = await _emailService.FetchEmailAsync(acc);
+
+            acc.Emails = emails;
+
+            await _storageService.StoreEmailAsync(acc);
+            _accounts.Add(acc);
         }
         /// <summary>
         /// Get all the added accounts
@@ -75,24 +128,15 @@ namespace EmailClientPluma.Core.Services
         /// <returns>true if valid else false</returns>
         public async Task<bool> ValidateAccountAsync(Account? acc)
         {
-            if (acc is null) 
+            if (acc is null)
                 return true;
 
-            if (!acc.IsTokenExpired())
-                return true;
-
-            bool success = await acc.Credentials.RefreshTokenAsync(CancellationToken.None);
-            if (success)
-            {
-                return true;
-            }
-            return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);  
+            return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
-
-        public AccountService(IEnumerable<IAuthenticationService> authServices)
+        public async Task RemoveAccountAsync(Account account)
         {
-            _authServices = [.. authServices];
-            _accounts = [];
+            _accounts.Remove(account);
+            await _storageService.RemoveAccountAsync(account);
         }
     }
 }

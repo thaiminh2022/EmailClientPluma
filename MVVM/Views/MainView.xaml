@@ -40,11 +40,20 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-                <Button Grid.Row="1" Command="{Binding AddAccount}">Add account</Button>
+                <Button Grid.Row="1" Command="{Binding AddAccountCommand}">Add account</Button>
             </Grid>
 
             <!--  Account email view  -->
-            <ListView Grid.Row="1" />
+            <ListView
+                Grid.Row="1"
+                ItemsSource="{Binding SelectedAccount.Emails}"
+                SelectedItem="{Binding SelectedEmail}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Subject}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </Grid>
 
         <Grid Grid.Column="1">
@@ -55,13 +64,14 @@
 
             <!--  Helper button  -->
             <StackPanel Margin="5" Orientation="Horizontal">
-                <Button>New Email</Button>
+                <Button Command="{Binding ComposeCommand}">New Email</Button>
                 <ToggleButton>IsFlag</ToggleButton>
-                <Button>Reply</Button>
+                <Button Command="{Binding ReplyCommand}">Reply</Button>
+                <Button Command="{Binding RemoveAccountCommand}">Remove selected account</Button>
             </StackPanel>
 
             <!--  Show mail  -->
-            <TextBlock Grid.Row="1" />
+            <TextBlock Grid.Row="1" Text="{Binding SelectedEmail.Body}" ScrollViewer.CanContentScroll="True" TextWrapping="WrapWithOverflow" />
         </Grid>
 
     </Grid>
