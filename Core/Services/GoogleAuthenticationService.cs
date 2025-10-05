@@ -97,7 +97,7 @@ namespace EmailClientPluma.Core.Services
 
             if (tokenRes.IsStale)
             {
-                MessageBox.Show("Token is stale");
+                //MessageBox.Show("Token is stale");
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
                 {
                     ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
