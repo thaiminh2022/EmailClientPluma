@@ -55,6 +55,8 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
 
+
+
         public RelayCommand AddAccountCommand { get; set; }
         public RelayCommand ComposeCommand { get; set; }
         public RelayCommand ReplyCommand { get; set; }
@@ -110,6 +112,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.From != SelectedAccount.Email);
         }
-        public MainViewModel() { }
+        public MainViewModel() {
+        }
     }
 }
