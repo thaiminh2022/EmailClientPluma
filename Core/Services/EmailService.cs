@@ -1,53 +1,101 @@
-﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System;
+using System.Linq;
 
 namespace EmailClientPluma.Core.Services
 {
     interface IEmailService
     {
-        Task<IEnumerable<Email>> FetchEmailAsync(Account acc);
+        Task<IEnumerable<Email>> FetchEmailHeadersAsync(Account acc);
+        Task LoadEmailBodyAsync(Account acc, Email email);
         Task SendEmailAsync(Account acc, Email email);
     }
     internal class EmailService : IEmailService
     {
-        public async Task<IEnumerable<Email>> FetchEmailAsync(Account acc)
+        public async Task<IEnumerable<Email>> FetchEmailHeadersAsync(Account acc)
         {
             using var imap = new ImapClient();
             await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
-
             var inbox = imap.Inbox;
             await inbox.OpenAsync(FolderAccess.ReadOnly);
             int takeAmount = Math.Min(10, inbox.Count);
 
+            if (takeAmount <= 0)
+            {
+                await imap.DisconnectAsync(true);
+                return [];
+            }
 
             var last = inbox.Count;
-            var start = System.Math.Max(0, last - takeAmount);
+            var start = Math.Max(0, last - takeAmount);
+            var summaries = await inbox.FetchAsync(start, last - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
+
             List<Email> emails = [];
-            for (int i = start; i < last; i++)
+            foreach (var summary in summaries)
             {
-                var msg = await inbox.GetMessageAsync(i);
-
-                if (msg is not null)
+                if (summary.Envelope is null || !summary.UniqueId.IsValid)
                 {
-                    var body = msg.HtmlBody ?? msg.TextBody;
-                    body ??= "(email have no body)";
-
-                    var m = new Email(acc.ProviderUID, msg.Subject, body, msg.From.ToString(), msg.To.ToString(), []);
-                    emails.Add(m);
+                    continue;
                 }
 
+                var subject = string.IsNullOrEmpty(summary.Envelope.Subject) ? "(email have no subject)" : summary.Envelope.Subject;
+                var from = summary.Envelope.From?.ToString() ?? string.Empty;
+                var to = summary.Envelope.To?.ToString() ?? string.Empty;
+                var uid = summary.UniqueId.Id;
+
+                var email = new Email(acc.ProviderUID, subject, null, from, to, [], uid);
+                emails.Add(email);
             }
 
             await imap.DisconnectAsync(true);
 
             return emails;
+        }
+
+        public async Task LoadEmailBodyAsync(Account acc, Email email)
+        {
+            if (email is null)
+            {
+                return;
+            }
+
+            if (email.IsBodyLoaded)
+            {
+                return;
+            }
+
+            if (email.ImapUid is null)
+            {
+                return;
+            }
+
+            using var imap = new ImapClient();
+            await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
+            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+            await imap.AuthenticateAsync(oauth2);
+
+            var inbox = imap.Inbox;
+            await inbox.OpenAsync(FolderAccess.ReadOnly);
+
+            var message = await inbox.GetMessageAsync(new UniqueId(email.ImapUid.Value));
+
+            if (message is not null)
+            {
+                var body = message.HtmlBody ?? message.TextBody ?? "(email have no body)";
+                email.Body = body;
+                email.From = message.From?.ToString() ?? email.From;
+                email.To = message.To?.Select(address => address.ToString()).ToArray() ?? Array.Empty<string>();
+            }
+
+            await imap.DisconnectAsync(true);
         }
 
         public async Task SendEmailAsync(Account acc, Email email)

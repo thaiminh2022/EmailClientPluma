@@ -1,6 +1,7 @@
-﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
+using System;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -67,7 +68,7 @@ namespace EmailClientPluma.Core.Services
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
-            command.CommandText = @"INSERT INTO ACCOUNTS (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME) 
+            command.CommandText = @"INSERT INTO ACCOUNTS (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME)
                                     VALUES ($provider_uid, $provider, $email, $display_name)
                                    ";
             command.Parameters.AddWithValue("$provider_uid", account.ProviderUID);
@@ -112,26 +113,37 @@ namespace EmailClientPluma.Core.Services
 
             var command = connection.CreateCommand();
             command.CommandText = @"CREATE TABLE IF NOT EXISTS ACCOUNTS (
-                                    PROVIDER_UID     TEXT PRIMARY KEY NOT NULL,             
-                                    PROVIDER         TEXT NOT NULL,            
+                                    PROVIDER_UID     TEXT PRIMARY KEY NOT NULL,
+                                    PROVIDER         TEXT NOT NULL,
                                     EMAIL            TEXT NOT NULL,
                                     DISPLAY_NAME     TEXT,
-                                    UNIQUE (PROVIDER, PROVIDER_UID, EMAIL)         
+                                    UNIQUE (PROVIDER, PROVIDER_UID, EMAIL)
                                     );
                                   ";
             command.ExecuteNonQuery();
 
             command.CommandText = @"CREATE TABLE IF NOT EXISTS EMAILS (
                                     EMAIL_ID    INTEGER  PRIMARY KEY AUTOINCREMENT,
-	                                OWNER_ID	TEXT,
-	                                SUBJECT	    TEXT,
-	                                BODY	TEXT,
-	                                ""FROM""	TEXT,
-	                                ""TO""	    TEXT,
-	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
+                                        OWNER_ID        TEXT,
+                                        SUBJECT     TEXT,
+                                        BODY    TEXT,
+                                        ""FROM""        TEXT,
+                                        ""TO""      TEXT,
+                                        IMAP_UID    INTEGER,
+                                        FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
                                 );";
 
             command.ExecuteNonQuery();
+
+            try
+            {
+                command.CommandText = @"ALTER TABLE EMAILS ADD COLUMN IMAP_UID INTEGER";
+                command.ExecuteNonQuery();
+            }
+            catch (SqliteException)
+            {
+                // Column already exists, ignore error.
+            }
         }
 
 
@@ -141,15 +153,16 @@ namespace EmailClientPluma.Core.Services
             await connection.OpenAsync();
             var command = connection.CreateCommand();
 
-            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY,""FROM"", ""TO"") 
-                                    VALUES ($owner_id, $subject, $body,$from, $to)";
+            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY,""FROM"", ""TO"", IMAP_UID)
+                                    VALUES ($owner_id, $subject, $body,$from, $to, $imap_uid)";
             foreach (var item in acc.Emails)
             {
                 command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
                 command.Parameters.AddWithValue("$subject", item.Subject);
-                command.Parameters.AddWithValue("$body", item.Body);
+                command.Parameters.AddWithValue("$body", item.Body ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$from", item.From);
                 command.Parameters.AddWithValue("$to", string.Join(',', item.To));
+                command.Parameters.AddWithValue("$imap_uid", item.ImapUid.HasValue ? item.ImapUid.Value : (object)DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
                 command.Parameters.Clear();
@@ -173,11 +186,29 @@ namespace EmailClientPluma.Core.Services
                 var emailID = reader.GetInt32(0);
                 var emailAccountOwnerID = reader.GetString(1);
                 var subject = reader.GetString(2);
-                var body = reader.GetString(3);
+                var body = reader.IsDBNull(3) ? null : reader.GetString(3);
                 var from = reader.GetString(4);
-                var to = reader.GetString(5);
+                var to = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
 
-                var email = new Email(emailAccountOwnerID, subject, body, from, to, [])
+                uint? imapUid = null;
+                try
+                {
+                    var ordinal = reader.GetOrdinal("IMAP_UID");
+                    if (!reader.IsDBNull(ordinal))
+                    {
+                        var value = reader.GetInt64(ordinal);
+                        if (value >= 0)
+                        {
+                            imapUid = (uint)value;
+                        }
+                    }
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    imapUid = null;
+                }
+
+                var email = new Email(emailAccountOwnerID, subject, body, from, to, [], imapUid)
                 {
                     EmailID = emailID,
                 };

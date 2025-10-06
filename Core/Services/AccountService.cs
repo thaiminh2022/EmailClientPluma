@@ -105,7 +105,7 @@ namespace EmailClientPluma.Core.Services
             // If not, add it to database
             var acc = new Account(res);
             await _storageService.StoreAccountAsync(acc);
-            var emails = await _emailService.FetchEmailAsync(acc);
+            var emails = await _emailService.FetchEmailHeadersAsync(acc);
 
             acc.Emails = emails;
 
