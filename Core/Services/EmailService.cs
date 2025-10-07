@@ -28,6 +28,7 @@ namespace EmailClientPluma.Core.Services
             var inbox = imap.Inbox;
             await inbox.OpenAsync(FolderAccess.ReadOnly);
 
+
             if (inbox.Count == 0) // inbox is empty
             {
                 await imap.DisconnectAsync(true);
@@ -84,9 +85,24 @@ namespace EmailClientPluma.Core.Services
 
             try
             {
-                var mailBodies = await inbox.GetMessageAsync(uniqueID);
-                email.MessageParts.Body = mailBodies.HtmlBody ?? mailBodies.TextBody ?? "(No Body)";
+                var bodies = await inbox.FetchAsync([uniqueID], MessageSummaryItems.BodyStructure);
+                var bodyParts = bodies?.FirstOrDefault();
+                if (bodies is null || bodyParts is null)
+                {
+                    email.MessageParts.Body = "(Unable to fetch body)";
+                    return;
+                }
 
+                var chosen = bodyParts.HtmlBody ?? bodyParts.TextBody;
+                var entity = await inbox.GetBodyPartAsync(uniqueID, chosen);
+                if (entity is TextPart textPart)
+                {
+                    email.MessageParts.Body = textPart.Text;
+                }
+                else
+                {
+                    email.MessageParts.Body = "(No Body)";
+                }
             }
             catch (Exception ex)
             {
