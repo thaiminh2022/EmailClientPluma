@@ -4,18 +4,19 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.Windows;
 
 namespace EmailClientPluma.Core.Services
 {
     interface IEmailService
     {
-        Task<IEnumerable<Email>> FetchEmailHeaderAsync(Account acc);
-        Task<string> FetchEmailBodyAsync(Account acc, Email email);
+        Task FetchEmailHeaderAsync(Account acc);
+        Task FetchEmailBodyAsync(Account acc, Email email);
         Task SendEmailAsync(Account acc, Email email);
     }
     internal class EmailService : IEmailService
     {
-        public async Task<IEnumerable<Email>> FetchEmailHeaderAsync(Account acc)
+        public async Task FetchEmailHeaderAsync(Account acc)
         {
             // authenticating process
             using var imap = new ImapClient();
@@ -30,7 +31,7 @@ namespace EmailClientPluma.Core.Services
             if (inbox.Count == 0) // inbox is empty
             {
                 await imap.DisconnectAsync(true);
-                return [];
+                return;
             }
 
             // Fetch latest 20 messages' envelope (headers summary)
@@ -39,19 +40,36 @@ namespace EmailClientPluma.Core.Services
 
             var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
 
-            List<Email> emails = [];
             foreach (var item in summaries)
             {
                 var env = item.Envelope;
                 var uniqueID = item.UniqueId.Id;
                 var messageID = env.MessageId;
-                var email = new Email(uniqueID, messageID, acc.ProviderUID, env.Subject, env.From.ToString(), env.To.ToString());
-                emails.Add(email);
+                var uidValidity = inbox.UidValidity;
+
+                var email = new Email(
+                    new Email.Identifiers
+                    {
+                        ImapUID = uniqueID,
+                        ImapUIDValidity = uidValidity,
+                        FolderFullName = inbox.FullName,
+                        MessageID = messageID,
+                        OwnerAccountID = acc.ProviderUID
+                    },
+                    new Email.DataParts
+                    {
+                        Subject = env.Subject ?? "(No Subject)",
+                        From = env.From.ToString(),
+                        To = env.To.ToString(),
+                    }
+                );
+
+
+                acc.Emails.Add(email);
             }
             await imap.DisconnectAsync(true);
-            return emails;
         }
-        public async Task<string> FetchEmailBodyAsync(Account acc, Email email)
+        public async Task FetchEmailBodyAsync(Account acc, Email email)
         {
             // authenticating process
             using var imap = new ImapClient();
@@ -59,14 +77,35 @@ namespace EmailClientPluma.Core.Services
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
+            var folder = await imap.GetFolderAsync(email.MessageIdentifiers.FolderFullName);
+            if (folder is null)
+                return;
 
-            return string.Empty;
+            var uids = new List<UniqueId>()
+            {
+                new(email.MessageIdentifiers.ImapUID)
+            };
+            try
+            {
+                await folder.OpenAsync(FolderAccess.ReadOnly);
+                var mailBodies = await folder.FetchAsync(uids, MessageSummaryItems.BodyStructure, default);
+                var bodyParts = mailBodies?.FirstOrDefault();
+                if (bodyParts == null)
+                    return;
+
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
         }
 
         public async Task SendEmailAsync(Account acc, Email email)
         {
             // Constructing the email
-            var message = ConstructEmail(email);
+            var message = ConstructEmail(acc, email);
             using var smtp = new SmtpClient();
 
             await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
@@ -77,20 +116,20 @@ namespace EmailClientPluma.Core.Services
             await smtp.DisconnectAsync(true);
         }
 
-        MimeMessage ConstructEmail(Email email)
+        MimeMessage ConstructEmail(Account acc, Email email)
         {
             var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(email.From));
+            message.From.Add(MailboxAddress.Parse(acc.Email));
             InternetAddressList internetAddresses = new InternetAddressList();
-            foreach (var item in email.To.Split(','))
+            foreach (var item in email.MessageParts.To.Split(','))
             {
                 internetAddresses.Add(InternetAddress.Parse(item));
             }
             message.To.AddRange(internetAddresses);
-            message.Subject = email.Subject;
+            message.Subject = email.MessageParts.Subject;
             message.Body = new BodyBuilder
             {
-                TextBody = email.Body
+                TextBody = email.MessageParts.Body
             }.ToMessageBody();
             return message;
         }

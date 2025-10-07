@@ -10,6 +10,7 @@ namespace EmailClientPluma.MVVM.ViewModels
     internal class MainViewModel : ObserableObject
     {
         readonly IAccountService _accountService;
+        readonly IEmailService _emailService;
         readonly IWindowFactory _windowFactory;
 
         // A list of logined account
@@ -23,24 +24,19 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-                var _ = ValidateSelected();
+                var _ = FetchEmailHeaders();
                 OnPropertyChanges();
             }
         }
 
-        async Task ValidateSelected()
+        async Task FetchEmailHeaders()
         {
-            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-            if (!isValid)
-            {
-                _selectedAccount = null;
-                //MessageBox.Show("Not valid");
-            }
-            else
-            {
-                //MessageBox.Show("Valid");
-            }
+            if (_selectedAccount is null) return;
 
+            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+            if (!isValid) return;
+
+            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
         }
         private Email? _selectedEmail;
 
@@ -50,11 +46,16 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedEmail = value;
+                var _ = FetchEmailBody();
                 OnPropertyChanges();
             }
         }
 
-
+        async Task FetchEmailBody()
+        {
+            if (_selectedAccount is null || _selectedEmail is null) return;
+            await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
+        }
 
 
         public RelayCommand AddAccountCommand { get; set; }
@@ -62,10 +63,11 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
 
-        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory)
+        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService)
         {
             _accountService = accountService;
             _windowFactory = windowFactory;
+            _emailService = emailService;
 
             Accounts = _accountService.GetAccounts();
 
@@ -110,9 +112,10 @@ namespace EmailClientPluma.MVVM.ViewModels
                 // too lazy to implement for now
 
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
-                    SelectedEmail.From != SelectedAccount.Email);
+                    SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
-        public MainViewModel() {
+        public MainViewModel()
+        {
         }
     }
 }

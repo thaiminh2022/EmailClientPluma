@@ -145,11 +145,12 @@ namespace EmailClientPluma.Core.Services
                                     VALUES ($owner_id, $subject, $body,$from, $to)";
             foreach (var item in acc.Emails)
             {
+                var msgPart = item.MessageParts;
                 command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
-                command.Parameters.AddWithValue("$subject", item.Subject);
-                command.Parameters.AddWithValue("$body", item.Body);
-                command.Parameters.AddWithValue("$from", item.From);
-                command.Parameters.AddWithValue("$to", string.Join(',', item.To));
+                command.Parameters.AddWithValue("$subject", msgPart.Subject);
+                command.Parameters.AddWithValue("$body", msgPart.Body);
+                command.Parameters.AddWithValue("$from", msgPart.From);
+                command.Parameters.AddWithValue("$to", msgPart.To);
 
                 await command.ExecuteNonQueryAsync();
                 command.Parameters.Clear();
@@ -170,18 +171,18 @@ namespace EmailClientPluma.Core.Services
 
             while (reader.Read())
             {
-                var emailID = reader.GetInt32(0);
-                var emailAccountOwnerID = reader.GetString(1);
-                var subject = reader.GetString(2);
-                var body = reader.GetString(3);
-                var from = reader.GetString(4);
-                var to = reader.GetString(5);
+                //var emailID = reader.GetInt32(0);
+                //var emailAccountOwnerID = reader.GetString(1);
+                //var subject = reader.GetString(2);
+                //var body = reader.GetString(3);
+                //var from = reader.GetString(4);
+                //var to = reader.GetString(5);
 
-                var email = new Email(emailAccountOwnerID, subject, body, from, to, [])
-                {
-                    EmailID = emailID,
-                };
-                emails.Add(email);
+                //var email = new Email(emailAccountOwnerID, subject, body, from, to, [])
+                //{
+                //    EmailID = emailID,
+                //};
+                //emails.Add(email);
             }
             return emails;
         }

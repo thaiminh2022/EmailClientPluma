@@ -34,12 +34,12 @@
 
 
         public Identifiers MessageIdentifiers { get; set; }
-        public DataParts MessagesParts { get; set; }
+        public DataParts MessageParts { get; set; }
 
         public Email(Identifiers messageIdentifiers, DataParts messagesParts)
         {
             MessageIdentifiers = messageIdentifiers;
-            MessagesParts = messagesParts;
+            MessageParts = messagesParts;
         }
     }
 

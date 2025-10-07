@@ -2,7 +2,6 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -44,28 +43,28 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 
-                var email = new Email(
-                        SelectedAccount.ProviderUID,
-                        Subject,
-                        Body,
-                        SelectedAccount.Email,
-                        ToAddresses,
-                        []
-                );
+                //var email = new Email(
+                //        SelectedAccount.ProviderUID,
+                //        Subject,
+                //        Body,
+                //        SelectedAccount.Email,
+                //        ToAddresses,
+                //        []
+                //);
 
-                try
-                {
-                    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
-                    if (validated)
-                    {
-                        await _emailService.SendEmailAsync(SelectedAccount, email);
-                        MessageBox.Show("Message was sent");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                //try
+                //{
+                //    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
+                //    if (validated)
+                //    {
+                //        await _emailService.SendEmailAsync(SelectedAccount, email);
+                //        MessageBox.Show("Message was sent");
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show(ex.Message);
+                //}
 
             });
         }
