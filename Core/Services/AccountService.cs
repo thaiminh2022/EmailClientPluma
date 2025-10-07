@@ -1,7 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 
 using System.Collections.ObjectModel;
-using System.Windows;
 
 
 namespace EmailClientPluma.Core.Services
@@ -26,12 +25,7 @@ namespace EmailClientPluma.Core.Services
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
         readonly IEmailService _emailService;
-
-
         readonly ObservableCollection<Account> _accounts;
-
-
-
 
         public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
         {
@@ -45,20 +39,22 @@ namespace EmailClientPluma.Core.Services
         // Call the storage service to get all the saved account
         async Task Initialize()
         {
-            try
-            {
-                var accs = await _storageService.GetAccountsAsync();
-                foreach (var acc in accs)
-                {
-                    var emails = await _storageService.GetEmailsAsync(acc);
-                    acc.Emails = emails;
-                    _accounts.Add(acc);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Email ex: " + ex.Message);
-            }
+            //try
+            //{
+            //    var accs = await _storageService.GetAccountsAsync();
+            //    foreach (var acc in accs)
+            //    {
+            //        var emails = await _storageService.GetEmailsAsync(acc);
+            //        acc.Emails = emails;
+            //        _accounts.Add(acc);
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("Email ex: " + ex.Message);
+            //}
+
+            await Task.Delay(1000);
 
         }
 
@@ -105,11 +101,8 @@ namespace EmailClientPluma.Core.Services
             // If not, add it to database
             var acc = new Account(res);
             await _storageService.StoreAccountAsync(acc);
-            var emails = await _emailService.FetchEmailAsync(acc);
 
-            acc.Emails = emails;
-
-            await _storageService.StoreEmailAsync(acc);
+            // mail not fetched yet
             _accounts.Add(acc);
         }
         /// <summary>

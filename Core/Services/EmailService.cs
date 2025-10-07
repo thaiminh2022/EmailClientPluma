@@ -9,45 +9,57 @@ namespace EmailClientPluma.Core.Services
 {
     interface IEmailService
     {
-        Task<IEnumerable<Email>> FetchEmailAsync(Account acc);
+        Task<IEnumerable<Email>> FetchEmailHeaderAsync(Account acc);
+        Task<string> FetchEmailBodyAsync(Account acc, Email email);
         Task SendEmailAsync(Account acc, Email email);
     }
     internal class EmailService : IEmailService
     {
-        public async Task<IEnumerable<Email>> FetchEmailAsync(Account acc)
+        public async Task<IEnumerable<Email>> FetchEmailHeaderAsync(Account acc)
         {
+            // authenticating process
             using var imap = new ImapClient();
             await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
-
+            // getting headers process
             var inbox = imap.Inbox;
             await inbox.OpenAsync(FolderAccess.ReadOnly);
-            int takeAmount = Math.Min(10, inbox.Count);
 
-
-            var last = inbox.Count;
-            var start = System.Math.Max(0, last - takeAmount);
-            List<Email> emails = [];
-            for (int i = start; i < last; i++)
+            if (inbox.Count == 0) // inbox is empty
             {
-                var msg = await inbox.GetMessageAsync(i);
-
-                if (msg is not null)
-                {
-                    var body = msg.HtmlBody ?? msg.TextBody;
-                    body ??= "(email have no body)";
-
-                    var m = new Email(acc.ProviderUID, msg.Subject, body, msg.From.ToString(), msg.To.ToString(), []);
-                    emails.Add(m);
-                }
-
+                await imap.DisconnectAsync(true);
+                return [];
             }
 
-            await imap.DisconnectAsync(true);
+            // Fetch latest 20 messages' envelope (headers summary)
+            int take = Math.Min(20, inbox.Count);
+            int start = Math.Max(0, inbox.Count - take);
 
+            var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
+
+            List<Email> emails = [];
+            foreach (var item in summaries)
+            {
+                var env = item.Envelope;
+                var uniqueID = item.UniqueId.Id;
+                var messageID = env.MessageId;
+                var email = new Email(uniqueID, messageID, acc.ProviderUID, env.Subject, env.From.ToString(), env.To.ToString());
+                emails.Add(email);
+            }
+            await imap.DisconnectAsync(true);
             return emails;
+        }
+        public async Task<string> FetchEmailBodyAsync(Account acc, Email email)
+        {
+            // authenticating process
+            using var imap = new ImapClient();
+            await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
+            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+            await imap.AuthenticateAsync(oauth2);
+
+            return string.Empty;
         }
 
         public async Task SendEmailAsync(Account acc, Email email)
@@ -69,7 +81,7 @@ namespace EmailClientPluma.Core.Services
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(email.From));
             InternetAddressList internetAddresses = new InternetAddressList();
-            foreach (var item in email.To)
+            foreach (var item in email.To.Split(','))
             {
                 internetAddresses.Add(InternetAddress.Parse(item));
             }
@@ -99,5 +111,7 @@ namespace EmailClientPluma.Core.Services
                 _ => throw new NotImplementedException()
             };
         }
+
+
     }
 }

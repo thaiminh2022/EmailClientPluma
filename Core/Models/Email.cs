@@ -1,24 +1,39 @@
 ﻿namespace EmailClientPluma.Core.Models
 {
-    internal class Email
+    internal class Email : ObserableObject
     {
         public int EmailID { get; set; } // set by database
+        public uint ImapUID { get; set; }
+        public string MessageID { get; set; }
         public string OwnerAccountID { get; set; }
         public string Subject { get; set; }
-        public string Body { get; set; }
-        public string From { get; set; }
-        public string[] To { get; set; }
 
-        public IEnumerable<Attachment> Attachments { get; set; }
 
-        public Email(string ownerAccountID, string subject, string body, string from, string to, IEnumerable<Attachment> attachments)
+
+        private string? _body;
+        public string? Body
         {
+            get { return _body; }
+            set
+            {
+                _body = value;
+                OnPropertyChanges();
+            }
+        }
+
+        public string From { get; set; }
+        public string To { get; set; }
+
+        public IEnumerable<Attachment> Attachments { get; set; } = [];
+
+        public Email(uint imapUID, string messageID, string ownerAccountID, string subject, string from, string to)
+        {
+            ImapUID = imapUID;
+            MessageID = messageID;
             OwnerAccountID = ownerAccountID;
             Subject = subject;
-            Body = body;
             From = from;
-            To = to.Split(',');
-            Attachments = attachments;
+            To = to;
         }
     }
 
