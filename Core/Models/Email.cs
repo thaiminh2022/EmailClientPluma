@@ -2,38 +2,44 @@
 {
     internal class Email : ObserableObject
     {
-        public int EmailID { get; set; } // set by database
-        public uint ImapUID { get; set; }
-        public string MessageID { get; set; }
-        public string OwnerAccountID { get; set; }
-        public string Subject { get; set; }
-
-
-
-        private string? _body;
-        public string? Body
+        public record Identifiers
         {
-            get { return _body; }
-            set
+            public int EmailID { get; set; } // set by database
+            required public uint ImapUID { get; set; }
+            required public uint ImapUIDValidity { get; set; }
+            required public string FolderFullName { get; set; }
+            required public string? MessageID { get; set; }
+            required public string OwnerAccountID { get; set; }
+        }
+        public class DataParts : ObserableObject
+        {
+            required public string Subject { get; set; }
+
+            private string? _body;
+            public string? Body
             {
-                _body = value;
-                OnPropertyChanges();
+                get { return _body; }
+                set
+                {
+                    _body = value;
+                    OnPropertyChanges();
+                }
             }
+
+            required public string From { get; set; }
+            required public string To { get; set; }
+
+            public IEnumerable<Attachment> Attachments { get; set; } = [];
         }
 
-        public string From { get; set; }
-        public string To { get; set; }
 
-        public IEnumerable<Attachment> Attachments { get; set; } = [];
+        public Identifiers MessageIdentifiers { get; set; }
+        public DataParts MessagesParts { get; set; }
 
-        public Email(uint imapUID, string messageID, string ownerAccountID, string subject, string from, string to)
+        public Email(Identifiers messageIdentifiers, DataParts messagesParts)
         {
-            ImapUID = imapUID;
-            MessageID = messageID;
-            OwnerAccountID = ownerAccountID;
-            Subject = subject;
-            From = from;
-            To = to;
+            MessageIdentifiers = messageIdentifiers;
+            MessagesParts = messagesParts;
         }
     }
 

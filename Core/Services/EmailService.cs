@@ -59,6 +59,7 @@ namespace EmailClientPluma.Core.Services
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
+
             return string.Empty;
         }
 
