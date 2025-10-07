@@ -4,6 +4,7 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -24,19 +25,31 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
+
                 var _ = FetchEmailHeaders();
+
                 OnPropertyChanges();
             }
         }
 
         async Task FetchEmailHeaders()
         {
-            if (_selectedAccount is null) return;
-
+            Mouse.OverrideCursor = Cursors.Wait;
+            if (_selectedAccount is null)
+            {
+                Mouse.OverrideCursor = null;
+                return;
+            }
             bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-            if (!isValid) return;
 
-            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+
+            if (!isValid)
+            {
+                Mouse.OverrideCursor = null;
+            }
+
+            //await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+            Mouse.OverrideCursor = null;
         }
         private Email? _selectedEmail;
 
@@ -46,6 +59,9 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedEmail = value;
+
+
+                Mouse.OverrideCursor = Cursors.Wait;
                 var _ = FetchEmailBody();
                 OnPropertyChanges();
             }
@@ -53,8 +69,14 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         async Task FetchEmailBody()
         {
-            if (_selectedAccount is null || _selectedEmail is null) return;
+            if (_selectedAccount is null || _selectedEmail is null || _selectedEmail.BodyFetched)
+            {
+                Mouse.OverrideCursor = null;
+                return;
+            };
             await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
+            Mouse.OverrideCursor = null;
+
         }
 
 

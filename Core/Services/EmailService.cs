@@ -16,6 +16,13 @@ namespace EmailClientPluma.Core.Services
     }
     internal class EmailService : IEmailService
     {
+        IStorageService _storageService;
+
+        public EmailService(IStorageService storageService)
+        {
+            _storageService = storageService;
+        }
+
         public async Task FetchEmailHeaderAsync(Account acc)
         {
             // authenticating process
@@ -62,6 +69,7 @@ namespace EmailClientPluma.Core.Services
                         Subject = env.Subject ?? "(No Subject)",
                         From = env.From.ToString(),
                         To = env.To.ToString(),
+                        Date = env.Date
                     }
                 );
 
@@ -69,6 +77,8 @@ namespace EmailClientPluma.Core.Services
                 acc.Emails.Add(email);
             }
             await imap.DisconnectAsync(true);
+
+            await _storageService.StoreEmailAsync(acc);
         }
         public async Task FetchEmailBodyAsync(Account acc, Email email)
         {
@@ -103,6 +113,7 @@ namespace EmailClientPluma.Core.Services
                 {
                     email.MessageParts.Body = "(No Body)";
                 }
+                await _storageService.UpdateEmailAsync(email);
             }
             catch (Exception ex)
             {
@@ -140,6 +151,7 @@ namespace EmailClientPluma.Core.Services
             {
                 TextBody = email.MessageParts.Body
             }.ToMessageBody();
+            message.Date = DateTimeOffset.Now;
             return message;
         }
 

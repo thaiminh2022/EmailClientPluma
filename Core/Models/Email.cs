@@ -28,6 +28,7 @@
 
             required public string From { get; set; }
             required public string To { get; set; }
+            required public DateTimeOffset? Date { get; set; }
 
             public IEnumerable<Attachment> Attachments { get; set; } = [];
         }
@@ -35,6 +36,8 @@
 
         public Identifiers MessageIdentifiers { get; set; }
         public DataParts MessageParts { get; set; }
+
+        public bool BodyFetched => !string.IsNullOrEmpty(MessageParts.Body);
 
         public Email(Identifiers messageIdentifiers, DataParts messagesParts)
         {

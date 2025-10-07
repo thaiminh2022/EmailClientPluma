@@ -25,14 +25,12 @@ namespace EmailClientPluma.Core.Services
     {
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
-        readonly IEmailService _emailService;
         readonly ObservableCollection<Account> _accounts;
 
-        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService)
         {
             _authServices = [.. authServices];
             _storageService = storageService;
-            _emailService = emailService;
             _accounts = [];
             var _ = Initialize();
         }
@@ -45,8 +43,8 @@ namespace EmailClientPluma.Core.Services
                 var accs = await _storageService.GetAccountsAsync();
                 foreach (var acc in accs)
                 {
-                    //var emails = await _storageService.GetEmailsAsync(acc);
-                    //acc.Emails = emails;
+                    var emails = await _storageService.GetEmailsAsync(acc);
+                    acc.Emails = new(emails);
                     _accounts.Add(acc);
                 }
             }
