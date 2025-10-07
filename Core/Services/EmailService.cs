@@ -77,22 +77,15 @@ namespace EmailClientPluma.Core.Services
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
-            var folder = await imap.GetFolderAsync(email.MessageIdentifiers.FolderFullName);
-            if (folder is null)
-                return;
+            var inbox = imap.Inbox;
+            await inbox.OpenAsync(FolderAccess.ReadOnly);
 
-            var uids = new List<UniqueId>()
-            {
-                new(email.MessageIdentifiers.ImapUID)
-            };
+            var uniqueID = new UniqueId(email.MessageIdentifiers.ImapUID);
+
             try
             {
-                await folder.OpenAsync(FolderAccess.ReadOnly);
-                var mailBodies = await folder.FetchAsync(uids, MessageSummaryItems.BodyStructure, default);
-                var bodyParts = mailBodies?.FirstOrDefault();
-                if (bodyParts == null)
-                    return;
-
+                var mailBodies = await inbox.GetMessageAsync(uniqueID);
+                email.MessageParts.Body = mailBodies.HtmlBody ?? mailBodies.TextBody ?? "(No Body)";
 
             }
             catch (Exception ex)
