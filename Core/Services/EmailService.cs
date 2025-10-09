@@ -12,7 +12,7 @@ namespace EmailClientPluma.Core.Services
     {
         Task FetchEmailHeaderAsync(Account acc);
         Task FetchEmailBodyAsync(Account acc, Email email);
-        Task SendEmailAsync(Account acc, Email email);
+        Task SendEmailAsync(Account acc, Email.OutgoingEmail email);
     }
     internal class EmailService : IEmailService
     {
@@ -54,6 +54,7 @@ namespace EmailClientPluma.Core.Services
                 var uniqueID = item.UniqueId.Id;
                 var messageID = env.MessageId;
                 var uidValidity = inbox.UidValidity;
+                var inReplyTo = env.InReplyTo;
 
                 var email = new Email(
                     new Email.Identifiers
@@ -62,7 +63,9 @@ namespace EmailClientPluma.Core.Services
                         ImapUIDValidity = uidValidity,
                         FolderFullName = inbox.FullName,
                         MessageID = messageID,
-                        OwnerAccountID = acc.ProviderUID
+                        OwnerAccountID = acc.ProviderUID,
+                        InReplyTo = inReplyTo,
+                        
                     },
                     new Email.DataParts
                     {
@@ -113,7 +116,7 @@ namespace EmailClientPluma.Core.Services
                 {
                     email.MessageParts.Body = "(No Body)";
                 }
-                await _storageService.UpdateEmailAsync(email);
+                await _storageService.UpdateEmailBodyAsync(email);
             }
             catch (Exception ex)
             {
@@ -122,7 +125,7 @@ namespace EmailClientPluma.Core.Services
 
         }
 
-        public async Task SendEmailAsync(Account acc, Email email)
+        public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
         {
             // Constructing the email
             var message = ConstructEmail(acc, email);
@@ -136,26 +139,39 @@ namespace EmailClientPluma.Core.Services
             await smtp.DisconnectAsync(true);
         }
 
-        MimeMessage ConstructEmail(Account acc, Email email)
+        MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
         {
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(acc.Email));
-            InternetAddressList internetAddresses = new InternetAddressList();
-            foreach (var item in email.MessageParts.To.Split(','))
+            
+            InternetAddressList internetAddresses = [];
+            foreach (var item in email.To.Split(','))
             {
                 internetAddresses.Add(InternetAddress.Parse(item));
             }
             message.To.AddRange(internetAddresses);
-            message.Subject = email.MessageParts.Subject;
-            message.Body = new BodyBuilder
+
+            message.Subject = email.Subject;
+            if (email.ReplyTo != null) {
+                message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
+            }
+
+            var bodyBuilder = new BodyBuilder
             {
-                TextBody = email.MessageParts.Body
-            }.ToMessageBody();
-            message.Date = DateTimeOffset.Now;
+                HtmlBody = email.Body
+            };
+
+            foreach (var item in email.Attachments)
+            {
+                bodyBuilder.Attachments.Add(item.FileName, item.Content);
+            }
+            message.Body = bodyBuilder.ToMessageBody();
+
+            message.Date = email.Date ?? DateTimeOffset.Now;
             return message;
         }
 
-        string GetSmtpHostByProvider(Provider prod)
+        static string GetSmtpHostByProvider(Provider prod)
         {
             return prod switch
             {
@@ -164,7 +180,7 @@ namespace EmailClientPluma.Core.Services
             };
         }
 
-        string GetImapHostByProvider(Provider prod)
+        static string GetImapHostByProvider(Provider prod)
         {
             return prod switch
             {

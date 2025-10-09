@@ -16,6 +16,8 @@ namespace EmailClientPluma.Core.Models
 
         public Credentials Credentials { get; set; }
 
+        public bool IsHeadersFetched => Emails.Count > 0;
+
 
         public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
         {

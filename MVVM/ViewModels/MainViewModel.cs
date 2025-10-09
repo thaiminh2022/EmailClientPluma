@@ -35,11 +35,13 @@ namespace EmailClientPluma.MVVM.ViewModels
         async Task FetchEmailHeaders()
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            if (_selectedAccount is null)
+            if (_selectedAccount is null || _selectedAccount.IsHeadersFetched)
             {
                 Mouse.OverrideCursor = null;
                 return;
             }
+
+
             bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
 
 
@@ -48,7 +50,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = null;
             }
 
-            //await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
             Mouse.OverrideCursor = null;
         }
         private Email? _selectedEmail;

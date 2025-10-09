@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
+using Microsoft.Web.WebView2.Core;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -13,7 +14,7 @@ namespace EmailClientPluma.Core.Services
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
-        Task UpdateEmailAsync(Email email);
+        Task UpdateEmailBodyAsync(Email email);
 
     }
     internal class StorageService : IStorageService
@@ -111,6 +112,7 @@ namespace EmailClientPluma.Core.Services
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
+            // user storage
             var command = connection.CreateCommand();
             command.CommandText = @"CREATE TABLE IF NOT EXISTS ACCOUNTS (
                                     PROVIDER_UID     TEXT PRIMARY KEY NOT NULL,             
@@ -122,26 +124,29 @@ namespace EmailClientPluma.Core.Services
                                   ";
             command.ExecuteNonQuery();
 
-
+            // email storage
             command.CommandText = @"
                                     CREATE TABLE IF NOT EXISTS EMAILS (
                                     EMAIL_ID           INTEGER PRIMARY KEY AUTOINCREMENT,  -- DB surrogate key
 
                                     -- IDENTIFIERS
                                     IMAP_UID           INTEGER NOT NULL,                   -- uint -> INTEGER
-                                    IMAP_UID_VALIDITY   INTEGER NOT NULL,                   -- uint -> INTEGER
+                                    IMAP_UID_VALIDITY  INTEGER NOT NULL,                   -- uint -> INTEGER
                                     FOLDER_FULLNAME    TEXT    NOT NULL,
-                                    MESSAGE_ID         TEXT UNIQUE,                               -- nullable
-                                    OWNER_ID    TEXT    NOT NULL,
+                                    MESSAGE_ID         TEXT UNIQUE,                        -- nullable
+                                    OWNER_ID           TEXT    NOT NULL,
+                                    IN_REPLY_TO        TEXT,                               -- nullable
 
                                     -- DATA PARTS
-                                    SUBJECT           TEXT    NOT NULL,
-                                    BODY              TEXT,                               -- nullable (lazy-loaded)
-                                    FROM_ADDRESS      TEXT    NOT NULL,
-                                    TO_ADDRESS        TEXT    NOT NULL,
-                                    DATE              TEXT,                               -- nullable
-                                    FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
-                                );";
+                                    SUBJECT            TEXT    NOT NULL,
+                                    BODY               TEXT,                               -- nullable (lazy-loaded)
+                                    FROM_ADDRESS       TEXT    NOT NULL,
+                                    TO_ADDRESS         TEXT    NOT NULL,
+                                    DATE               TEXT,                               -- nullable
+
+                                    FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
+);
+                                    ";
             command.ExecuteNonQuery();
         }
 
@@ -153,10 +158,10 @@ namespace EmailClientPluma.Core.Services
             var command = connection.CreateCommand();
 
             command.CommandText = @"INSERT INTO EMAILS (
-                                    IMAP_UID, IMAP_UID_VALIDITY, FOLDER_FULLNAME, MESSAGE_ID, OWNER_ID,
+                                    IMAP_UID, IMAP_UID_VALIDITY, FOLDER_FULLNAME, MESSAGE_ID, OWNER_ID, IN_REPLY_TO,
                                     SUBJECT, BODY, FROM_ADDRESS, TO_ADDRESS, DATE
                                 ) VALUES (
-                                    $imap_uid, $imap_uid_validity, $folder_fullname, $message_id, $owner_id, 
+                                    $imap_uid, $imap_uid_validity, $folder_fullname, $message_id, $owner_id, $in_reply_to,
                                     $subject, $body, $from, $to, $date
                                 ) ON CONFLICT (MESSAGE_ID)
                                   DO UPDATE SET 
@@ -170,23 +175,17 @@ namespace EmailClientPluma.Core.Services
             {
                 var msgPart = item.MessageParts;
                 var msgId = item.MessageIdentifiers;
+                // IDS
                 command.Parameters.AddWithValue("$imap_uid", msgId.ImapUID);
                 command.Parameters.AddWithValue("$imap_uid_validity", msgId.ImapUIDValidity);
                 command.Parameters.AddWithValue("$folder_fullname", msgId.FolderFullName);
                 command.Parameters.AddWithValue("$message_id", msgId.MessageID);
                 command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
+                command.Parameters.AddWithValue("$in_reply_to", DbNullOrValue(msgId.InReplyTo));
 
-
+                // PARTS
                 command.Parameters.AddWithValue("$subject", msgPart.Subject);
-
-                if (msgPart.Body is null)
-                {
-                    command.Parameters.AddWithValue("$body", DBNull.Value);
-                }
-                else
-                {
-                    command.Parameters.AddWithValue("$body", msgPart.Body);
-                }
+                command.Parameters.AddWithValue("$body", DbNullOrValue(msgPart.Body));
                 command.Parameters.AddWithValue("$from", msgPart.From);
                 command.Parameters.AddWithValue("$to", msgPart.To);
                 command.Parameters.AddWithValue("$date", msgPart.Date?.ToString("o"));
@@ -224,10 +223,12 @@ namespace EmailClientPluma.Core.Services
                 var folderFullName = reader.GetString(3);
                 var messageID = reader.IsDBNull(4) ? null : reader.GetString(4);
                 var emailAccountOwnerID = reader.GetString(5);
-                var subject = reader.GetString(6);
-                var body = reader.IsDBNull(7) ? null : reader.GetString(7);
-                var from = reader.GetString(8);
-                var to = reader.GetString(9);
+                var inReplyTo = reader.IsDBNull(6) ? null :  reader.GetString(6);
+
+                var subject = reader.GetString(7);
+                var body = reader.IsDBNull(8) ? null : reader.GetString(8);
+                var from = reader.GetString(9);
+                var to = reader.GetString(10);
                 DateTimeOffset? date = reader.IsDBNull(10) ? null : DateTimeOffset.Parse(reader.GetString(10));
                 var email = new Email(
                     new Email.Identifiers
@@ -237,7 +238,8 @@ namespace EmailClientPluma.Core.Services
                         ImapUIDValidity = imapUIDValidity,
                         FolderFullName = folderFullName,
                         MessageID = messageID,
-                        OwnerAccountID = emailAccountOwnerID
+                        OwnerAccountID = emailAccountOwnerID,
+                        InReplyTo = inReplyTo,  
                     },
                     new Email.DataParts
                     {
@@ -253,19 +255,28 @@ namespace EmailClientPluma.Core.Services
             return emails;
         }
 
-        public async Task UpdateEmailAsync(Email email)
+        public async Task UpdateEmailBodyAsync(Email email)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
             command.CommandText = @"UPDATE EMAILS
                                     SET BODY = $body
-                                    WHERE EMAIL_ID = $email_id                      
+                                    WHERE EMAIL_ID = $email_id 
+                                    OR MESSAGE_ID = $message_id;                  
                                     ";
 
             command.Parameters.AddWithValue("$email_id", email.MessageIdentifiers.EmailID);
+            command.Parameters.AddWithValue("$message_id", email.MessageIdentifiers.MessageID);
             command.Parameters.AddWithValue("$body", email.MessageParts.Body);
             await command.ExecuteNonQueryAsync();
+        }
+
+        private object DbNullOrValue<T>(T? value)
+        {
+            if (value is null)
+                return DBNull.Value;
+            return value;
         }
     }
 }
