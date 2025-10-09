@@ -44,15 +44,14 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 
-                var email = new Email(
-                        SelectedAccount.ProviderUID,
-                        Subject,
-                        Body,
-                        SelectedAccount.Email,
-                        ToAddresses,
-                        []
-                );
-
+                var email = new Email.OutgoingEmail {  
+                    Subject = Subject,
+                    Body = Body,
+                    ReplyTo = null,
+                    From = SelectedAccount.Email,
+                    To = ToAddresses,
+                    Date= DateTime.Now 
+                };
                 try
                 {
                     var validated = await _accountService.ValidateAccountAsync(SelectedAccount);

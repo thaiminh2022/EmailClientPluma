@@ -52,7 +52,7 @@
                 SelectedItem="{Binding SelectedEmail}">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding Subject}" />
+                        <TextBlock Text="{Binding MessageParts.Subject}" />
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -91,15 +91,15 @@
 
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="From: " />
-                    <TextBlock Text="{Binding From}" />
+                    <TextBlock Text="{Binding MessageParts.From}" />
                 </StackPanel>
                 <TextBlock Text="To: YOU" />
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Subject: " />
-                    <TextBlock Text="{Binding Subject}" />
+                    <TextBlock Text="{Binding MessageParts.Subject}" />
                 </StackPanel>
             </StackPanel>
-            <wv2:WebView2 Grid.Row="2" behaviors:WebView2Html.Html="{Binding SelectedEmail.Body}" />
+            <wv2:WebView2 Grid.Row="2" behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" />
         </Grid>
 
     </Grid>

@@ -4,12 +4,14 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class MainViewModel : ObserableObject
     {
         readonly IAccountService _accountService;
+        readonly IEmailService _emailService;
         readonly IWindowFactory _windowFactory;
 
         // A list of logined account
@@ -23,24 +25,33 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-                var _ = ValidateSelected();
+
+                var _ = FetchEmailHeaders();
+
                 OnPropertyChanges();
             }
         }
 
-        async Task ValidateSelected()
+        async Task FetchEmailHeaders()
         {
-            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-            if (!isValid)
+            Mouse.OverrideCursor = Cursors.Wait;
+            if (_selectedAccount is null || _selectedAccount.IsHeadersFetched)
             {
-                _selectedAccount = null;
-                //MessageBox.Show("Not valid");
-            }
-            else
-            {
-                //MessageBox.Show("Valid");
+                Mouse.OverrideCursor = null;
+                return;
             }
 
+
+            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+
+
+            if (!isValid)
+            {
+                Mouse.OverrideCursor = null;
+            }
+
+            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+            Mouse.OverrideCursor = null;
         }
         private Email? _selectedEmail;
 
@@ -50,11 +61,25 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedEmail = value;
+
+
+                Mouse.OverrideCursor = Cursors.Wait;
+                var _ = FetchEmailBody();
                 OnPropertyChanges();
             }
         }
 
+        async Task FetchEmailBody()
+        {
+            if (_selectedAccount is null || _selectedEmail is null || _selectedEmail.BodyFetched)
+            {
+                Mouse.OverrideCursor = null;
+                return;
+            };
+            await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
+            Mouse.OverrideCursor = null;
 
+        }
 
 
         public RelayCommand AddAccountCommand { get; set; }
@@ -62,10 +87,11 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
 
-        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory)
+        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService)
         {
             _accountService = accountService;
             _windowFactory = windowFactory;
+            _emailService = emailService;
 
             Accounts = _accountService.GetAccounts();
 
@@ -78,13 +104,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             ComposeCommand = new RelayCommand(_ =>
             {
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
-                var confirmSend = newEmailWindow.ShowDialog();
-
-                if (confirmSend is not null && confirmSend == true)
-                {
-                    // start sending them emails
-                    MessageBox.Show("User wanna send emails");
-                }
+                newEmailWindow.Show();
             }, _ => Accounts.Count > 0);
 
             RemoveAccountCommand = new RelayCommand(_ =>
@@ -110,9 +130,10 @@ namespace EmailClientPluma.MVVM.ViewModels
                 // too lazy to implement for now
 
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
-                    SelectedEmail.From != SelectedAccount.Email);
+                    SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
-        public MainViewModel() {
+        public MainViewModel()
+        {
         }
     }
 }

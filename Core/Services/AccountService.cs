@@ -14,7 +14,7 @@ namespace EmailClientPluma.Core.Services
     {
         Task AddAccountAsync(Provider prodiver);
         Task RemoveAccountAsync(Account account);
-        Task<bool> ValidateAccountAsync(Account? acc);
+        Task<bool> ValidateAccountAsync(Account acc);
         ObservableCollection<Account> GetAccounts();
     }
 
@@ -25,19 +25,12 @@ namespace EmailClientPluma.Core.Services
     {
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
-        readonly IEmailService _emailService;
-
-
         readonly ObservableCollection<Account> _accounts;
 
-
-
-
-        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService, IEmailService emailService)
+        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService)
         {
             _authServices = [.. authServices];
             _storageService = storageService;
-            _emailService = emailService;
             _accounts = [];
             var _ = Initialize();
         }
@@ -51,7 +44,7 @@ namespace EmailClientPluma.Core.Services
                 foreach (var acc in accs)
                 {
                     var emails = await _storageService.GetEmailsAsync(acc);
-                    acc.Emails = emails;
+                    acc.Emails = new(emails);
                     _accounts.Add(acc);
                 }
             }
@@ -105,11 +98,8 @@ namespace EmailClientPluma.Core.Services
             // If not, add it to database
             var acc = new Account(res);
             await _storageService.StoreAccountAsync(acc);
-            var emails = await _emailService.FetchEmailAsync(acc);
 
-            acc.Emails = emails;
-
-            await _storageService.StoreEmailAsync(acc);
+            // mail not fetched yet
             _accounts.Add(acc);
         }
         /// <summary>
@@ -126,11 +116,8 @@ namespace EmailClientPluma.Core.Services
         /// </summary>
         /// <param name="acc">The account to check</param>
         /// <returns>true if valid else false</returns>
-        public async Task<bool> ValidateAccountAsync(Account? acc)
+        public async Task<bool> ValidateAccountAsync(Account acc)
         {
-            if (acc is null)
-                return true;
-
             return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
         }
         public async Task RemoveAccountAsync(Account account)

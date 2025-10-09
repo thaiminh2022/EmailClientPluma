@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Services;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -11,9 +12,11 @@ namespace EmailClientPluma.Core.Models
         public string Email { get; set; }
         public string DisplayName { get; set; }
         public Provider Provider { get; set; }
-        public IEnumerable<Email> Emails { get; set; } = [];
+        public ObservableCollection<Email> Emails { get; set; } = [];
 
         public Credentials Credentials { get; set; }
+
+        public bool IsHeadersFetched => Emails.Count > 0;
 
 
         public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
