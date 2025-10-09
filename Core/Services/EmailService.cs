@@ -16,7 +16,7 @@ namespace EmailClientPluma.Core.Services
     }
     internal class EmailService : IEmailService
     {
-        IStorageService _storageService;
+        readonly IStorageService _storageService;
 
         public EmailService(IStorageService storageService)
         {
