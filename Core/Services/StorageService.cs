@@ -229,7 +229,7 @@ namespace EmailClientPluma.Core.Services
                 var body = reader.IsDBNull(8) ? null : reader.GetString(8);
                 var from = reader.GetString(9);
                 var to = reader.GetString(10);
-                DateTimeOffset? date = reader.IsDBNull(10) ? null : DateTimeOffset.Parse(reader.GetString(10));
+                DateTimeOffset? date = reader.IsDBNull(11) ? null : DateTimeOffset.Parse(reader.GetString(11));
                 var email = new Email(
                     new Email.Identifiers
                     {

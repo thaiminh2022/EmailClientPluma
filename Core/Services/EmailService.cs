@@ -139,7 +139,7 @@ namespace EmailClientPluma.Core.Services
             await smtp.DisconnectAsync(true);
         }
 
-        MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
+        static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
         {
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(acc.Email));
@@ -179,7 +179,6 @@ namespace EmailClientPluma.Core.Services
                 _ => throw new NotImplementedException()
             };
         }
-
         static string GetImapHostByProvider(Provider prod)
         {
             return prod switch

@@ -104,13 +104,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             ComposeCommand = new RelayCommand(_ =>
             {
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
-                var confirmSend = newEmailWindow.ShowDialog();
-
-                if (confirmSend is not null && confirmSend == true)
-                {
-                    // start sending them emails
-                    MessageBox.Show("User wanna send emails");
-                }
+                newEmailWindow.Show();
             }, _ => Accounts.Count > 0);
 
             RemoveAccountCommand = new RelayCommand(_ =>
