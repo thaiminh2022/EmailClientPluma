@@ -9,6 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="MVVM\Views\Images\bg.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="MVVM\Views\MainView.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="MVVM\Views\MainView.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Apis" Version="1.71.0" />
     <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
     <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869" />
@@ -26,6 +38,13 @@
 
 	<ItemGroup>
 	  <Folder Include="MVVM\Models\" />
+	  <Folder Include="MVVM\Views\Images\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="MVVM\Views\NewEmailView.xaml">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Page>
 	</ItemGroup>
 
 </Project>
