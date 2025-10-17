@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -35,8 +36,15 @@ namespace EmailClientPluma.MVVM.ViewModels
         async Task FetchEmailHeaders()
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            if (_selectedAccount is null || _selectedAccount.IsHeadersFetched)
+            if (_selectedAccount is null)
             {
+                Mouse.OverrideCursor = null;
+                return;
+            }
+
+            if (_selectedAccount.IsHeadersFetched)
+            {
+                _emailService.StartRealtimeUpdates(_selectedAccount);
                 Mouse.OverrideCursor = null;
                 return;
             }
@@ -48,9 +56,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             if (!isValid)
             {
                 Mouse.OverrideCursor = null;
+                return;
             }
 
             await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+            _emailService.StartRealtimeUpdates(_selectedAccount);
             Mouse.OverrideCursor = null;
         }
         private Email? _selectedEmail;
@@ -93,6 +103,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             _windowFactory = windowFactory;
             _emailService = emailService;
 
+            _emailService.EmailReceived += OnEmailReceived;
+
             Accounts = _accountService.GetAccounts();
 
             AddAccountCommand = new RelayCommand(async _ =>
@@ -115,6 +127,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 switch (result)
                 {
                     case MessageBoxResult.Yes:
+                        _emailService.StopRealtimeUpdates(SelectedAccount);
                         _accountService.RemoveAccountAsync(SelectedAccount);
                         SelectedAccount = null;
                         break;
@@ -134,6 +147,20 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
         public MainViewModel()
         {
+        }
+
+        void OnEmailReceived(object? sender, EmailReceivedEventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var account = Accounts.FirstOrDefault(a => a.ProviderUID == e.Account.ProviderUID);
+                if (account is null)
+                {
+                    return;
+                }
+
+                account.Emails.Add(e.Email);
+            });
         }
     }
 }

@@ -2,6 +2,7 @@
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
 using Microsoft.Web.WebView2.Core;
+using System.Collections.Generic;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -13,7 +14,7 @@ namespace EmailClientPluma.Core.Services
         Task RemoveAccountAsync(Account account);
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
-        Task StoreEmailAsync(Account acc);
+        Task StoreEmailsAsync(Account acc, IEnumerable<Email> emails);
         Task UpdateEmailBodyAsync(Email email);
 
     }
@@ -151,7 +152,7 @@ namespace EmailClientPluma.Core.Services
         }
 
 
-        public async Task StoreEmailAsync(Account acc)
+        public async Task StoreEmailsAsync(Account acc, IEnumerable<Email> emails)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
@@ -164,14 +165,14 @@ namespace EmailClientPluma.Core.Services
                                     $imap_uid, $imap_uid_validity, $folder_fullname, $message_id, $owner_id, $in_reply_to,
                                     $subject, $body, $from, $to, $date
                                 ) ON CONFLICT (MESSAGE_ID)
-                                  DO UPDATE SET 
+                                  DO UPDATE SET
                                     SUBJECT = excluded.SUBJECT,
                                     BODY = COALESCE(excluded.BODY, EMAILS.BODY),
                                     FROM_ADDRESS = excluded.FROM_ADDRESS,
                                     TO_ADDRESS = excluded.TO_ADDRESS,
                                     DATE = excluded.DATE
                                    ";
-            foreach (var item in acc.Emails)
+            foreach (var item in emails)
             {
                 var msgPart = item.MessageParts;
                 var msgId = item.MessageIdentifiers;

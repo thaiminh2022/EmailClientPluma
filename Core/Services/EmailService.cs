@@ -1,10 +1,15 @@
-﻿using EmailClientPluma.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using EmailClientPluma.Core.Models;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services
 {
@@ -13,79 +18,93 @@ namespace EmailClientPluma.Core.Services
         Task FetchEmailHeaderAsync(Account acc);
         Task FetchEmailBodyAsync(Account acc, Email email);
         Task SendEmailAsync(Account acc, Email.OutgoingEmail email);
+        void StartRealtimeUpdates(Account acc);
+        void StopRealtimeUpdates(Account acc);
+        event EventHandler<EmailReceivedEventArgs>? EmailReceived;
     }
+
+    internal class EmailReceivedEventArgs : EventArgs
+    {
+        public EmailReceivedEventArgs(Account account, Email email)
+        {
+            Account = account;
+            Email = email;
+        }
+
+        public Account Account { get; }
+        public Email Email { get; }
+    }
+
     internal class EmailService : IEmailService
     {
-        readonly IStorageService _storageService;
+        private readonly IStorageService _storageService;
+        private readonly Dictionary<string, CancellationTokenSource> _realtimeTokens = new();
+        private readonly Dictionary<string, HashSet<uint>> _knownUids = new();
+        private readonly object _monitoringLock = new();
+        private readonly object _knownUidLock = new();
 
         public EmailService(IStorageService storageService)
         {
             _storageService = storageService;
         }
 
+        public event EventHandler<EmailReceivedEventArgs>? EmailReceived;
+
         public async Task FetchEmailHeaderAsync(Account acc)
         {
-            // authenticating process
+            InitializeKnownUidSet(acc);
+
             using var imap = new ImapClient();
             await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
-            // getting headers process
             var inbox = imap.Inbox;
             await inbox.OpenAsync(FolderAccess.ReadOnly);
 
-
-            if (inbox.Count == 0) // inbox is empty
+            if (inbox.Count == 0)
             {
                 await imap.DisconnectAsync(true);
                 return;
             }
 
-            // Fetch latest 20 messages' envelope (headers summary)
             int take = Math.Min(20, inbox.Count);
             int start = Math.Max(0, inbox.Count - take);
 
             var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
 
-            foreach (var item in summaries)
+            List<Email> newlyFetched = new();
+            foreach (var summary in summaries)
             {
-                var env = item.Envelope;
-                var uniqueID = item.UniqueId.Id;
-                var messageID = env.MessageId;
-                var uidValidity = inbox.UidValidity;
-                var inReplyTo = env.InReplyTo;
+                if (!summary.UniqueId.IsValid)
+                {
+                    continue;
+                }
 
-                var email = new Email(
-                    new Email.Identifiers
-                    {
-                        ImapUID = uniqueID,
-                        ImapUIDValidity = uidValidity,
-                        FolderFullName = inbox.FullName,
-                        MessageID = messageID,
-                        OwnerAccountID = acc.ProviderUID,
-                        InReplyTo = inReplyTo,
-                        
-                    },
-                    new Email.DataParts
-                    {
-                        Subject = env.Subject ?? "(No Subject)",
-                        From = env.From.ToString(),
-                        To = env.To.ToString(),
-                        Date = env.Date
-                    }
-                );
+                if (!TryTrackUid(acc, summary.UniqueId.Id))
+                {
+                    continue;
+                }
 
+                var email = CreateEmailFromSummary(acc, inbox, summary);
+                newlyFetched.Add(email);
+            }
 
+            foreach (var email in newlyFetched.OrderBy(e => e.MessageIdentifiers.ImapUID))
+            {
                 acc.Emails.Add(email);
             }
-            await imap.DisconnectAsync(true);
 
-            await _storageService.StoreEmailAsync(acc);
+            if (newlyFetched.Count > 0)
+            {
+                await _storageService.StoreEmailsAsync(acc, newlyFetched);
+            }
+
+            await imap.DisconnectAsync(true);
         }
+
         public async Task FetchEmailBodyAsync(Account acc, Email email)
         {
-            // authenticating process
             using var imap = new ImapClient();
             await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
@@ -98,7 +117,7 @@ namespace EmailClientPluma.Core.Services
 
             try
             {
-                var bodies = await inbox.FetchAsync([uniqueID], MessageSummaryItems.BodyStructure);
+                var bodies = await inbox.FetchAsync(new[] { uniqueID }, MessageSummaryItems.BodyStructure);
                 var bodyParts = bodies?.FirstOrDefault();
                 if (bodies is null || bodyParts is null)
                 {
@@ -127,23 +146,231 @@ namespace EmailClientPluma.Core.Services
 
         public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
         {
-            // Constructing the email
             var message = ConstructEmail(acc, email);
             using var smtp = new SmtpClient();
 
             await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
             var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
-            //MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
 
-        static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
+        public void StartRealtimeUpdates(Account acc)
+        {
+            InitializeKnownUidSet(acc);
+
+            CancellationTokenSource? cts = null;
+            lock (_monitoringLock)
+            {
+                if (_realtimeTokens.ContainsKey(acc.ProviderUID))
+                {
+                    return;
+                }
+
+                cts = new CancellationTokenSource();
+                _realtimeTokens[acc.ProviderUID] = cts;
+            }
+
+            if (cts is null)
+            {
+                return;
+            }
+
+            _ = Task.Run(() => MonitorAccountAsync(acc, cts.Token));
+        }
+
+        public void StopRealtimeUpdates(Account acc)
+        {
+            CancellationTokenSource? cts = null;
+            lock (_monitoringLock)
+            {
+                if (_realtimeTokens.TryGetValue(acc.ProviderUID, out var existing))
+                {
+                    cts = existing;
+                    _realtimeTokens.Remove(acc.ProviderUID);
+                }
+            }
+
+            cts?.Cancel();
+            cts?.Dispose();
+
+            lock (_knownUidLock)
+            {
+                _knownUids.Remove(acc.ProviderUID);
+            }
+        }
+
+        private async Task MonitorAccountAsync(Account acc, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    using var imap = new ImapClient();
+                    await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect, token);
+                    var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
+                    await imap.AuthenticateAsync(oauth2, token);
+
+                    var inbox = imap.Inbox;
+                    await inbox.OpenAsync(FolderAccess.ReadOnly, token);
+
+                    await FetchNewMessagesAsync(acc, inbox, token);
+
+                    while (!token.IsCancellationRequested)
+                    {
+                        using var done = new CancellationTokenSource(TimeSpan.FromMinutes(9));
+                        var messageArrived = false;
+
+                        void OnMessagesArrived(object? sender, MessagesArrivedEventArgs e)
+                        {
+                            messageArrived = true;
+                            done.Cancel();
+                        }
+
+                        inbox.MessagesArrived += OnMessagesArrived;
+
+                        try
+                        {
+                            await imap.IdleAsync(done.Token, token);
+                        }
+                        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+                        {
+                            // Idle cancelled due to timeout or new messages.
+                        }
+                        finally
+                        {
+                            inbox.MessagesArrived -= OnMessagesArrived;
+                        }
+
+                        if (token.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
+                        await FetchNewMessagesAsync(acc, inbox, token);
+
+                        if (!messageArrived)
+                        {
+                            continue;
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception)
+                {
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(10), token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        private async Task FetchNewMessagesAsync(Account acc, IMailFolder inbox, CancellationToken token)
+        {
+            if (inbox.Count == 0)
+            {
+                return;
+            }
+
+            int take = Math.Min(20, inbox.Count);
+            int start = Math.Max(0, inbox.Count - take);
+            var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId, token);
+
+            List<Email> newEmails = new();
+            foreach (var summary in summaries)
+            {
+                if (!summary.UniqueId.IsValid)
+                {
+                    continue;
+                }
+
+                if (!TryTrackUid(acc, summary.UniqueId.Id))
+                {
+                    continue;
+                }
+
+                var email = CreateEmailFromSummary(acc, inbox, summary);
+                newEmails.Add(email);
+            }
+
+            if (newEmails.Count == 0)
+            {
+                return;
+            }
+
+            await _storageService.StoreEmailsAsync(acc, newEmails);
+
+            foreach (var email in newEmails.OrderBy(e => e.MessageIdentifiers.ImapUID))
+            {
+                EmailReceived?.Invoke(this, new EmailReceivedEventArgs(acc, email));
+            }
+        }
+
+        private bool TryTrackUid(Account acc, uint uid)
+        {
+            lock (_knownUidLock)
+            {
+                if (!_knownUids.TryGetValue(acc.ProviderUID, out var set))
+                {
+                    set = new HashSet<uint>();
+                    _knownUids[acc.ProviderUID] = set;
+                }
+
+                return set.Add(uid);
+            }
+        }
+
+        private void InitializeKnownUidSet(Account acc)
+        {
+            lock (_knownUidLock)
+            {
+                if (_knownUids.ContainsKey(acc.ProviderUID))
+                {
+                    return;
+                }
+
+                var existing = acc.Emails.Select(e => e.MessageIdentifiers.ImapUID);
+                _knownUids[acc.ProviderUID] = new HashSet<uint>(existing);
+            }
+        }
+
+        private static Email CreateEmailFromSummary(Account acc, IMailFolder inbox, IMessageSummary summary)
+        {
+            var env = summary.Envelope;
+            return new Email(
+                new Email.Identifiers
+                {
+                    ImapUID = summary.UniqueId.Id,
+                    ImapUIDValidity = inbox.UidValidity,
+                    FolderFullName = inbox.FullName,
+                    MessageID = env?.MessageId,
+                    OwnerAccountID = acc.ProviderUID,
+                    InReplyTo = env?.InReplyTo,
+                },
+                new Email.DataParts
+                {
+                    Subject = env?.Subject ?? "(No Subject)",
+                    From = env?.From?.ToString() ?? string.Empty,
+                    To = env?.To?.ToString() ?? string.Empty,
+                    Date = env?.Date
+                }
+            );
+        }
+
+        private static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
         {
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(acc.Email));
-            
+
             InternetAddressList internetAddresses = [];
             foreach (var item in email.To.Split(','))
             {
@@ -152,7 +379,8 @@ namespace EmailClientPluma.Core.Services
             message.To.AddRange(internetAddresses);
 
             message.Subject = email.Subject;
-            if (email.ReplyTo != null) {
+            if (email.ReplyTo != null)
+            {
                 message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
             }
 
@@ -171,7 +399,7 @@ namespace EmailClientPluma.Core.Services
             return message;
         }
 
-        static string GetSmtpHostByProvider(Provider prod)
+        private static string GetSmtpHostByProvider(Provider prod)
         {
             return prod switch
             {
@@ -179,7 +407,7 @@ namespace EmailClientPluma.Core.Services
                 _ => throw new NotImplementedException()
             };
         }
-        static string GetImapHostByProvider(Provider prod)
+        private static string GetImapHostByProvider(Provider prod)
         {
             return prod switch
             {
