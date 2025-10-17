@@ -3,6 +3,8 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
@@ -94,6 +96,13 @@ namespace EmailClientPluma.MVVM.ViewModels
             _emailService = emailService;
 
             Accounts = _accountService.GetAccounts();
+            Accounts.CollectionChanged += AccountsCollectionChanged;
+            foreach (var account in Accounts)
+            {
+                _emailService.StartRealtimeUpdates(account);
+            }
+
+            _emailService.EmailReceived += OnEmailReceived;
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -115,7 +124,10 @@ namespace EmailClientPluma.MVVM.ViewModels
                 switch (result)
                 {
                     case MessageBoxResult.Yes:
-                        _accountService.RemoveAccountAsync(SelectedAccount);
+                        var accountToRemove = SelectedAccount;
+                        if (accountToRemove is null) break;
+                        _emailService.StopRealtimeUpdates(accountToRemove);
+                        _accountService.RemoveAccountAsync(accountToRemove);
                         SelectedAccount = null;
                         break;
                     default:
@@ -134,6 +146,54 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
         public MainViewModel()
         {
+        }
+
+        void AccountsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems is not null)
+            {
+                foreach (Account account in e.NewItems)
+                {
+                    _emailService.StartRealtimeUpdates(account);
+                }
+            }
+
+            if (e.OldItems is not null)
+            {
+                foreach (Account account in e.OldItems)
+                {
+                    _emailService.StopRealtimeUpdates(account);
+                }
+            }
+        }
+
+        void OnEmailReceived(object? sender, EmailReceivedEventArgs e)
+        {
+            void AddEmail()
+            {
+                var account = Accounts.FirstOrDefault(acc => acc.ProviderUID == e.Account.ProviderUID);
+                if (account is null)
+                {
+                    return;
+                }
+
+                if (account.Emails.Any(mail => mail.MessageIdentifiers.ImapUID == e.Email.MessageIdentifiers.ImapUID))
+                {
+                    return;
+                }
+
+                account.Emails.Insert(0, e.Email);
+            }
+
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher is not null && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(AddEmail);
+            }
+            else
+            {
+                AddEmail();
+            }
         }
     }
 }

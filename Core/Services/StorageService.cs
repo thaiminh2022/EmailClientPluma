@@ -2,6 +2,9 @@
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
 using Microsoft.Web.WebView2.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -14,6 +17,7 @@ namespace EmailClientPluma.Core.Services
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
+        Task StoreEmailAsync(Account acc, Email email);
         Task UpdateEmailBodyAsync(Email email);
 
     }
@@ -151,56 +155,83 @@ namespace EmailClientPluma.Core.Services
         }
 
 
-        public async Task StoreEmailAsync(Account acc)
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync();
-            var command = connection.CreateCommand();
-
-            command.CommandText = @"INSERT INTO EMAILS (
+        const string UpsertEmailSql = @"INSERT INTO EMAILS (
                                     IMAP_UID, IMAP_UID_VALIDITY, FOLDER_FULLNAME, MESSAGE_ID, OWNER_ID, IN_REPLY_TO,
                                     SUBJECT, BODY, FROM_ADDRESS, TO_ADDRESS, DATE
                                 ) VALUES (
                                     $imap_uid, $imap_uid_validity, $folder_fullname, $message_id, $owner_id, $in_reply_to,
                                     $subject, $body, $from, $to, $date
                                 ) ON CONFLICT (MESSAGE_ID)
-                                  DO UPDATE SET 
+                                  DO UPDATE SET
                                     SUBJECT = excluded.SUBJECT,
                                     BODY = COALESCE(excluded.BODY, EMAILS.BODY),
                                     FROM_ADDRESS = excluded.FROM_ADDRESS,
                                     TO_ADDRESS = excluded.TO_ADDRESS,
                                     DATE = excluded.DATE
                                    ";
-            foreach (var item in acc.Emails)
+
+        public async Task StoreEmailAsync(Account acc)
+        {
+            await StoreEmailsInternalAsync(acc, acc.Emails);
+        }
+
+        public async Task StoreEmailAsync(Account acc, Email email)
+        {
+            await StoreEmailsInternalAsync(acc, new[] { email });
+        }
+
+        async Task StoreEmailsInternalAsync(Account acc, IEnumerable<Email> emails)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+
+            foreach (var item in emails.ToList())
             {
-                var msgPart = item.MessageParts;
-                var msgId = item.MessageIdentifiers;
-                // IDS
-                command.Parameters.AddWithValue("$imap_uid", msgId.ImapUID);
-                command.Parameters.AddWithValue("$imap_uid_validity", msgId.ImapUIDValidity);
-                command.Parameters.AddWithValue("$folder_fullname", msgId.FolderFullName);
-                command.Parameters.AddWithValue("$message_id", msgId.MessageID);
-                command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
-                command.Parameters.AddWithValue("$in_reply_to", DbNullOrValue(msgId.InReplyTo));
+                await UpsertEmailAsync(connection, acc, item);
+            }
+        }
 
-                // PARTS
-                command.Parameters.AddWithValue("$subject", msgPart.Subject);
-                command.Parameters.AddWithValue("$body", DbNullOrValue(msgPart.Body));
-                command.Parameters.AddWithValue("$from", msgPart.From);
-                command.Parameters.AddWithValue("$to", msgPart.To);
-                command.Parameters.AddWithValue("$date", msgPart.Date?.ToString("o"));
+        async Task UpsertEmailAsync(SqliteConnection connection, Account acc, Email email)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = UpsertEmailSql;
+            FillEmailParameters(command, acc, email);
 
-                try
+            try
+            {
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher is not null && !dispatcher.CheckAccess())
                 {
-                    await command.ExecuteNonQueryAsync();
-
+                    dispatcher.Invoke(() => MessageBox.Show(ex.Message));
                 }
-                catch (Exception ex)
+                else
                 {
                     MessageBox.Show(ex.Message);
                 }
-                command.Parameters.Clear();
             }
+        }
+
+        void FillEmailParameters(SqliteCommand command, Account acc, Email email)
+        {
+            var msgPart = email.MessageParts;
+            var msgId = email.MessageIdentifiers;
+
+            command.Parameters.AddWithValue("$imap_uid", msgId.ImapUID);
+            command.Parameters.AddWithValue("$imap_uid_validity", msgId.ImapUIDValidity);
+            command.Parameters.AddWithValue("$folder_fullname", msgId.FolderFullName);
+            command.Parameters.AddWithValue("$message_id", msgId.MessageID);
+            command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
+            command.Parameters.AddWithValue("$in_reply_to", DbNullOrValue(msgId.InReplyTo));
+
+            command.Parameters.AddWithValue("$subject", msgPart.Subject);
+            command.Parameters.AddWithValue("$body", DbNullOrValue(msgPart.Body));
+            command.Parameters.AddWithValue("$from", msgPart.From);
+            command.Parameters.AddWithValue("$to", msgPart.To);
+            command.Parameters.AddWithValue("$date", msgPart.Date?.ToString("o"));
         }
         public async Task<IEnumerable<Email>> GetEmailsAsync(Account acc)
         {
