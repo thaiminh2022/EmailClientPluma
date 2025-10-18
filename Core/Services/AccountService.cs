@@ -16,6 +16,10 @@ namespace EmailClientPluma.Core.Services
         Task RemoveAccountAsync(Account account);
         Task<bool> ValidateAccountAsync(Account acc);
         ObservableCollection<Account> GetAccounts();
+
+        Task StartMonitoringAsync(Account acc);
+        void StopMonitoringAsync(Account acc);
+
     }
 
     /// <summary>
@@ -25,12 +29,18 @@ namespace EmailClientPluma.Core.Services
     {
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
+        readonly IEmailMonitoringService _emailMonitoringService;
         readonly ObservableCollection<Account> _accounts;
 
-        public AccountService(IEnumerable<IAuthenticationService> authServices, IStorageService storageService)
+        public AccountService(
+            IEnumerable<IAuthenticationService> authServices, 
+            IStorageService storageService,
+            IEmailMonitoringService emailMonitoringService
+        )
         {
             _authServices = [.. authServices];
             _storageService = storageService;
+            _emailMonitoringService = emailMonitoringService;
             _accounts = [];
             var _ = Initialize();
         }
@@ -124,6 +134,19 @@ namespace EmailClientPluma.Core.Services
         {
             _accounts.Remove(account);
             await _storageService.RemoveAccountAsync(account);
+        }
+
+        public async Task StartMonitoringAsync(Account acc)
+        {
+            bool accountValid= await  ValidateAccountAsync(acc);
+            if (!accountValid)
+                return;
+            _emailMonitoringService.StartMonitor(acc);
+        }
+
+        public void StopMonitoringAsync(Account acc)
+        {
+             _emailMonitoringService.StopMonitor(acc);
         }
     }
 }

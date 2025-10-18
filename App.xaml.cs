@@ -31,10 +31,10 @@ namespace EmailClientPluma
             services.AddSingleton<IAccountService, AccountService>();
             services.AddSingleton<IEmailService, EmailService>();
             services.AddSingleton<IWindowFactory, WindowFactory>();
+            services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 
             //window
             services.AddTransient<NewEmailViewModel>();
-
 
             // Might change this later, it's a singleton due to aplication design
             services.AddSingleton<MainViewModel>();

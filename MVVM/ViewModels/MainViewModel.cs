@@ -25,8 +25,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-
-                var _ = FetchEmailHeaders();
+                _ = FetchEmailHeaders();
 
                 OnPropertyChanges();
             }
@@ -76,6 +75,14 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = null;
                 return;
             };
+
+            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+
+            if (!isValid)
+            {
+                Mouse.OverrideCursor = null;
+            }
+
             await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             Mouse.OverrideCursor = null;
 
