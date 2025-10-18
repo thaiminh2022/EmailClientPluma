@@ -27,7 +27,7 @@ namespace EmailClientPluma.Core.Services
         {
             // authenticating process
             using var imap = new ImapClient();
-            await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
+            await imap.ConnectAsync(Helper.GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
@@ -50,44 +50,17 @@ namespace EmailClientPluma.Core.Services
 
             foreach (var item in summaries)
             {
-                var env = item.Envelope;
-                var uniqueID = item.UniqueId.Id;
-                var messageID = env.MessageId;
-                var uidValidity = inbox.UidValidity;
-                var inReplyTo = env.InReplyTo;
-
-                var email = new Email(
-                    new Email.Identifiers
-                    {
-                        ImapUID = uniqueID,
-                        ImapUIDValidity = uidValidity,
-                        FolderFullName = inbox.FullName,
-                        MessageID = messageID,
-                        OwnerAccountID = acc.ProviderUID,
-                        InReplyTo = inReplyTo,
-                        
-                    },
-                    new Email.DataParts
-                    {
-                        Subject = env.Subject ?? "(No Subject)",
-                        From = env.From.ToString(),
-                        To = env.To.ToString(),
-                        Date = env.Date
-                    }
-                );
-
-
+                var email = Helper.CreateEmailFromSummary(acc, inbox, item);
                 acc.Emails.Add(email);
             }
             await imap.DisconnectAsync(true);
-
             await _storageService.StoreEmailAsync(acc);
         }
         public async Task FetchEmailBodyAsync(Account acc, Email email)
         {
             // authenticating process
             using var imap = new ImapClient();
-            await imap.ConnectAsync(GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
+            await imap.ConnectAsync(Helper.GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
             var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
             await imap.AuthenticateAsync(oauth2);
 
@@ -131,7 +104,7 @@ namespace EmailClientPluma.Core.Services
             var message = ConstructEmail(acc, email);
             using var smtp = new SmtpClient();
 
-            await smtp.ConnectAsync(GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
+            await smtp.ConnectAsync(Helper.GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
             var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
             //MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
@@ -170,24 +143,5 @@ namespace EmailClientPluma.Core.Services
             message.Date = email.Date ?? DateTimeOffset.Now;
             return message;
         }
-
-        static string GetSmtpHostByProvider(Provider prod)
-        {
-            return prod switch
-            {
-                Provider.Google => "smtp.gmail.com",
-                _ => throw new NotImplementedException()
-            };
-        }
-        static string GetImapHostByProvider(Provider prod)
-        {
-            return prod switch
-            {
-                Provider.Google => "imap.gmail.com",
-                _ => throw new NotImplementedException()
-            };
-        }
-
-
     }
 }

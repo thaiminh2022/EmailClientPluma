@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
 
@@ -25,36 +26,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-
-                var _ = FetchEmailHeaders();
-
                 OnPropertyChanges();
             }
         }
 
-        async Task FetchEmailHeaders()
-        {
-            Mouse.OverrideCursor = Cursors.Wait;
-            if (_selectedAccount is null || _selectedAccount.IsHeadersFetched)
-            {
-                Mouse.OverrideCursor = null;
-                return;
-            }
-
-
-            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-
-            if (!isValid)
-            {
-                Mouse.OverrideCursor = null;
-            }
-
-            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
-            Mouse.OverrideCursor = null;
-        }
         private Email? _selectedEmail;
-
         public Email? SelectedEmail
         {
             get { return _selectedEmail; }
@@ -76,6 +52,14 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = null;
                 return;
             };
+
+            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+
+            if (!isValid)
+            {
+                Mouse.OverrideCursor = null;
+            }
+
             await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             Mouse.OverrideCursor = null;
 
@@ -132,6 +116,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
+
         public MainViewModel()
         {
         }

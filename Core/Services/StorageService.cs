@@ -14,6 +14,7 @@ namespace EmailClientPluma.Core.Services
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
+        Task StoreEmailAsync(Account acc, Email mail);
         Task UpdateEmailBodyAsync(Email email);
 
     }
@@ -25,8 +26,8 @@ namespace EmailClientPluma.Core.Services
 
         public StorageService()
         {
-            _connectionString = $"Data Source={AppPaths.DatabasePath}";
-            _tokenStore = new SQLiteDataStore(AppPaths.DatabasePath);
+            _connectionString = $"Data Source={Helper.DatabasePath}";
+            _tokenStore = new SQLiteDataStore(Helper.DatabasePath);
             Initialize();
         }
 
@@ -150,8 +151,7 @@ namespace EmailClientPluma.Core.Services
             command.ExecuteNonQuery();
         }
 
-
-        public async Task StoreEmailAsync(Account acc)
+        public async Task StoreEmailsInternal(Account acc, IEnumerable<Email> mails)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
@@ -171,7 +171,7 @@ namespace EmailClientPluma.Core.Services
                                     TO_ADDRESS = excluded.TO_ADDRESS,
                                     DATE = excluded.DATE
                                    ";
-            foreach (var item in acc.Emails)
+            foreach (var item in mails)
             {
                 var msgPart = item.MessageParts;
                 var msgId = item.MessageIdentifiers;
@@ -202,6 +202,18 @@ namespace EmailClientPluma.Core.Services
                 command.Parameters.Clear();
             }
         }
+
+
+        public async Task StoreEmailAsync(Account acc)
+        {
+            await StoreEmailsInternal(acc, acc.Emails);
+        }
+
+        public async Task StoreEmailAsync(Account acc, Email mail)
+        {
+            await StoreEmailsInternal(acc, [mail]);
+        }
+
         public async Task<IEnumerable<Email>> GetEmailsAsync(Account acc)
         {
             using var connection = new SqliteConnection(_connectionString);
@@ -278,5 +290,6 @@ namespace EmailClientPluma.Core.Services
                 return DBNull.Value;
             return value;
         }
+
     }
 }
