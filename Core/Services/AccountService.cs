@@ -18,7 +18,7 @@ namespace EmailClientPluma.Core.Services
         ObservableCollection<Account> GetAccounts();
 
         Task StartMonitoringAsync(Account acc);
-        void StopMonitoringAsync(Account acc);
+        void StopMonitoring(Account acc);
 
     }
 
@@ -144,7 +144,7 @@ namespace EmailClientPluma.Core.Services
             _emailMonitoringService.StartMonitor(acc);
         }
 
-        public void StopMonitoringAsync(Account acc)
+        public void StopMonitoring(Account acc)
         {
              _emailMonitoringService.StopMonitor(acc);
         }

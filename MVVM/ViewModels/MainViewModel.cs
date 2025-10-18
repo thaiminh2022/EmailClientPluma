@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
 
@@ -101,6 +102,12 @@ namespace EmailClientPluma.MVVM.ViewModels
             _emailService = emailService;
 
             Accounts = _accountService.GetAccounts();
+            Accounts.CollectionChanged += Accounts_CollectionChanged;
+
+            foreach (var item in Accounts)
+            {
+                _ = _accountService.StartMonitoringAsync(item);
+            }
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -139,6 +146,29 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
+
+        private async void Accounts_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems is not null)
+            {
+                foreach (Account item in e.NewItems)
+                {
+                    await _accountService.StartMonitoringAsync(item);
+                }
+            }
+
+
+            if (e.OldItems is not null)
+            {
+                foreach (Account item in e.OldItems)
+                {
+                    _accountService.StopMonitoring(item);
+                }
+            }
+
+
+        }
+
         public MainViewModel()
         {
         }

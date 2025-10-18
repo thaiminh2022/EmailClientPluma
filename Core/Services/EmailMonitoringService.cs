@@ -2,8 +2,6 @@
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Security;
-using Newtonsoft.Json;
-using System.Security.Policy;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -110,7 +108,7 @@ namespace EmailClientPluma.Core.Services
                                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
 
                                 // THIS BLOCK WILL WAIT UNTIL TIMEOUT OR A CHANGE IN INBOX (NEW MESSAGE ARRIVE, MESSAGE DELETED)
-                                await imap.IdleAsync(linked.Token);
+                                await imap.IdleAsync(linked.Token).ConfigureAwait(false);
                             }
                             catch (OperationCanceledException)
                             {
@@ -141,7 +139,7 @@ namespace EmailClientPluma.Core.Services
                             var take = newInboxCount - inboxCount + 2;
                             var fetchCount = Math.Min(take, newInboxCount);
 
-                            if (fetchCount < 0) return;
+                            if (fetchCount <= 0) return;
 
                             // fetch the headers only of course, 
                             var start = Math.Max(0, newInboxCount - fetchCount);
@@ -162,6 +160,12 @@ namespace EmailClientPluma.Core.Services
 
                                 // Store the newly fetched email
                                 await _storageService.StoreEmailAsync(acc, email);
+
+                                // Does not support UI change from a different thread, so we calling the original thread
+                                await Application.Current.Dispatcher.InvokeAsync(() =>
+                                {
+                                    acc.Emails.Add(email);
+                                });
                             }
                         }
 
