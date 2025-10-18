@@ -122,7 +122,8 @@ namespace EmailClientPluma.Core.Services
                                 {
                                     // Incase the server does not have the idle feature
                                     // PING it manually every 9 minutes
-                                    await imap.NoOpAsync(cancellationToken).ConfigureAwait(false);
+                                    await Task.Delay(TimeSpan.FromMinutes(9), linked.Token).ConfigureAwait(false);
+                                    await imap.NoOpAsync(linked.Token).ConfigureAwait(false);
                                 }
                             }
                             catch (OperationCanceledException)
