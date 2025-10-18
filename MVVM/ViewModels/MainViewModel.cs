@@ -26,35 +26,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-                _ = FetchEmailHeaders();
-
                 OnPropertyChanges();
             }
         }
 
-        async Task FetchEmailHeaders()
-        {
-            Mouse.OverrideCursor = Cursors.Wait;
-            if (_selectedAccount is null || _selectedAccount.IsHeadersFetched)
-            {
-                Mouse.OverrideCursor = null;
-                return;
-            }
-
-
-            bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-
-            if (!isValid)
-            {
-                Mouse.OverrideCursor = null;
-            }
-
-            await _emailService.FetchEmailHeaderAsync(_selectedAccount);
-            Mouse.OverrideCursor = null;
-        }
         private Email? _selectedEmail;
-
         public Email? SelectedEmail
         {
             get { return _selectedEmail; }
@@ -102,12 +78,6 @@ namespace EmailClientPluma.MVVM.ViewModels
             _emailService = emailService;
 
             Accounts = _accountService.GetAccounts();
-            Accounts.CollectionChanged += Accounts_CollectionChanged;
-
-            foreach (var item in Accounts)
-            {
-                _ = _accountService.StartMonitoringAsync(item);
-            }
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -145,28 +115,6 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
-        }
-
-        private async void Accounts_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (e.NewItems is not null)
-            {
-                foreach (Account item in e.NewItems)
-                {
-                    await _accountService.StartMonitoringAsync(item);
-                }
-            }
-
-
-            if (e.OldItems is not null)
-            {
-                foreach (Account item in e.OldItems)
-                {
-                    _accountService.StopMonitoring(item);
-                }
-            }
-
-
         }
 
         public MainViewModel()

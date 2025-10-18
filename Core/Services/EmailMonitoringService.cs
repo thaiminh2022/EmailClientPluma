@@ -11,14 +11,12 @@ namespace EmailClientPluma.Core.Services
     {
         void StartMonitor(Account acc);
         void StopMonitor(Account acc);
-
     }
     internal class EmailMonitoringService : IEmailMonitoringService
     {
         readonly IStorageService _storageService;
 
         readonly Dictionary<string, AccountMonitor> _monitors = [];
-        readonly Dictionary<string, HashSet<string>> _knowsIDs = [];
         readonly object _lock = new object();
 
         public EmailMonitoringService(IStorageService storageService)

@@ -23,26 +23,55 @@ namespace EmailClientPluma.Core.Services
     }
 
     /// <summary>
-    /// This handle reading accounts from database, and using it for UI that needs it
+    /// This handle reading accounts from database, and using it for UI that needs it.
+    /// This also helps with monitoring new emails.
     /// </summary>
     internal class AccountService : IAccountService
     {
         readonly List<IAuthenticationService> _authServices;
         readonly IStorageService _storageService;
+        readonly IEmailService _emailService;
+
         readonly IEmailMonitoringService _emailMonitoringService;
         readonly ObservableCollection<Account> _accounts;
 
         public AccountService(
             IEnumerable<IAuthenticationService> authServices, 
             IStorageService storageService,
+            IEmailService emailService,
             IEmailMonitoringService emailMonitoringService
         )
         {
             _authServices = [.. authServices];
+            _emailService = emailService;
             _storageService = storageService;
             _emailMonitoringService = emailMonitoringService;
             _accounts = [];
+
+            _accounts.CollectionChanged += Accounts_CollectionChanged;
+
             var _ = Initialize();
+        }
+
+        private async void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.NewItems is not null)
+            {
+                foreach (Account item in e.NewItems)
+                {
+                    await StartMonitoringAsync(item);
+                }
+            }
+
+
+            if (e.OldItems is not null)
+            {
+                foreach (Account item in e.OldItems)
+                {
+                    StopMonitoring(item);
+                }
+            }
+
         }
 
         // Call the storage service to get all the saved account
@@ -56,11 +85,16 @@ namespace EmailClientPluma.Core.Services
                     var emails = await _storageService.GetEmailsAsync(acc);
                     acc.Emails = new(emails);
                     _accounts.Add(acc);
+
+                    if (await ValidateAccountAsync(acc))
+                    {
+                        await StartMonitoringAsync(acc);  
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Email ex: " + ex.Message);
+                MessageBox.Show("Account intialize exception: " + ex.Message);
             }
 
         }
@@ -111,6 +145,10 @@ namespace EmailClientPluma.Core.Services
 
             // mail not fetched yet
             _accounts.Add(acc);
+
+            // fetching them emails header
+            await _emailService.FetchEmailHeaderAsync(acc);
+
         }
         /// <summary>
         /// Get all the added accounts
@@ -134,6 +172,9 @@ namespace EmailClientPluma.Core.Services
         {
             _accounts.Remove(account);
             await _storageService.RemoveAccountAsync(account);
+
+            // This should be handled by the _accounts changed event, but i dont trust it
+            StopMonitoring(account);
         }
 
         public async Task StartMonitoringAsync(Account acc)
