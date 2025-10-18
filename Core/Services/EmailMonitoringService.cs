@@ -48,7 +48,14 @@ namespace EmailClientPluma.Core.Services
                 var monitor = new AccountMonitor(knownEmailIds);
                 _monitors.Add(acc.ProviderUID, monitor);
 
-                _ = StartMonitorEmail(acc, monitor);
+                // SPAWN A THREAD (tiểu trình) to monitor 
+                // Hệ Điều Hành bài tiến trình =))
+                _ = StartMonitorEmail(acc, monitor).ContinueWith(task => { 
+                    if (task.IsFaulted)
+                    {
+                        
+                    }
+                });
             }
             
         }
@@ -73,6 +80,8 @@ namespace EmailClientPluma.Core.Services
                             SecureSocketOptions.SslOnConnect,
                            cancellationToken
                         );
+
+                        var supportsIdle = imap.Capabilities.HasFlag(ImapCapabilities.Idle);
 
                         // authenticate user
                         var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
@@ -105,8 +114,16 @@ namespace EmailClientPluma.Core.Services
                             {
                                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
 
-                                // THIS BLOCK WILL WAIT UNTIL TIMEOUT OR A CHANGE IN INBOX (NEW MESSAGE ARRIVE, MESSAGE DELETED)
-                                await imap.IdleAsync(linked.Token).ConfigureAwait(false);
+                                if (supportsIdle)
+                                {
+                                    // THIS BLOCK WILL WAIT UNTIL TIMEOUT OR A CHANGE IN INBOX (NEW MESSAGE ARRIVE, MESSAGE DELETED)
+                                    await imap.IdleAsync(linked.Token).ConfigureAwait(false);
+                                }else
+                                {
+                                    // Incase the server does not have the idle feature
+                                    // PING it manually every 9 minutes
+                                    await imap.NoOpAsync(cancellationToken).ConfigureAwait(false);
+                                }
                             }
                             catch (OperationCanceledException)
                             {
@@ -121,11 +138,13 @@ namespace EmailClientPluma.Core.Services
                             if (cancellationToken.IsCancellationRequested)
                                 break;
 
+
                             // nothing changes, it's the imap PINGING the server
                             if (!inboxUpdated)
                                 continue;
 
                             // SOMETHING CHANGES
+
                             var newInboxCount = inbox.Count;
                             if (newInboxCount < inboxCount)
                             {
@@ -133,17 +152,18 @@ namespace EmailClientPluma.Core.Services
                                 continue;
                             }
 
-                            // +2 for buffering idk
-                            var take = newInboxCount - inboxCount + 2;
+                            var take = newInboxCount - inboxCount;
                             var fetchCount = Math.Min(take, newInboxCount);
 
-                            if (fetchCount <= 0) return;
+                            if (fetchCount <= 0)
+                                continue;
 
                             // fetch the headers only of course, 
                             var start = Math.Max(0, newInboxCount - fetchCount);
                             var summaries = await inbox.FetchAsync(start, newInboxCount - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId, cancellationToken);
 
-                            // Rebuilding the email form summary
+                            // Rebuilding the email from summary
+                            List<Email> emails = [];
                             foreach (var item in summaries)
                             {
                                 var uniqueId = item.UniqueId.Id;
@@ -160,11 +180,23 @@ namespace EmailClientPluma.Core.Services
                                 await _storageService.StoreEmailAsync(acc, email);
 
                                 // Does not support UI change from a different thread, so we calling the original thread
-                                await Application.Current.Dispatcher.InvokeAsync(() =>
+
+                                emails.Add(email);
+                                
+                                // No point of doing this, since if we reconnect, we gonna recall ids anyway
+                                // just put this here so i dont forget why we should not do this
+                                //monitor.KnownUids.Add(email.MessageIdentifiers.ImapUID);
+                            }
+
+                            await Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                foreach (var email in emails)
                                 {
                                     acc.Emails.Add(email);
-                                });
-                            }
+                                }
+                            });
+
+                            
                         }
 
                         // Disconnect and be ready for the next reconnect
@@ -178,9 +210,12 @@ namespace EmailClientPluma.Core.Services
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message);
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            MessageBox.Show($"Problem with monitoring email: {ex.Message}");
+                        });
 
-                        // Wait 10 sec to idk, 
+                        // Wait 10 sec to retry connect
                         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                     }
                 }
