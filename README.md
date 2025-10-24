@@ -57,7 +57,7 @@ git push origin <YOUR_BRANCH>
 
 - Create a "secrets" folder in the project's root, inside put the secret.json file
 - Get your secret.json on the team's Google Drive
->[!INFO]
+>[!Note]
 > Project structure should look like this:
 > EmailClientPluma (root)
 > - secrets

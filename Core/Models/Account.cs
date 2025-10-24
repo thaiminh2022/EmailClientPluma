@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Services;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -7,14 +8,19 @@ namespace EmailClientPluma.Core.Models
     /// </summary>
     internal class Account
     {
+        // DATABASE STORED
         public string ProviderUID { get; set; }
         public string Email { get; set; }
         public string DisplayName { get; set; }
         public Provider Provider { get; set; }
-        public IEnumerable<Email> Emails { get; set; } = [];
+        public ObservableCollection<Email> Emails { get; set; } = [];
 
         public Credentials Credentials { get; set; }
 
+
+        // NOT STORED
+        public bool IsHeadersFetched => Emails.Count > 0;
+        public int UnreadCount { get; set; }
 
         public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
         {

@@ -5,10 +5,10 @@ namespace EmailClientPluma.Behaviors
 {
     public static class WebView2Html
     {
-        public static readonly DependencyProperty HtmlProperty = 
-            DependencyProperty.RegisterAttached("Html", 
-            typeof(string), 
-            typeof(WebView2Html), 
+        public static readonly DependencyProperty HtmlProperty =
+            DependencyProperty.RegisterAttached("Html",
+            typeof(string),
+            typeof(WebView2Html),
             new PropertyMetadata(null, OnHtmlChanged));
 
 

@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
+using Microsoft.Web.WebView2.Core;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -13,6 +14,8 @@ namespace EmailClientPluma.Core.Services
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
+        Task StoreEmailAsync(Account acc, Email mail);
+        Task UpdateEmailBodyAsync(Email email);
 
     }
     internal class StorageService : IStorageService
@@ -23,8 +26,8 @@ namespace EmailClientPluma.Core.Services
 
         public StorageService()
         {
-            _connectionString = $"Data Source={AppPaths.DatabasePath}";
-            _tokenStore = new SQLiteDataStore(AppPaths.DatabasePath);
+            _connectionString = $"Data Source={Helper.DatabasePath}";
+            _tokenStore = new SQLiteDataStore(Helper.DatabasePath);
             Initialize();
         }
 
@@ -110,6 +113,7 @@ namespace EmailClientPluma.Core.Services
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
 
+            // user storage
             var command = connection.CreateCommand();
             command.CommandText = @"CREATE TABLE IF NOT EXISTS ACCOUNTS (
                                     PROVIDER_UID     TEXT PRIMARY KEY NOT NULL,             
@@ -121,40 +125,95 @@ namespace EmailClientPluma.Core.Services
                                   ";
             command.ExecuteNonQuery();
 
-            command.CommandText = @"CREATE TABLE IF NOT EXISTS EMAILS (
-                                    EMAIL_ID    INTEGER  PRIMARY KEY AUTOINCREMENT,
-	                                OWNER_ID	TEXT,
-	                                SUBJECT	    TEXT,
-	                                BODY	TEXT,
-	                                ""FROM""	TEXT,
-	                                ""TO""	    TEXT,
-	                                FOREIGN KEY(OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
-                                );";
+            // email storage
+            command.CommandText = @"
+                                    CREATE TABLE IF NOT EXISTS EMAILS (
+                                    EMAIL_ID           INTEGER PRIMARY KEY AUTOINCREMENT,  -- DB surrogate key
 
+                                    -- IDENTIFIERS
+                                    IMAP_UID           INTEGER NOT NULL,                   -- uint -> INTEGER
+                                    IMAP_UID_VALIDITY  INTEGER NOT NULL,                   -- uint -> INTEGER
+                                    FOLDER_FULLNAME    TEXT    NOT NULL,
+                                    MESSAGE_ID         TEXT UNIQUE,                        -- nullable
+                                    OWNER_ID           TEXT    NOT NULL,
+                                    IN_REPLY_TO        TEXT,                               -- nullable
+
+                                    -- DATA PARTS
+                                    SUBJECT            TEXT    NOT NULL,
+                                    BODY               TEXT,                               -- nullable (lazy-loaded)
+                                    FROM_ADDRESS       TEXT    NOT NULL,
+                                    TO_ADDRESS         TEXT    NOT NULL,
+                                    DATE               TEXT,                               -- nullable
+
+                                    FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
+);
+                                    ";
             command.ExecuteNonQuery();
         }
 
-
-        public async Task StoreEmailAsync(Account acc)
+        public async Task StoreEmailsInternal(Account acc, IEnumerable<Email> mails)
         {
             using var connection = new SqliteConnection(_connectionString);
             await connection.OpenAsync();
             var command = connection.CreateCommand();
 
-            command.CommandText = @"INSERT INTO EMAILS (OWNER_ID, SUBJECT, BODY,""FROM"", ""TO"") 
-                                    VALUES ($owner_id, $subject, $body,$from, $to)";
-            foreach (var item in acc.Emails)
+            command.CommandText = @"INSERT INTO EMAILS (
+                                    IMAP_UID, IMAP_UID_VALIDITY, FOLDER_FULLNAME, MESSAGE_ID, OWNER_ID, IN_REPLY_TO,
+                                    SUBJECT, BODY, FROM_ADDRESS, TO_ADDRESS, DATE
+                                ) VALUES (
+                                    $imap_uid, $imap_uid_validity, $folder_fullname, $message_id, $owner_id, $in_reply_to,
+                                    $subject, $body, $from, $to, $date
+                                ) ON CONFLICT (MESSAGE_ID)
+                                  DO UPDATE SET 
+                                    SUBJECT = excluded.SUBJECT,
+                                    BODY = COALESCE(excluded.BODY, EMAILS.BODY),
+                                    FROM_ADDRESS = excluded.FROM_ADDRESS,
+                                    TO_ADDRESS = excluded.TO_ADDRESS,
+                                    DATE = excluded.DATE
+                                   ";
+            foreach (var item in mails)
             {
+                var msgPart = item.MessageParts;
+                var msgId = item.MessageIdentifiers;
+                // IDS
+                command.Parameters.AddWithValue("$imap_uid", msgId.ImapUID);
+                command.Parameters.AddWithValue("$imap_uid_validity", msgId.ImapUIDValidity);
+                command.Parameters.AddWithValue("$folder_fullname", msgId.FolderFullName);
+                command.Parameters.AddWithValue("$message_id", msgId.MessageID);
                 command.Parameters.AddWithValue("$owner_id", acc.ProviderUID);
-                command.Parameters.AddWithValue("$subject", item.Subject);
-                command.Parameters.AddWithValue("$body", item.Body);
-                command.Parameters.AddWithValue("$from", item.From);
-                command.Parameters.AddWithValue("$to", string.Join(',', item.To));
+                command.Parameters.AddWithValue("$in_reply_to", DbNullOrValue(msgId.InReplyTo));
 
-                await command.ExecuteNonQueryAsync();
+                // PARTS
+                command.Parameters.AddWithValue("$subject", msgPart.Subject);
+                command.Parameters.AddWithValue("$body", DbNullOrValue(msgPart.Body));
+                command.Parameters.AddWithValue("$from", msgPart.From);
+                command.Parameters.AddWithValue("$to", msgPart.To);
+                command.Parameters.AddWithValue("$date", msgPart.Date?.ToString("o"));
+
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
                 command.Parameters.Clear();
             }
         }
+
+
+        public async Task StoreEmailAsync(Account acc)
+        {
+            await StoreEmailsInternal(acc, acc.Emails);
+        }
+
+        public async Task StoreEmailAsync(Account acc, Email mail)
+        {
+            await StoreEmailsInternal(acc, [mail]);
+        }
+
         public async Task<IEnumerable<Email>> GetEmailsAsync(Account acc)
         {
             using var connection = new SqliteConnection(_connectionString);
@@ -171,19 +230,65 @@ namespace EmailClientPluma.Core.Services
             while (reader.Read())
             {
                 var emailID = reader.GetInt32(0);
-                var emailAccountOwnerID = reader.GetString(1);
-                var subject = reader.GetString(2);
-                var body = reader.GetString(3);
-                var from = reader.GetString(4);
-                var to = reader.GetString(5);
+                var imapUID = reader.GetFieldValue<uint>(1);
+                var imapUIDValidity = reader.GetFieldValue<uint>(2);
+                var folderFullName = reader.GetString(3);
+                var messageID = reader.IsDBNull(4) ? null : reader.GetString(4);
+                var emailAccountOwnerID = reader.GetString(5);
+                var inReplyTo = reader.IsDBNull(6) ? null :  reader.GetString(6);
 
-                var email = new Email(emailAccountOwnerID, subject, body, from, to, [])
-                {
-                    EmailID = emailID,
-                };
+                var subject = reader.GetString(7);
+                var body = reader.IsDBNull(8) ? null : reader.GetString(8);
+                var from = reader.GetString(9);
+                var to = reader.GetString(10);
+                DateTimeOffset? date = reader.IsDBNull(11) ? null : DateTimeOffset.Parse(reader.GetString(11));
+                var email = new Email(
+                    new Email.Identifiers
+                    {
+                        EmailID = emailID,
+                        ImapUID = imapUID,
+                        ImapUIDValidity = imapUIDValidity,
+                        FolderFullName = folderFullName,
+                        MessageID = messageID,
+                        OwnerAccountID = emailAccountOwnerID,
+                        InReplyTo = inReplyTo,  
+                    },
+                    new Email.DataParts
+                    {
+                        Subject = subject,
+                        Body = body,
+                        From = from,
+                        To = to,
+                        Date = date
+                    }
+                );
                 emails.Add(email);
             }
             return emails;
+        }
+
+        public async Task UpdateEmailBodyAsync(Email email)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            await connection.OpenAsync();
+            var command = connection.CreateCommand();
+            command.CommandText = @"UPDATE EMAILS
+                                    SET BODY = $body
+                                    WHERE EMAIL_ID = $email_id 
+                                    OR MESSAGE_ID = $message_id;                  
+                                    ";
+
+            command.Parameters.AddWithValue("$email_id", email.MessageIdentifiers.EmailID);
+            command.Parameters.AddWithValue("$message_id", email.MessageIdentifiers.MessageID);
+            command.Parameters.AddWithValue("$body", email.MessageParts.Body);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        private object DbNullOrValue<T>(T? value)
+        {
+            if (value is null)
+                return DBNull.Value;
+            return value;
         }
 
     }

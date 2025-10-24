@@ -16,7 +16,7 @@ namespace EmailClientPluma.Core.Services
     /// </summary>
     internal class GoogleAuthenticationService : IAuthenticationService
     {
-        readonly SQLiteDataStore _dataStore = new(AppPaths.DatabasePath);
+        readonly SQLiteDataStore _dataStore = new(Helper.DatabasePath);
 
         // Ask user permissions (gmail, profile)
         public static readonly string[] scopes = [
@@ -107,6 +107,8 @@ namespace EmailClientPluma.Core.Services
 
                 if (await usercred.RefreshTokenAsync(default))
                 {
+                    acc.Credentials.SessionToken = usercred.Token.AccessToken;
+                    acc.Credentials.RefreshToken = usercred.Token.RefreshToken;
                     return true;
                 }
             }
@@ -126,6 +128,8 @@ namespace EmailClientPluma.Core.Services
 
                 if (credentials != null)
                 {
+                    acc.Credentials.SessionToken = credentials.Token.AccessToken;
+                    acc.Credentials.RefreshToken = credentials.Token.RefreshToken;
                     return true;
                 }
             }

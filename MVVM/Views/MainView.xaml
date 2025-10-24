@@ -43,14 +43,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border 
-                        Background="{TemplateBinding Background}" 
-                        CornerRadius="6"
-                        SnapsToDevicePixels="True">
-                            <ContentPresenter 
-                            HorizontalAlignment="Center" 
-                            VerticalAlignment="Center"
-                            Margin="{TemplateBinding Padding}" />
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="6"
+                            SnapsToDevicePixels="True">
+                            <ContentPresenter
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -74,83 +74,93 @@
             <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
-        <!--Text box style-->
+        <!--  Text box style  -->
         <Style TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
-        <!--Grid style-->
+        <!--  Grid style  -->
         <Style TargetType="Grid">
             <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
         </Style>
-        <!--Stack panel style-->
+        <!--  Stack panel style  -->
         <Style TargetType="StackPanel">
             <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
         </Style>
-        <!--Border style-->
-        <Style TargetType="Border" x:Key="WebViewContainerStyle">
+        <!--  Border style  -->
+        <Style x:Key="WebViewContainerStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
 
-        <Style TargetType="ComboBox" x:Key="CustomCombo">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+        <Style x:Key="CustomCombo" TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
         </Style>
 
-        <Style TargetType="ComboBoxItem" x:Key="CustomComboItem">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Style x:Key="CustomComboItem" TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="0.25*"/>
-            <RowDefinition Height="4*"/>
+            <RowDefinition Height="0.25*" />
+            <RowDefinition Height="4*" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="0.5*"/>
+                <ColumnDefinition Width="0.5*" />
                 <ColumnDefinition x:Name="CenterColumn" Width="3*" />
                 <ColumnDefinition x:Name="RightColumn" Width="auto" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0">
                 <StackPanel VerticalAlignment="top">
-                    <Button Margin="0,0,0,2" Content="Inbox"/>
-                    <Button Margin="0,0,0,2" Content="Flagged"/>
-                    <Button Margin="0,0,0,2" Content="Sent"/>
-                    <Button Margin="0,0,0,2" Content="Drafts"/>
-                    <Button Margin="0,0,0,2" Content="Important"/>
-                    <Button Margin="0,0,0,2" Content="Scheduled"/>
-                    <Button Margin="0,0,0,2" Content="Spam"/>
-                    <Button Margin="0,0,0,2" Content="Trash"/>
-                    <Separator Margin="0,2" Background="{DynamicResource TextBrush}" Height="5" Opacity="1" />
-                    <TextBlock Text="Category" FontWeight="Bold"/>
-                    <Button Content="Ad" Margin="0,2"/>
-                    <Button Content="Social" Margin="0,2"/>
-                    <Button Content="Forum" Margin="0,2"/>
-                    <Button Content="Promotions" Margin="0,2"/>
-                    <Separator Margin="0,2" Background="{DynamicResource TextBrush}" Height="5" Opacity="1" />
-                    <Button Margin="0,0,0,2" Content="Create new label"/>
-                    <TextBlock Text="Labels" FontWeight="Bold"/>
-                    <ListView/>
+                    <Button Margin="0,0,0,2" Content="Inbox" />
+                    <Button Margin="0,0,0,2" Content="Flagged" />
+                    <Button Margin="0,0,0,2" Content="Sent" />
+                    <Button Margin="0,0,0,2" Content="Drafts" />
+                    <Button Margin="0,0,0,2" Content="Important" />
+                    <Button Margin="0,0,0,2" Content="Scheduled" />
+                    <Button Margin="0,0,0,2" Content="Spam" />
+                    <Button Margin="0,0,0,2" Content="Trash" />
+                    <Separator
+                        Height="5"
+                        Margin="0,2"
+                        Background="{DynamicResource TextBrush}"
+                        Opacity="1" />
+                    <TextBlock FontWeight="Bold" Text="Category" />
+                    <Button Margin="0,2" Content="Ad" />
+                    <Button Margin="0,2" Content="Social" />
+                    <Button Margin="0,2" Content="Forum" />
+                    <Button Margin="0,2" Content="Promotions" />
+                    <Separator
+                        Height="5"
+                        Margin="0,2"
+                        Background="{DynamicResource TextBrush}"
+                        Opacity="1" />
+                    <Button Margin="0,0,0,2" Content="Create new label" />
+                    <TextBlock FontWeight="Bold" Text="Labels" />
+                    <ListView />
 
                 </StackPanel>
             </Border>
 
-            <!-- Center panel -->
-            <Border Grid.Column="1"
+            <!--  Center panel  -->
+            <Border
+                Grid.Column="1"
                 Margin="0,0,10,0"
-                CornerRadius="8"
+                Padding="8"
                 Background="{DynamicResource PanelBackgroundBrush}"
                 BorderBrush="{DynamicResource LightPurple}"
                 BorderThickness="1"
-                Padding="8">
+                CornerRadius="8">
                 <Grid>
-                    <ListView x:Name="EmailList"
+                    <ListView
+                        x:Name="EmailList"
                         Grid.Row="2"
                         Margin="0,0,0,0"
                         ItemsSource="{Binding SelectedAccount.Emails}"
@@ -159,15 +169,15 @@
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Border
-                                    Background="White"
                                     Margin="2"
                                     Padding="6"
-                                    CornerRadius="5"
-                                    BorderThickness="0.5">
+                                    Background="White"
+                                    BorderThickness="0.5"
+                                    CornerRadius="5">
                                     <TextBlock
+                                        Foreground="{DynamicResource TextBrush}"
                                         Text="{Binding Subject}"
-                                        TextTrimming="CharacterEllipsis"
-                                        Foreground="{DynamicResource TextBrush}" />
+                                        TextTrimming="CharacterEllipsis" />
                                 </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -175,14 +185,15 @@
                 </Grid>
             </Border>
 
-            <!-- Right panel -->
+            <!--  Right panel  -->
             <Border
-                x:Name="RightPanel" Grid.Column="2" Visibility="Collapsed"
-                CornerRadius="8"
+                x:Name="RightPanel"
+                Grid.Column="2"
                 Background="White"
                 BorderBrush="{DynamicResource PanelBackgroundBrush}"
                 BorderThickness="1"
-    >
+                CornerRadius="8"
+                Visibility="Collapsed">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto" />
@@ -190,18 +201,26 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Toolbar -->
-                    <Button x:Name="CloseBtn" Content="Close" Width="50" HorizontalAlignment="Left" Click="CloseBtn_Click" />
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0" HorizontalAlignment="Right">
+                    <!--  Toolbar  -->
+                    <Button
+                        x:Name="CloseBtn"
+                        Width="50"
+                        HorizontalAlignment="Left"
+                        Click="CloseBtn_Click"
+                        Content="Close" />
+                    <StackPanel
+                        Margin="0,0,0,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
 
-                        <ToggleButton Margin="5,0" Background="{DynamicResource AccentBrush}"  >
+                        <ToggleButton Margin="5,0" Background="{DynamicResource AccentBrush}">
                             IsFlag
                         </ToggleButton>
                         <Button Command="{Binding ReplyCommand}">Reply</Button>
                     </StackPanel>
 
 
-                    <!-- Email header -->
+                    <!--  Email header  -->
                     <StackPanel
                         Grid.Row="1"
                         Margin="10,0"
@@ -219,98 +238,156 @@
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontWeight="Bold" Text="From: " />
-                            <TextBlock Text="{Binding From}" />
+                            <TextBlock Text="{Binding MessageParts.From}" />
                         </StackPanel>
 
                         <TextBlock Text="To: YOU" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontWeight="Bold" Text="Subject: " />
-                            <TextBlock Text="{Binding Subject}" />
+                            <TextBlock Text="{Binding MessageParts.Subject}" />
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Body -->
-                    <Border Style="{StaticResource WebViewContainerStyle}" Grid.Row="2" Margin="0,10,0,0">
-                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.Body}" />
+                    <!--  Body  -->
+                    <Border
+                        Grid.Row="2"
+                        Margin="0,10,0,0"
+                        Style="{StaticResource WebViewContainerStyle}">
+                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" />
                     </Border>
                 </Grid>
             </Border>
         </Grid>
 
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <TextBlock Text="Search Mail" FontWeight="Bold"/>
-            <TextBox Width="200" Margin="10,0,0,0"/>
-            <Button x:Name="MoreSearch" Content="..." Click="MoreSearch_Click"/>
-            <Popup x:Name="MoreSearchPopup" PlacementTarget="{Binding ElementName=MoreSearch}"
-                    Placement="Bottom" StaysOpen="False" PopupAnimation="Scroll">
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Orientation="Horizontal">
+            <TextBlock FontWeight="Bold" Text="Search Mail" />
+            <TextBox Width="200" Margin="10,0,0,0" />
+            <Button
+                x:Name="MoreSearch"
+                Click="MoreSearch_Click"
+                Content="..." />
+            <Popup
+                x:Name="MoreSearchPopup"
+                Placement="Bottom"
+                PlacementTarget="{Binding ElementName=MoreSearch}"
+                PopupAnimation="Scroll"
+                StaysOpen="False">
                 <Border>
                     <StackPanel Margin="0,0,0,0">
-                        <!-- Input Fields -->
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="From" Width="100" VerticalAlignment="Center"/>
-                            <TextBox Width="300"  />
+                        <!--  Input Fields  -->
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="From" />
+                            <TextBox Width="300" />
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="To" Width="100" VerticalAlignment="Center"/>
-                            <TextBox Width="300"  />
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="To" />
+                            <TextBox Width="300" />
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Subject" Width="100" VerticalAlignment="Center"/>
-                            <TextBox Width="300"  />
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Subject" />
+                            <TextBox Width="300" />
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Has the words" Width="100" VerticalAlignment="Center"/>
-                            <TextBox Width="300"  />
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Has the words" />
+                            <TextBox Width="300" />
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Doesn’t have" Width="100" VerticalAlignment="Center"/>
-                            <TextBox Width="300"  />
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Doesn’t have" />
+                            <TextBox Width="300" />
                         </StackPanel>
 
-                        <!-- Size -->
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Size" Width="100" VerticalAlignment="Center"/>
-                            <ComboBox Width="100" Style="{StaticResource CustomCombo}" ItemContainerStyle="{StaticResource CustomComboItem}">
-                                <ComboBoxItem Content="greater than"/>
-                                <ComboBoxItem Content="less than"/>
+                        <!--  Size  -->
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Size" />
+                            <ComboBox
+                                Width="100"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="greater than" />
+                                <ComboBoxItem Content="less than" />
                             </ComboBox>
-                            <TextBox Width="60" Margin="10,0"/>
-                            <ComboBox Width="70" Style="{StaticResource CustomCombo}" ItemContainerStyle="{StaticResource CustomComboItem}">
-                                <ComboBoxItem Content="MB"/>
-                                <ComboBoxItem Content="KB"/>
+                            <TextBox Width="60" Margin="10,0" />
+                            <ComboBox
+                                Width="70"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="MB" />
+                                <ComboBoxItem Content="KB" />
                             </ComboBox>
                         </StackPanel>
 
-                        <!-- Date -->
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Date within" Width="100" VerticalAlignment="Center"/>
-                            <ComboBox Width="150" Style="{StaticResource CustomCombo}" ItemContainerStyle="{StaticResource CustomComboItem}">
-                                <ComboBoxItem Content="1 day"/>
-                                <ComboBoxItem Content="1 week"/>
-                                <ComboBoxItem Content="1 month"/>
+                        <!--  Date  -->
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Date within" />
+                            <ComboBox
+                                Width="150"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="1 day" />
+                                <ComboBoxItem Content="1 week" />
+                                <ComboBoxItem Content="1 month" />
                             </ComboBox>
                             <DatePicker Width="120" Margin="10,0,0,0" />
                         </StackPanel>
 
-                        <!-- Search -->
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Search" Width="100" VerticalAlignment="Center"/>
-                            <ComboBox Style="{StaticResource CustomCombo}" ItemContainerStyle="{StaticResource CustomComboItem}" Width="200">
-                                <ComboBoxItem Content="All Mail"/>
-                                <ComboBoxItem Content="Inbox"/>
-                                <ComboBoxItem Content="Sent"/>
+                        <!--  Search  -->
+                        <StackPanel Margin="0,5" Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Search" />
+                            <ComboBox
+                                Width="200"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="All Mail" />
+                                <ComboBoxItem Content="Inbox" />
+                                <ComboBoxItem Content="Sent" />
                             </ComboBox>
                         </StackPanel>
 
-                        <!-- Footer -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                            <CheckBox Content="Has attachment"   Margin="0,0,20,0" Foreground="{DynamicResource TextBrush}"/>
-                            <Button Content="Create filter" Width="100" Margin="0,0,10,0"/>
-                            <Button Content="Search" Width="80"/>
+                        <!--  Footer  -->
+                        <StackPanel
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                            <CheckBox
+                                Margin="0,0,20,0"
+                                Content="Has attachment"
+                                Foreground="{DynamicResource TextBrush}" />
+                            <Button
+                                Width="100"
+                                Margin="0,0,10,0"
+                                Content="Create filter" />
+                            <Button Width="80" Content="Search" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -318,62 +395,105 @@
             </Popup>
         </StackPanel>
 
-        <Button Grid.Row="1" Command="{Binding ComposeCommand}" 
-            Height="auto" Width="auto" 
-            VerticalAlignment="Bottom" 
-            HorizontalAlignment="Right"
+        <Button
+            Grid.Row="1"
+            Width="auto"
+            Height="auto"
             Margin="0,0,20,20"
-            Padding="10">Pen</Button>
-
-        <Button x:Name="AccountSettingsButton" Grid.Row="0"
-            Grid.Column="1" Height="auto" Width="auto" 
-            VerticalAlignment="Center" 
+            Padding="10"
             HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Command="{Binding ComposeCommand}">
+            Pen
+        </Button>
+
+        <Button
+            x:Name="AccountSettingsButton"
+            Grid.Row="0"
+            Grid.Column="1"
+            Width="auto"
+            Height="auto"
             Margin="0,0,20,0"
-            Click="Button_Click">Accounts</Button>
-        <Popup x:Name="AccountSettingsPopup"
-                PlacementTarget="{Binding ElementName=AccountSettingsButton}"
-                Placement="Bottom"
-                StaysOpen="True"
-                AllowsTransparency="True"
-                PopupAnimation="Slide">
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Click="Button_Click">
+            Accounts
+        </Button>
+        <Popup
+            x:Name="AccountSettingsPopup"
+            AllowsTransparency="True"
+            Placement="Bottom"
+            PlacementTarget="{Binding ElementName=AccountSettingsButton}"
+            PopupAnimation="Slide"
+            StaysOpen="True">
             <Border
-                    CornerRadius="8"
-                    Padding="8"
-                    BorderBrush="{DynamicResource LightPurple}"
-                    BorderThickness="1"
-                    Background="{DynamicResource PanelBackgroundBrush}">
+                Padding="8"
+                Background="{DynamicResource PanelBackgroundBrush}"
+                BorderBrush="{DynamicResource LightPurple}"
+                BorderThickness="1"
+                CornerRadius="8">
                 <StackPanel>
-                    <TextBlock Text="Accounts" FontWeight="Bold" Margin="0,0,0,6" />
+                    <TextBlock
+                        Margin="0,0,0,6"
+                        FontWeight="Bold"
+                        Text="Accounts" />
                     <ListView
-                            Height="120"
-                            ItemsSource="{Binding Accounts}"
-                            SelectedItem="{Binding SelectedAccount}">
+                        Height="120"
+                        ItemsSource="{Binding Accounts}"
+                        SelectedItem="{Binding SelectedAccount}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="2" Padding="6" Background="White" CornerRadius="5">
-                                    <TextBlock
-                                            Text="{Binding DisplayName}"
-                                            FontWeight="Medium"/>
+                                <Border
+                                    Margin="2"
+                                    Padding="6"
+                                    Background="White"
+                                    CornerRadius="5">
+                                    <TextBlock FontWeight="Medium" Text="{Binding DisplayName}" />
                                 </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Command="{Binding AddAccountCommand}" Margin="0,8,0,0">Add Account</Button>
-                    <Button Command="{Binding RemoveAccountCommand}" Margin="0,4,0,0">Remove Account</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding AddAccountCommand}">Add Account</Button>
+                    <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>
         </Popup>
 
-        <Button x:Name="ThemeToggle" Content="Theme" Margin="20,0,0,0" Width="60" Click="ThemeToggle_Click" HorizontalAlignment="Left" />
-        <Popup x:Name="ThemePopup" PlacementTarget="{Binding ElementName=ThemeToggle}" 
-        Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
-            <Border CornerRadius="8" Padding="8"  BorderThickness="1" >
+        <Button
+            x:Name="ThemeToggle"
+            Width="60"
+            Margin="20,0,0,0"
+            HorizontalAlignment="Left"
+            Click="ThemeToggle_Click"
+            Content="Theme" />
+        <Popup
+            x:Name="ThemePopup"
+            AllowsTransparency="True"
+            Placement="Bottom"
+            PlacementTarget="{Binding ElementName=ThemeToggle}"
+            PopupAnimation="Fade"
+            StaysOpen="False">
+            <Border
+                Padding="8"
+                BorderThickness="1"
+                CornerRadius="8">
                 <StackPanel>
-                    <TextBlock Text="Choose theme" FontWeight="Bold" Margin="0,0,0,6"/>
-                    <Button x:Name="LightModeBtn" Content="Light Mode" Width="160" Click="LightModeBtn_Click" />
-                    <Button x:Name="DarkModeBtn" Content="Dark Mode" Width="160" Click="DarkModeBtn_Click" Margin="0,6,0,0" />
+                    <TextBlock
+                        Margin="0,0,0,6"
+                        FontWeight="Bold"
+                        Text="Choose theme" />
+                    <Button
+                        x:Name="LightModeBtn"
+                        Width="160"
+                        Click="LightModeBtn_Click"
+                        Content="Light Mode" />
+                    <Button
+                        x:Name="DarkModeBtn"
+                        Width="160"
+                        Margin="0,6,0,0"
+                        Click="DarkModeBtn_Click"
+                        Content="Dark Mode" />
                 </StackPanel>
             </Border>
         </Popup>
