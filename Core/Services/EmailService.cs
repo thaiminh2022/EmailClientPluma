@@ -5,6 +5,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace EmailClientPluma.Core.Services
 {
@@ -43,13 +44,15 @@ namespace EmailClientPluma.Core.Services
             }
 
             // Fetch latest 20 messages' envelope (headers summary)
-            int take = Math.Min(20, inbox.Count);
+            int take = Math.Min(10, inbox.Count);
             int start = Math.Max(0, inbox.Count - take);
 
             var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
 
-            foreach (var item in summaries)
+            for(int i = 0; i < summaries.Count - 1; i++)
             {
+                var item = summaries[i];
+                
                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
                 acc.Emails.Add(email);
             }
@@ -102,11 +105,14 @@ namespace EmailClientPluma.Core.Services
         {
             // Constructing the email
             var message = ConstructEmail(acc, email);
+
+            
+
             using var smtp = new SmtpClient();
 
             await smtp.ConnectAsync(Helper.GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
             var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
-            //MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
+            MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
@@ -125,8 +131,23 @@ namespace EmailClientPluma.Core.Services
             message.To.AddRange(internetAddresses);
 
             message.Subject = email.Subject;
-            if (email.ReplyTo != null) {
+
+            // Add reply-to email address (if set)
+            if (!string.IsNullOrEmpty(email.ReplyTo))
+            {
                 message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
+            }
+
+            // Threading headers
+            if (!string.IsNullOrEmpty(email.InReplyTo))
+            {
+                message.InReplyTo = $"<{email.InReplyTo}>";   // always wrapped in <>
+            }
+
+            // Append all references
+            if (!string.IsNullOrEmpty(email.References))
+            {
+                message.Headers.Add("References", email.References);
             }
 
             var bodyBuilder = new BodyBuilder
