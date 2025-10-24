@@ -46,9 +46,9 @@
             </Grid>
 
             <!--  Account email view  -->
-            <ListView
+            <ListView x:Name="EmailListView"
                 Grid.Row="1"
-                ItemsSource="{Binding SelectedAccount.Emails}"
+                ItemsSource="{Binding FilteredEmails}"
                 SelectedItem="{Binding SelectedEmail}">
                 <ListView.ItemTemplate>
                     <DataTemplate>

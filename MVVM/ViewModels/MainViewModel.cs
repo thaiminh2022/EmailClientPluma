@@ -2,10 +2,16 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
+using MailKit;
+using MailKit.Search;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using static EmailClientPluma.Core.Models.Email;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -27,6 +33,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedAccount = value;
                 OnPropertyChanges();
+                UpdateFilteredEmails();
             }
         }
 
@@ -44,6 +51,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                 OnPropertyChanges();
             }
         }
+
+        public ICollectionView? FilteredEmails { get; private set; } 
 
         async Task FetchEmailBody()
         {
@@ -64,6 +73,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             Mouse.OverrideCursor = null;
 
         }
+
+         
 
 
         public RelayCommand AddAccountCommand { get; set; }
@@ -116,6 +127,52 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
+
+        public void UpdateFilteredEmails()
+        {
+            if (SelectedAccount == null)
+            {
+                FilteredEmails = null;
+            }
+            else
+            {
+                FilteredEmails = CollectionViewSource.GetDefaultView(SelectedAccount.Emails);
+                FilteredEmails.Filter = FilterEmails;
+            }
+
+            OnPropertyChanges(nameof(FilteredEmails));
+        }
+
+
+        private string _searchText = "";
+        public string SearchText
+        {
+            get { return _searchText; }
+            set
+            {
+                _searchText = value;
+                OnPropertyChanges();
+                FilteredEmails.Refresh();
+            }
+        } 
+        private bool FilterEmails(object obj)
+        {
+            if (obj is not Email) return false;
+            if (string.IsNullOrWhiteSpace(SearchText)) return true;
+
+            DataParts email = ((Email)obj).MessageParts;
+            return email.Subject.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || email.From.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || email.To.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || (email.Body?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
+
+
+
+
+
+
 
         public MainViewModel()
         {

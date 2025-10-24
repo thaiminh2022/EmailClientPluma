@@ -10,6 +10,7 @@ namespace EmailClientPluma
         public MainView()
         {
             InitializeComponent();
+            
         }
     }
 }
