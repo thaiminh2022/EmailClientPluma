@@ -150,7 +150,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         private DateTime _startDate = DateTime.MinValue;
         private DateTime _endDate = DateTime.MaxValue;
 
-        private MailboxAddress _emailSenderFilter = new MailboxAddress("Display Name","newultragame@gmail.com");
+        private MailboxAddress _emailSenderFilter;
      
         public string SearchText
         {
@@ -213,10 +213,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             bool IsDateInRange = email.Date.HasValue && 
                                  email.Date.Value.DateTime >= StartDate && 
                                  email.Date.Value.DateTime <= EndDate;
-            //MailboxAddress m =  MailboxAddress.Parse(email.From);
-            //bool IsSameSender = m.Address.Equals(EmailSenderFilter.Address, StringComparison.OrdinalIgnoreCase);
-
-            // Sender filter (safer)
+            
             bool IsSameSender = false;
             try
             {
