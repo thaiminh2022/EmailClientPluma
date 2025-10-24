@@ -36,7 +36,10 @@
 
         internal class OutgoingEmail : DataParts
         {
+            required public string? InReplyTo { get; set; }
             required public string? ReplyTo { get; set; }
+
+            required public string? References { get; set; }
 
         }
 
