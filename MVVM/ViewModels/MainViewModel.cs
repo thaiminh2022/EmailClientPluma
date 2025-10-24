@@ -85,7 +85,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                     // start sending them emails
                     MessageBox.Show("User wanna send emails");
                 }
-            }, _ => Accounts.Count > 0);
+            }, _ => Accounts.Count >= 0);
 
             RemoveAccountCommand = new RelayCommand(_ =>
             {
