@@ -105,6 +105,45 @@
     </Window.Resources>
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="4*" />
+        </Grid.ColumnDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <!--  Accounts list  -->
+                <ListView ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button Grid.Row="1" Command="{Binding AddAccountCommand}">Add account</Button>
+            </Grid>
+
+            <!--  Account email view  -->
+            <ListView x:Name="EmailListView"
+                Grid.Row="1"
+                ItemsSource="{Binding FilteredEmails}"
+                SelectedItem="{Binding SelectedEmail}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding MessageParts.Subject}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         <Grid.RowDefinitions>
             <RowDefinition Height="0.25*" />
             <RowDefinition Height="4*" />
