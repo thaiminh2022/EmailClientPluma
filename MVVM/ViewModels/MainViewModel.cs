@@ -21,6 +21,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         readonly IAccountService _accountService;
         readonly IEmailService _emailService;
         readonly IWindowFactory _windowFactory;
+        readonly IEmailFilterService _filterService;
 
         // A list of logined account
         public ObservableCollection<Account> Accounts { get; private set; }
@@ -34,7 +35,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedAccount = value;
                 OnPropertyChanges();
-                UpdateFilteredEmails();
+                UpdateFilteredEmailsAsync();
             }
         }
 
@@ -54,7 +55,9 @@ namespace EmailClientPluma.MVVM.ViewModels
             }
         }
 
-        public ICollectionView? FilteredEmails { get; private set; }
+        private CancellationTokenSource? _filterCts; //cancellation when filtering
+        public ICollectionView? FilteredEmails { get; private set; } 
+        public EmailFilterOptions Filters { get; } = new(); // Filter options
 
         async Task FetchEmailBody()
         {
@@ -132,112 +135,85 @@ namespace EmailClientPluma.MVVM.ViewModels
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
 
-        public void UpdateFilteredEmails()
+        #region Filtered Emails
+        public async Task UpdateFilteredEmailsAsync()
         {
             if (SelectedAccount == null)
             {
                 FilteredEmails = null;
-            }
-            else
-            {
-                FilteredEmails = CollectionViewSource.GetDefaultView(SelectedAccount.Emails);
-                FilteredEmails.Filter = FilterEmails;
+                OnPropertyChanges(nameof(FilteredEmails));
+                return;
             }
 
+            var emails = SelectedAccount.Emails;
+
+            // Cancel previous filter if running
+            _filterCts?.Cancel();
+            _filterCts = new CancellationTokenSource();
+            var token = _filterCts.Token;
+
+            var filteredList = new List<Email>();
+            foreach (var email in emails)
+            {
+                if (await _filterService.MatchFiltersAsync(email, Filters, token))
+                {
+                    filteredList.Add(email);
+                }
+            }
+
+            FilteredEmails = CollectionViewSource.GetDefaultView(filteredList);
             OnPropertyChanges(nameof(FilteredEmails));
         }
+        #endregion
+        #region Filter Property Bindings
+        public string From
+        {
+            get => Filters.From;
+            set { Filters.From = value; _ = UpdateFilteredEmailsAsync(); }
+        }
 
+        public string To
+        {
+            get => Filters.To;
+            set { Filters.To = value; _ = UpdateFilteredEmailsAsync(); }
+        }
 
-        private string _searchText = "";
-        private DateTime _startDate = DateTime.MinValue;
-        private DateTime _endDate = DateTime.MaxValue;
+        public string Subject
+        {
+            get => Filters.Subject;
+            set { Filters.Subject = value; _ = UpdateFilteredEmailsAsync(); }
+        }
 
-        private MailboxAddress _emailSenderFilter;
+        public string HasWords
+        {
+            get => Filters.HasWords;
+            set { Filters.HasWords = value; _ = UpdateFilteredEmailsAsync(); }
+        }
+
+        public string DoesNotHave
+        {
+            get => Filters.DoesNotHave;
+            set { Filters.DoesNotHave = value; _ = UpdateFilteredEmailsAsync(); }
+        }
+
+        public DateTime StartDate
+        {
+            get => Filters.StartDate;
+            set { Filters.StartDate = value; _ = UpdateFilteredEmailsAsync(); }
+        }
+
+        public DateTime EndDate
+        {
+            get => Filters.EndDate;
+            set { Filters.EndDate = value; _ = UpdateFilteredEmailsAsync(); }
+        }
 
         public string SearchText
         {
-            get { return _searchText; }
-            set
-            {
-                _searchText = value;
-                OnPropertyChanges();
-                FilteredEmails.Refresh();
-            }
+            get => Filters.SearchText;
+            set { Filters.SearchText = value; _ = UpdateFilteredEmailsAsync(); }
         }
-        public DateTime StartDate
-        {
-            get { return _startDate; }
-            set
-            {
-                _startDate = value;
-                OnPropertyChanges();
-                FilteredEmails.Refresh();
-            }
-        }
-        public DateTime EndDate
-        {
-            get { return _endDate; }
-            set
-            {
-                _endDate = value;
-                OnPropertyChanges();
-                FilteredEmails.Refresh();
-            }
-        }
-        public MailboxAddress EmailSenderFilter
-        {
-            get { return _emailSenderFilter; }
-            set
-            {
-                _emailSenderFilter = value;
-                OnPropertyChanges();
-                FilteredEmails.Refresh();
-            }
-        }
-
-
-
-
-
-        private bool FilterEmails(object obj)
-        {
-            if (obj is not Email) return false;
-
-
-            DataParts email = ((Email)obj).MessageParts;
-            bool IsSearch = email.Subject.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
-                || email.From.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
-                || email.To.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
-                || (email.Body?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
-
-            if (string.IsNullOrWhiteSpace(SearchText)) IsSearch = true;
-
-            bool IsDateInRange = email.Date.HasValue &&
-                                 email.Date.Value.DateTime >= StartDate &&
-                                 email.Date.Value.DateTime <= EndDate;
-
-            bool IsSameSender = false;
-            try
-            {
-                var parsed = InternetAddressList.Parse(email.From);
-                foreach (var addr in parsed.Mailboxes)
-                {
-                    if (string.Equals(addr.Address?.Trim(), EmailSenderFilter.Address?.Trim(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        IsSameSender = true;
-                        break;
-                    }
-                }
-            }
-            catch
-            {
-                // ignore parsing errors (invalid From)
-            }
-
-
-
-            return IsDateInRange && IsSearch && IsSameSender;
-        }
+        #endregion
 
 
 

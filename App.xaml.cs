@@ -33,6 +33,9 @@ namespace EmailClientPluma
             services.AddSingleton<IWindowFactory, WindowFactory>();
             services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 
+            //Binhs property
+            services.AddSingleton<IEmailFilterService, EmailFilterService>();
+
             //window
             services.AddTransient<NewEmailViewModel>();
 
