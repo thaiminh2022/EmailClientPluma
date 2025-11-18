@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using System.Windows.Interop;
 
 public class EmailFilterOptions
 {
@@ -7,10 +8,21 @@ public class EmailFilterOptions
     public string Subject { get; set; } = "";
     public string HasWords { get; set; } = "";
     public string DoesNotHave { get; set; } = "";
+
     public DateTime? SelectedDate { get; set; } = null;
-    public int DateRangeIndex { get; set; } = 0;
-    public string SearchText { get; set; } = "";
+    public short DateRangeIndex { get; set; } = -1;
+
+    public short SizeOperatorIndex { get; set; } = 0; // 0=greater than,1=less than
+    public double SizeValue { get; set; } = 0; // numeric value
+    public short SizeUnitIndex { get; set; } = 0; // 0=MB,1=KB
+
+    public string SearchText { get; set; } = string.Empty;
+
+    public int MailboxIndex { get; set; } = 0; // 0=All Mail,1=Inbox,2=Sent
+    public bool HasAttachment { get; set; } = false;
+
 }
+
 
 
 interface IEmailFilterService
@@ -51,20 +63,21 @@ class EmailFilterService : IEmailFilterService
             (email.Body?.Contains(opt.DoesNotHave, StringComparison.OrdinalIgnoreCase) ?? false))
             return false;
 
-        if (opt.SelectedDate.HasValue && opt.SelectedDate.HasValue)
+        //Date
+        if (email.Date.HasValue && opt.SelectedDate.HasValue)
         {
             DateTime endDate = opt.SelectedDate.Value;
             DateTime startDate = opt.SelectedDate.Value;
 
             switch (opt.DateRangeIndex)
             {
-                case 1: // 1 day
+                case 0: // 1 day
                     startDate = endDate.AddDays(-1);
                     break;
-                case 2: // 1 week
+                case 1: // 1 week
                     startDate = endDate.AddDays(-7);
                     break;
-                case 3: // 1 month
+                case 2: // 1 month
                     startDate = endDate.AddMonths(-1);
                     break;
                 default:
@@ -79,6 +92,38 @@ class EmailFilterService : IEmailFilterService
             }
         }
 
+        //size
+        if (opt.SizeValue > 0)
+        {
+            double emailSizeKb = email.EmailSizeInKb;
+            double filterSizeKb = opt.SizeValue * (opt.SizeUnitIndex == 0 ? 1024 : 1); // MB->KB
+
+            switch (opt.SizeOperatorIndex)
+            {
+                case 0: // greater than
+                    if (emailSizeKb < filterSizeKb) return false;
+                    break;
+                case 1: // less than
+                    if (emailSizeKb > filterSizeKb) return false;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // --- Mailbox filter ---
+        switch (opt.MailboxIndex)
+        {
+            case 1: // Inbox
+               
+                break;
+            case 2: // Sent
+                
+                break;
+        }
+
+
+
         if (!string.IsNullOrWhiteSpace(opt.SearchText))
         {
             bool match = (email.Subject?.Contains(opt.SearchText, StringComparison.OrdinalIgnoreCase) ?? false)
@@ -87,6 +132,12 @@ class EmailFilterService : IEmailFilterService
                          || (email.Body?.Contains(opt.SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
 
             if (!match) return false;
+        }
+
+        if(opt.HasAttachment)
+        {
+            if (email.Attachments == null || !email.Attachments.Any())
+                return false;
         }
 
         return true;

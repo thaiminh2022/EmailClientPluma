@@ -56,7 +56,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
         private CancellationTokenSource? _filterCts; //cancellation when filtering
-        public ICollectionView? FilteredEmails { get; private set; } 
+        public ICollectionView? FilteredEmails { get; private set; }
         public EmailFilterOptions Filters { get; } = new(); // Filter options
 
         async Task FetchEmailBody()
@@ -88,13 +88,16 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
 
-        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService)
+        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService,IEmailFilterService emailFilterService)
         {
             _accountService = accountService;
             _windowFactory = windowFactory;
             _emailService = emailService;
+            _filterService = emailFilterService;
 
             Accounts = _accountService.GetAccounts();
+
+            
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -203,17 +206,34 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
         // Range selected in ComboBox (1 = 1 day, 2 = 1 week, 3 = 1 month)
-        public int DateRangeIndex
+        public short DateRangeIndex
         {
             get => Filters.DateRangeIndex;
             set { Filters.DateRangeIndex = value; _ = UpdateFilteredEmailsAsync(); }
         }
+
 
         public string SearchText
         {
             get => Filters.SearchText;
             set { Filters.SearchText = value; _ = UpdateFilteredEmailsAsync(); }
         }
+
+        public int MailboxIndex
+        {
+            get => Filters.MailboxIndex;
+            set { Filters.MailboxIndex = value; _ = UpdateFilteredEmailsAsync(); }
+        }
+
+        public bool HasAttachment
+        {
+            get => Filters.HasAttachment;
+            set { Filters.HasAttachment = value; _ = UpdateFilteredEmailsAsync(); }
+        }
+
+
+
+
         #endregion
 
 

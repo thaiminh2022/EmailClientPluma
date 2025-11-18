@@ -51,6 +51,10 @@ namespace EmailClientPluma.Core.Services
             foreach (var item in summaries)
             {
                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+
+                // set size in KB
+                email.MessageParts.EmailSizeInKb = (double)item.Size / 1024.0;
+
                 acc.Emails.Add(email);
             }
             await imap.DisconnectAsync(true);
