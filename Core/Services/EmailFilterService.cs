@@ -7,8 +7,8 @@ public class EmailFilterOptions
     public string Subject { get; set; } = "";
     public string HasWords { get; set; } = "";
     public string DoesNotHave { get; set; } = "";
-    public DateTime StartDate { get; set; } = DateTime.MinValue;
-    public DateTime EndDate { get; set; } = DateTime.MaxValue;
+    public DateTime? SelectedDate { get; set; } = null;
+    public int DateRangeIndex { get; set; } = 0;
     public string SearchText { get; set; } = "";
 }
 
@@ -51,11 +51,32 @@ class EmailFilterService : IEmailFilterService
             (email.Body?.Contains(opt.DoesNotHave, StringComparison.OrdinalIgnoreCase) ?? false))
             return false;
 
-        if (email.Date.HasValue)
+        if (opt.SelectedDate.HasValue && opt.SelectedDate.HasValue)
         {
-            var dt = email.Date.Value.DateTime;
-            if (dt < opt.StartDate || dt > opt.EndDate)
-                return false;
+            DateTime endDate = opt.SelectedDate.Value;
+            DateTime startDate = opt.SelectedDate.Value;
+
+            switch (opt.DateRangeIndex)
+            {
+                case 1: // 1 day
+                    startDate = endDate.AddDays(-1);
+                    break;
+                case 2: // 1 week
+                    startDate = endDate.AddDays(-7);
+                    break;
+                case 3: // 1 month
+                    startDate = endDate.AddMonths(-1);
+                    break;
+                default:
+                    break;
+            }
+
+            if (email.Date.HasValue)
+            {
+                var emailDate = email.Date.Value.DateTime;
+                if (emailDate < startDate || emailDate > endDate)
+                    return false;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(opt.SearchText))

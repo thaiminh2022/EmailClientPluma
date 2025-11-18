@@ -196,16 +196,17 @@ namespace EmailClientPluma.MVVM.ViewModels
             set { Filters.DoesNotHave = value; _ = UpdateFilteredEmailsAsync(); }
         }
 
-        public DateTime StartDate
+        public DateTime? SelectedDate
         {
-            get => Filters.StartDate;
-            set { Filters.StartDate = value; _ = UpdateFilteredEmailsAsync(); }
+            get => Filters.SelectedDate;
+            set { Filters.SelectedDate = value; _ = UpdateFilteredEmailsAsync(); }
         }
 
-        public DateTime EndDate
+        // Range selected in ComboBox (1 = 1 day, 2 = 1 week, 3 = 1 month)
+        public int DateRangeIndex
         {
-            get => Filters.EndDate;
-            set { Filters.EndDate = value; _ = UpdateFilteredEmailsAsync(); }
+            get => Filters.DateRangeIndex;
+            set { Filters.DateRangeIndex = value; _ = UpdateFilteredEmailsAsync(); }
         }
 
         public string SearchText
