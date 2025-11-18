@@ -55,13 +55,25 @@ class EmailFilterService : IEmailFilterService
             !email.Subject.Contains(opt.Subject, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        if (!string.IsNullOrWhiteSpace(opt.HasWords) &&
-            !(email.Body?.Contains(opt.HasWords, StringComparison.OrdinalIgnoreCase) ?? false))
-            return false;
+        // HasWords: must be in subject OR body
+        if (!string.IsNullOrWhiteSpace(opt.HasWords))
+        {
+            bool contains = (email.Subject?.Contains(opt.HasWords, StringComparison.OrdinalIgnoreCase) ?? false)
+                            || (email.Body?.Contains(opt.HasWords, StringComparison.OrdinalIgnoreCase) ?? false);
 
-        if (!string.IsNullOrWhiteSpace(opt.DoesNotHave) &&
-            (email.Body?.Contains(opt.DoesNotHave, StringComparison.OrdinalIgnoreCase) ?? false))
-            return false;
+            if (!contains)
+                return false;
+        }
+
+        // DoesNotHave: must NOT be in subject AND body
+        if (!string.IsNullOrWhiteSpace(opt.DoesNotHave))
+        {
+            bool contains = (email.Subject?.Contains(opt.DoesNotHave, StringComparison.OrdinalIgnoreCase) ?? false)
+                            || (email.Body?.Contains(opt.DoesNotHave, StringComparison.OrdinalIgnoreCase) ?? false);
+
+            if (contains)
+                return false;
+        }
 
         //Date
         if (email.Date.HasValue && opt.SelectedDate.HasValue)

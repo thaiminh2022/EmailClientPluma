@@ -164,7 +164,7 @@
                         x:Name="EmailList"
                         Grid.Row="2"
                         Margin="0,0,0,0"
-                        ItemsSource="{Binding SelectedAccount.Emails}"
+                        ItemsSource="{Binding FilteredEmails}"
                         SelectedItem="{Binding SelectedEmail}"
                         SelectionChanged="EmailList_SelectionChanged">
                         <ListView.ItemTemplate>
