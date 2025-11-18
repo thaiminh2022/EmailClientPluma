@@ -96,8 +96,9 @@ namespace EmailClientPluma.MVVM.ViewModels
             _filterService = emailFilterService;
 
             Accounts = _accountService.GetAccounts();
+            Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
 
-            
+
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -168,80 +169,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             OnPropertyChanges(nameof(FilteredEmails));
         }
         #endregion
-        #region Filter Property Bindings
-        public string From
-        {
-            get => Filters.From;
-            set { Filters.From = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public string To
-        {
-            get => Filters.To;
-            set { Filters.To = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public string Subject
-        {
-            get => Filters.Subject;
-            set { Filters.Subject = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public string HasWords
-        {
-            get => Filters.HasWords;
-            set { Filters.HasWords = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public string DoesNotHave
-        {
-            get => Filters.DoesNotHave;
-            set { Filters.DoesNotHave = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public DateTime? SelectedDate
-        {
-            get => Filters.SelectedDate;
-            set { Filters.SelectedDate = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        // Range selected in ComboBox (1 = 1 day, 2 = 1 week, 3 = 1 month)
-        public short DateRangeIndex
-        {
-            get => Filters.DateRangeIndex;
-            set { Filters.DateRangeIndex = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-
-        public string SearchText
-        {
-            get => Filters.SearchText;
-            set { Filters.SearchText = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public int MailboxIndex
-        {
-            get => Filters.MailboxIndex;
-            set { Filters.MailboxIndex = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-        public bool HasAttachment
-        {
-            get => Filters.HasAttachment;
-            set { Filters.HasAttachment = value; _ = UpdateFilteredEmailsAsync(); }
-        }
-
-
-
-
-        #endregion
-
-
-
-
-
-
-
+        
 
         public MainViewModel()
         {

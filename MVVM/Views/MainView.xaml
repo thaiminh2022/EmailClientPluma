@@ -281,44 +281,48 @@
                         <!-- From -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="From" />
-                            <TextBox Width="300" Text="{Binding From, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300" Text="{Binding Filters.From, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!-- To -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="To" />
-                            <TextBox Width="300" Text="{Binding To, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300" Text="{Binding Filters.To, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!-- Subject -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Subject" />
-                            <TextBox Width="300" Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300" Text="{Binding Filters.Subject, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!-- Has the words -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Has the words" />
-                            <TextBox Width="300" Text="{Binding HasWords, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300" Text="{Binding Filters.HasWords, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!-- Doesn’t have -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Doesn’t have" />
-                            <TextBox Width="300" Text="{Binding DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300" Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!-- Size -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Size" />
-                            <ComboBox Width="100" SelectedIndex="{Binding SizeOperatorIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" Style="{StaticResource CustomCombo}">
+                            <ComboBox Width="100"
+                          SelectedIndex="{Binding Filters.SizeOperatorIndex, Mode=TwoWay}" 
+                          ItemContainerStyle="{StaticResource CustomComboItem}" 
+                          Style="{StaticResource CustomCombo}">
                                 <ComboBoxItem Content="greater than" />
                                 <ComboBoxItem Content="less than" />
                             </ComboBox>
-                            <TextBox Width="60" Margin="10,0" Text="{Binding SizeValue, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox Width="70" SelectedIndex="{Binding SizeUnitIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" Style="{StaticResource CustomCombo}">
+                            <TextBox Width="60" Margin="10,0" Text="{Binding Filters.SizeValue, UpdateSourceTrigger=PropertyChanged}" />
+                            <ComboBox Width="70"
+                          SelectedIndex="{Binding Filters.SizeUnitIndex, Mode=TwoWay}" 
+                          ItemContainerStyle="{StaticResource CustomComboItem}" 
+                          Style="{StaticResource CustomCombo}">
                                 <ComboBoxItem Content="MB" />
                                 <ComboBoxItem Content="KB" />
                             </ComboBox>
@@ -327,20 +331,24 @@
                         <!-- Date -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Date within" />
-                            <ComboBox Width="150" SelectedIndex="{Binding DateRangeIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" Style="{StaticResource CustomCombo}">
+                            <ComboBox Width="150"
+                          SelectedIndex="{Binding Filters.DateRangeIndex, Mode=TwoWay}" 
+                          ItemContainerStyle="{StaticResource CustomComboItem}" 
+                          Style="{StaticResource CustomCombo}">
                                 <ComboBoxItem Content="1 day" />
                                 <ComboBoxItem Content="1 week" />
                                 <ComboBoxItem Content="1 month" />
                             </ComboBox>
-                            <DatePicker Width="120" Margin="10,0,0,0" SelectedDate="{Binding StartDate, Mode=TwoWay}" />
+                            <DatePicker Width="120" Margin="10,0,0,0" SelectedDate="{Binding Filters.SelectedDate, Mode=TwoWay}" />
                         </StackPanel>
 
                         <!-- Search -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock Width="100" VerticalAlignment="Center" Text="Search" />
-                            <ComboBox Width="200" SelectedIndex="{Binding MailboxIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" Style="{StaticResource CustomCombo}">
+                            <ComboBox Width="200"
+                          SelectedIndex="{Binding Filters.MailboxIndex, Mode=TwoWay}" 
+                          ItemContainerStyle="{StaticResource CustomComboItem}" 
+                          Style="{StaticResource CustomCombo}">
                                 <ComboBoxItem Content="All Mail" />
                                 <ComboBoxItem Content="Inbox" />
                                 <ComboBoxItem Content="Sent" />
@@ -349,7 +357,8 @@
 
                         <!-- Footer -->
                         <StackPanel Margin="0,15,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
-                            <CheckBox Margin="0,0,20,0" Content="Has attachment" IsChecked="{Binding HasAttachment, Mode=TwoWay}" 
+                            <CheckBox Margin="0,0,20,0" Content="Has attachment" 
+                          IsChecked="{Binding Filters.HasAttachment, Mode=TwoWay}" 
                           Foreground="{DynamicResource TextBrush}" />
                             <Button Width="100" Margin="0,0,10,0" Content="Create filter" Command="{Binding CreateFilterCommand}" />
                             <Button Width="80" Content="Search" Command="{Binding ApplyFilterCommand}" />
