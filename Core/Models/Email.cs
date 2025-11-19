@@ -31,9 +31,11 @@
             required public string To { get; set; }
             required public DateTimeOffset? Date { get; set; }
 
+            public double EmailSizeInKb { get; set; } = 0;
+
             public IEnumerable<Attachment> Attachments { get; set; } = [];
         }
-
+        
         internal class OutgoingEmail : DataParts
         {
             required public string? ReplyTo { get; set; }

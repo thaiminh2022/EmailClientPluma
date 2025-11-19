@@ -2,10 +2,17 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.MVVM.Views;
+using MailKit;
+using MailKit.Search;
+using MimeKit;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using static EmailClientPluma.Core.Models.Email;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -14,6 +21,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         readonly IAccountService _accountService;
         readonly IEmailService _emailService;
         readonly IWindowFactory _windowFactory;
+        readonly IEmailFilterService _filterService;
 
         // A list of logined account
         public ObservableCollection<Account> Accounts { get; private set; }
@@ -27,6 +35,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedAccount = value;
                 OnPropertyChanges();
+                UpdateFilteredEmailsAsync();
             }
         }
 
@@ -42,8 +51,13 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = Cursors.Wait;
                 var _ = FetchEmailBody();
                 OnPropertyChanges();
+                MessageBox.Show(_selectedEmail.MessageParts.From);
             }
         }
+
+        private CancellationTokenSource? _filterCts; //cancellation when filtering
+        public ICollectionView? FilteredEmails { get; private set; }
+        public EmailFilterOptions Filters { get; } = new(); // Filter options
 
         async Task FetchEmailBody()
         {
@@ -51,7 +65,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 Mouse.OverrideCursor = null;
                 return;
-            };
+            }
+            ;
 
             bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
 
@@ -66,18 +81,24 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
 
+
+
         public RelayCommand AddAccountCommand { get; set; }
         public RelayCommand ComposeCommand { get; set; }
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
 
-        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService)
+        public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService,IEmailFilterService emailFilterService)
         {
             _accountService = accountService;
             _windowFactory = windowFactory;
             _emailService = emailService;
+            _filterService = emailFilterService;
 
             Accounts = _accountService.GetAccounts();
+            Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
+
+
 
             AddAccountCommand = new RelayCommand(async _ =>
             {
@@ -104,7 +125,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                         break;
                     default:
                         return;
-                };
+                }
+                ;
 
             }, _ => SelectedAccount is not null);
 
@@ -116,6 +138,38 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
         }
+
+        #region Filtered Emails
+        public async Task UpdateFilteredEmailsAsync()
+        {
+            if (SelectedAccount == null)
+            {
+                FilteredEmails = null;
+                OnPropertyChanges(nameof(FilteredEmails));
+                return;
+            }
+
+            var emails = SelectedAccount.Emails;
+
+            // Cancel previous filter if running
+            _filterCts?.Cancel();
+            _filterCts = new CancellationTokenSource();
+            var token = _filterCts.Token;
+
+            var filteredList = new List<Email>();
+            foreach (var email in emails)
+            {
+                if (await _filterService.MatchFiltersAsync(email, Filters, token))
+                {
+                    filteredList.Add(email);
+                }
+            }
+
+            FilteredEmails = CollectionViewSource.GetDefaultView(filteredList);
+            OnPropertyChanges(nameof(FilteredEmails));
+        }
+        #endregion
+        
 
         public MainViewModel()
         {

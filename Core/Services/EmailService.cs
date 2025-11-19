@@ -46,11 +46,20 @@ namespace EmailClientPluma.Core.Services
             int take = Math.Min(20, inbox.Count);
             int start = Math.Max(0, inbox.Count - take);
 
-            var summaries = await inbox.FetchAsync(start, inbox.Count - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId);
+            var summaries = await inbox.FetchAsync(start, inbox.Count - 1, 
+                MessageSummaryItems.Envelope | 
+                MessageSummaryItems.UniqueId |
+                 MessageSummaryItems.Size);
 
             foreach (var item in summaries)
             {
                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+
+                if (item.Size != null)
+                    email.MessageParts.EmailSizeInKb = item.Size.Value / 1024.0;
+
+                acc.Emails.Add(email);
+
                 acc.Emails.Add(email);
             }
             await imap.DisconnectAsync(true);
@@ -95,6 +104,8 @@ namespace EmailClientPluma.Core.Services
             {
                 MessageBox.Show(ex.Message);
             }
+
+            
 
         }
 
