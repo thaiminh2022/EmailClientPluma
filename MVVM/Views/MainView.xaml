@@ -266,7 +266,9 @@
             VerticalAlignment="Center"
             Orientation="Horizontal">
             <TextBlock FontWeight="Bold" Text="Search Mail" />
-            <TextBox Width="200" Margin="10,0,0,0" />
+            <TextBox Width="200"
+                 Margin="10,0,0,0"
+                 Text="{Binding Filters.SearchText, UpdateSourceTrigger=PropertyChanged}" />    
             <Button
                 x:Name="MoreSearch"
                 Click="MoreSearch_Click"
