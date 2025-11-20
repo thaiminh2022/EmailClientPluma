@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
@@ -35,13 +32,13 @@ public class PhishDetector
 
     public static bool DisplayHrefMismatch((string href, string display) link)
     {
-        string hrefHost = GetHostSafe(link.href);
-        string displayHost = GetHostFromText(link.display);
+        string? hrefHost = GetHostSafe(link.href);
+        string? displayHost = GetHostFromText(link.display);
         if (string.IsNullOrEmpty(hrefHost) || string.IsNullOrEmpty(displayHost)) return false;
         return !hrefHost.Equals(displayHost, StringComparison.OrdinalIgnoreCase);
     }
 
-    public static string GetHostSafe(string url)
+    public static string? GetHostSafe(string url)
     {
         try
         {
@@ -52,7 +49,7 @@ public class PhishDetector
         catch { return null; }
     }
 
-    public static string GetHostFromText(string text)
+    public static string? GetHostFromText(string text)
     {
         if (string.IsNullOrEmpty(text)) return null;
         var m = Regex.Match(text, @"([a-z0-9\-]+\.[a-z]{2,})", RegexOptions.IgnoreCase);
