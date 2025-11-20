@@ -19,91 +19,6 @@
         <viewmodels:MainViewModel />
     </Window.DataContext>
 
-    <Window.Resources>
-        <!--  Color palette  -->
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#F7F4FB" />
-        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FAF8FF" />
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#7E57C2" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#B39DDB" />
-        <SolidColorBrush x:Key="TextBrush" Color="Black" />
-        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="White" />
-        <SolidColorBrush x:Key="GoldBrush" Color="#FFD700" />
-        <SolidColorBrush x:Key="DarkPurple" Color="#5E35B1" />
-        <SolidColorBrush x:Key="LightPurple" Color="#D1C4E9" />
-
-        <!--  Button style  -->
-        <Style TargetType="Button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Margin" Value="5,0,5,0" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="6"
-                            SnapsToDevicePixels="True">
-                            <ContentPresenter
-                                Margin="{TemplateBinding Padding}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource DarkPurple}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!--  ListView style  -->
-        <Style TargetType="ListView">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LightPurple}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-
-        <!--  TextBlock style  -->
-        <Style TargetType="TextBlock">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-        <!--  Text box style  -->
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-        <!--  Grid style  -->
-        <Style TargetType="Grid">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-        <!--  Stack panel style  -->
-        <Style TargetType="StackPanel">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-        <!--  Border style  -->
-        <Style x:Key="WebViewContainerStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style x:Key="CustomCombo" TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-
-        <Style x:Key="CustomComboItem" TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-    </Window.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
@@ -430,9 +345,16 @@
             HorizontalAlignment="Left"
             Orientation="Horizontal">
             <Button
+                Style="{DynamicResource {x:Type Button}}"
                 HorizontalAlignment="Left"
                 Command="{Binding ComposeCommand}"
                 Content="New Mail" />
+            
+            <Button Content="Settings"
+                Command="{Binding SettingCommand}"
+                Background="{DynamicResource PrimaryBrush}"
+                Foreground="{DynamicResource ButtonForegroundBrush}"
+                Width="70" Height="30"/>
 
             <Button
                 x:Name="ThemeToggle"

@@ -87,6 +87,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand ComposeCommand { get; set; }
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
+        public RelayCommand SettingCommand { get; set; }
 
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService,IEmailFilterService emailFilterService)
         {
@@ -111,6 +112,12 @@ namespace EmailClientPluma.MVVM.ViewModels
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
                 newEmailWindow.Show();
             }, _ => Accounts.Count > 0);
+
+            SettingCommand = new RelayCommand(_ =>
+            {
+                var newEmailWindow = _windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+                newEmailWindow.Show();
+            });
 
             RemoveAccountCommand = new RelayCommand(_ =>
             {
