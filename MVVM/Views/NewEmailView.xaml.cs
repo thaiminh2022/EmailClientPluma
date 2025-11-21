@@ -13,8 +13,6 @@ namespace EmailClientPluma.MVVM.Views
             InitializeComponent();
         }
 
-
-
         private void OptionsButton_Click(object sender, RoutedEventArgs e)
         {
             OptionsPopup.IsOpen = !OptionsPopup.IsOpen;
@@ -27,16 +25,16 @@ namespace EmailClientPluma.MVVM.Views
 
         private async void WebViewControl_Loaded(object sender, RoutedEventArgs e)
         {
-            var wv2 = (WebView2)sender;
+            //var wv2 = (WebView2)sender;
 
-            await wv2.EnsureCoreWebView2Async();
+            //await wv2.EnsureCoreWebView2Async();
 
-            string editorPath = System.IO.Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "QuillEditor",
-                "index.html");
+            //string editorPath = System.IO.Path.Combine(
+            //    AppDomain.CurrentDomain.BaseDirectory,
+            //    "QuillEditor",
+            //    "index.html");
 
-            wv2.CoreWebView2.Navigate(new Uri(editorPath).AbsoluteUri);
+            //wv2.CoreWebView2.Navigate(new Uri(editorPath).AbsoluteUri);
 
         }
     }

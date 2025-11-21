@@ -26,10 +26,6 @@ const quill = new Quill('#editor', {
     }
 });
 
-function getEditorContent() {
-    return quill.root.innerHTML;
-}
-
 function setEditorContent(html) {
     quill.root.innerHTML = html || "";
 }
@@ -37,5 +33,6 @@ function setEditorContent(html) {
 window.setEditorContent = setEditorContent;
 
 quill.on('text-change', function () {
-        window.chrome.webview.postMessage(getEditorContent());
+    const html = quill.root.innerHTML;
+    window.chrome.webview.postMessage({ type: 'html', value: html });
 });

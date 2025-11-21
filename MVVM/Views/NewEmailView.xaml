@@ -109,9 +109,7 @@
                 Opacity="1"
                 Stretch="UniformToFill" />
             <!--  Main TextBox  -->
-            <wv2:WebView2 x:Name="WebViewControl" 
-                          Loaded="WebViewControl_Loaded" 
-                          behaviors:WebView2Editor.Html="{Binding Body}" />
+            <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True" behaviors:WebView2Editor.HtmlContent="{Binding Body}" />
         </Grid>
         <StackPanel
             Grid.Row="2"

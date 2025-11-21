@@ -38,10 +38,10 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             SendCommand = new RelayCommand(async (_) =>
             {
+                if (string.IsNullOrEmpty(Body)) return;
                 if (SelectedAccount is null) return;
                 if (string.IsNullOrEmpty(ToAddresses)) return;
                 if (string.IsNullOrEmpty(Subject)) return;
-                if (string.IsNullOrEmpty(Body)) return;
 
 
 
