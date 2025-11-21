@@ -4,7 +4,6 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
-using Google.Apis.Http;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -21,7 +20,10 @@ namespace EmailClientPluma.MVVM.ViewModels
         readonly IEmailFilterService _filterService;
 
         // A list of logined account
-        public ObservableCollection<Account> Accounts { get; private set; }
+        public ObservableCollection<Account> Accounts { 
+            get; 
+            private set; 
+        }
         // Account selected in the list view
 
 
@@ -32,9 +34,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             set
             {
                 _selectedAccount = value;
-                Mouse.OverrideCursor = Cursors.Wait;
                 OnPropertyChanges();
-                _ = FetchNewHeaders();
+
+                //Mouse.OverrideCursor = Cursors.Wait;
+
+                //_ = FetchNewHeaders();
                 _ = UpdateFilteredEmailsAsync();
             }
         }
@@ -65,11 +69,18 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedEmail = value;
 
-
                 Mouse.OverrideCursor = Cursors.Wait;
                 var _ = FetchEmailBody();
                 OnPropertyChanges();
                 // MessageBox.Show(_selectedEmail.MessageParts.From);
+
+
+                if (_selectedEmail is not null && _selectedEmail.BodyFetched)
+                {
+                    var result = PhishDetector.ValidateHtmlContent(_selectedEmail.MessageParts.Body ?? "");
+                    MessageBox.Show(result.ToString());
+                }
+
             }
         }
 
@@ -94,6 +105,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             }
 
             await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
+
             Mouse.OverrideCursor = null;
         }
 
@@ -113,7 +125,6 @@ namespace EmailClientPluma.MVVM.ViewModels
             Accounts = _accountService.GetAccounts();
 
             //SelectedAccount = Accounts.First();
-
             Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
 
 
