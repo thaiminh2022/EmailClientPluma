@@ -4,6 +4,7 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
+using Google.Apis.Http;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -41,18 +42,18 @@ namespace EmailClientPluma.MVVM.ViewModels
         private async Task FetchNewHeaders()
         {
             if (_selectedAccount is null)
-            {
                 return;
-            }
+
             bool isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
 
-            if (!isValid)
+            if (!isValid || _selectedAccount.FirstTimeHeaderFetched)
             {
                 Mouse.OverrideCursor = null;
                 return;
             }
 
             await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+            _selectedAccount.FirstTimeHeaderFetched = true;
             Mouse.OverrideCursor = null;
         }
 
@@ -126,7 +127,15 @@ namespace EmailClientPluma.MVVM.ViewModels
             ComposeCommand = new RelayCommand(_ =>
             {
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
-                newEmailWindow.Show();
+                bool? sucess = newEmailWindow.ShowDialog();
+
+                if (sucess is null)
+                    return;
+
+                if (sucess == true)
+                {
+                    MessageBox.Show("Message was sent");
+                }
             }, _ => Accounts.Count > 0);
 
             RemoveAccountCommand = new RelayCommand(_ =>

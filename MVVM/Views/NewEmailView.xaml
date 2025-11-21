@@ -22,9 +22,7 @@
             <RowDefinition Height="149*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <Rectangle Grid.Row="0" Fill="AliceBlue" />
-        <Rectangle Grid.Row="1" Fill="AliceBlue" />
-        <Rectangle Grid.Row="2" Fill="AliceBlue" />
+
         <StackPanel>
             <Grid Margin="10" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
@@ -118,13 +116,14 @@
             Orientation="Horizontal">
             <Button
                 Background="#0b57d0"
-                Command="{Binding SendCommand, Mode=TwoWay}"
+                Command="{Binding SendCommand}"
                 Foreground="White">
                 Send
             </Button>
             <Button
                 Margin="5,0,0,0"
                 Background="#0b57d0"
+                Command="{Binding CancelCommand}"
                 Foreground="White">
                 Cancel
             </Button>

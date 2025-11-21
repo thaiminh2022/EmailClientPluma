@@ -1,5 +1,4 @@
-﻿using Microsoft.Web.WebView2.Wpf;
-using System.Windows;
+﻿using System.Windows;
 
 namespace EmailClientPluma.MVVM.Views
 {
@@ -23,19 +22,5 @@ namespace EmailClientPluma.MVVM.Views
             LabelsPopup.IsOpen = !LabelsPopup.IsOpen;
         }
 
-        private async void WebViewControl_Loaded(object sender, RoutedEventArgs e)
-        {
-            //var wv2 = (WebView2)sender;
-
-            //await wv2.EnsureCoreWebView2Async();
-
-            //string editorPath = System.IO.Path.Combine(
-            //    AppDomain.CurrentDomain.BaseDirectory,
-            //    "QuillEditor",
-            //    "index.html");
-
-            //wv2.CoreWebView2.Navigate(new Uri(editorPath).AbsoluteUri);
-
-        }
     }
 }

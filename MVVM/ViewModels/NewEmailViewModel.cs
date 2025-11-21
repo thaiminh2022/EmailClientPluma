@@ -7,13 +7,16 @@ using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
-    internal class NewEmailViewModel : ObserableObject
+    internal class NewEmailViewModel : ObserableObject, IRequestClose
     {
         readonly IAccountService _accountService;
         readonly IEmailService _emailService;
 
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
+
+        public event EventHandler<bool?>? RequestClose;
+
         public Account? SelectedAccount
         {
             get { return _selectedAccount; }
@@ -24,6 +27,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             }
         }
         public RelayCommand SendCommand { get; set; }
+        public RelayCommand CancelCommand { get; set; }
+
 
         public string? ToAddresses { get; set; }
         public string? Subject { get; set; }
@@ -54,22 +59,28 @@ namespace EmailClientPluma.MVVM.ViewModels
                     To = ToAddresses,
                     Date = DateTime.Now
                 };
-                MessageBox.Show(email.ToString());
 
-                //try
-                //{
-                //    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
-                //    if (validated)
-                //    {
-                //        await _emailService.SendEmailAsync(SelectedAccount, email);
-                //        MessageBox.Show("Message was sent");
-                //    }
-                //}
-                //catch (Exception ex)
-                //{
-                //    MessageBox.Show(ex.Message);
-                //}
+                try
+                {
+                    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
+                    if (validated)
+                    {
+                        await _emailService.SendEmailAsync(SelectedAccount, email);
+                        RequestClose?.Invoke(this, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    RequestClose?.Invoke(this, false);
+                }
+                
 
+            });
+
+            CancelCommand = new RelayCommand(_ =>
+            {
+                RequestClose?.Invoke(this, null);
             });
         }
 

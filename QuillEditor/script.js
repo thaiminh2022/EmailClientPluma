@@ -6,13 +6,9 @@ const toolbarOptions = [
     [{ 'header': 1 }, { 'header': 2 }, { 'header': 3 }, { 'header': 4 }],               // custom button values
     [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
     [{ 'script': 'sub' }, { 'script': 'super' }],      // superscript/subscript
-    [{ 'direction': 'rtl' }],                         // text direction
-
-    [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
 
     [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
     [{ 'font': [] }],
-    [{ 'align': [] }],
 
     ['clean']                                         // remove formatting button
 ];

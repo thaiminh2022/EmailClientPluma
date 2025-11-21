@@ -197,7 +197,8 @@ namespace EmailClientPluma.Core.Services
                                 TO_ADDRESS,
                                 DATE
                         FROM EMAILS
-                        WHERE OWNER_ID = @OwnerId;
+                        WHERE OWNER_ID = @OwnerId
+                        ORDER BY DATE DESC
                        ";
             var rows = await connection.QueryAsync<EmailRow>(sql, new { OwnerId = acc.ProviderUID });
             var emails = rows.Select(r =>

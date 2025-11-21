@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using EmailClientPluma.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services
@@ -16,10 +17,21 @@ namespace EmailClientPluma.Core.Services
 
         TView IWindowFactory.CreateWindow<TView, TViewModel>()
         {
-            return new TView
+             var vm = _serviceProvider.GetRequiredService<TViewModel>();
+             var window = new TView
+             {
+                DataContext = vm
+             };
+
+            if (vm is IRequestClose rc)
             {
-                DataContext = _serviceProvider.GetRequiredService<TViewModel>()
-            };
+                rc.RequestClose += (_, result) => { 
+                    window.DialogResult = result;
+                    window.Close();
+                };
+            }
+
+            return window;
         }
 
         public WindowFactory(IServiceProvider serviceProvider)
