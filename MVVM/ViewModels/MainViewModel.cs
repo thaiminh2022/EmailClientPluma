@@ -23,6 +23,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         public ObservableCollection<Account> Accounts { get; private set; }
         // Account selected in the list view
 
+
         private Account? _selectedAccount;
         public Account? SelectedAccount
         {

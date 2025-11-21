@@ -1,6 +1,4 @@
-﻿using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.Wpf;
-using Newtonsoft.Json.Linq;
+﻿using Microsoft.Web.WebView2.Wpf;
 using System.IO;
 using System.Windows;
 
@@ -15,6 +13,7 @@ namespace EmailClientPluma.Behaviors
                typeof(WebView2Editor),
                new PropertyMetadata(null, OnHtmlChanged));
 
+
         public static string GetHtml(DependencyObject obj) =>
             (string)obj.GetValue(HtmlProperty);
 
@@ -23,50 +22,43 @@ namespace EmailClientPluma.Behaviors
 
         private static async void OnHtmlChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            MessageBox.Show("Load");
             if (d is not WebView2 wv2) return;
             string html = e.NewValue as string ?? "";
-
             await wv2.EnsureCoreWebView2Async();
-
-            // ---- Load local editor (only once) ----
-            if (EditorDocumentReady(wv2.CoreWebView2))
-            {
-                string path = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "QuillEditor",               
-                    "index.html"          
-                );
-
-                wv2.CoreWebView2.Navigate(path);
-                await WaitForDocumentAsync(wv2);
-            }
-
             await wv2.CoreWebView2.ExecuteScriptAsync($"window.setEditorHtml({html});");
         }
 
-        static bool EditorDocumentReady(CoreWebView2 core) { 
-            return core.Source?.EndsWith("index.html") == true;
-        }
 
-        private static Task WaitForDocumentAsync(WebView2 w)
+        private static async Task EnsureInitializedAsync(WebView2 wv2)
         {
-            var tcs = new TaskCompletionSource();
-            w.CoreWebView2.NavigationCompleted += Handler;
-            void Handler(object? s, CoreWebView2NavigationCompletedEventArgs e)
+            if (wv2.CoreWebView2 == null)
             {
-                w.CoreWebView2.NavigationCompleted -= Handler;
-                tcs.TrySetResult();
+                await wv2.EnsureCoreWebView2Async();
             }
-            return tcs.Task;
-        }
 
-        private static async Task EnsureInitializedAsync(WebView2 webView)
-        {
-            if (webView.CoreWebView2 == null)
+            if (wv2.CoreWebView2 is null)
+                return;
+
+            string filePath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "QuillEditor",
+                "index.html"
+            );
+
+            var uri = new Uri(Path.GetFullPath(filePath));
+            wv2.CoreWebView2.Navigate(uri.AbsoluteUri);
+
+            wv2.WebMessageReceived += (s, e) =>
             {
-                await webView.EnsureCoreWebView2Async();
-            }
+                string? htmlFromJs = e.TryGetWebMessageAsString();
+                if (htmlFromJs is null) return;
+
+                string current = GetHtml(wv2) ?? string.Empty;
+                if (current.Equals(htmlFromJs))
+                    return; // nothing changed
+
+                SetHtml(wv2, htmlFromJs);
+            };
         }
     }
 }

@@ -31,8 +31,11 @@ function getEditorContent() {
 }
 
 function setEditorContent(html) {
-    quill.root.innerHTML = html;
+    quill.root.innerHTML = html || "";
 }
 
-window.getEditorContent = getEditorContent;
 window.setEditorContent = setEditorContent;
+
+quill.on('text-change', function () {
+        window.chrome.webview.postMessage(getEditorContent());
+});

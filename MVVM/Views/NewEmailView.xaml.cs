@@ -1,8 +1,5 @@
 ﻿using Microsoft.Web.WebView2.Wpf;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Media;
 
 namespace EmailClientPluma.MVVM.Views
 {
@@ -39,7 +36,8 @@ namespace EmailClientPluma.MVVM.Views
                 "QuillEditor",
                 "index.html");
 
-            wv2.CoreWebView2.Navigate(@"file:///C:/dev/CSharpProjects/EmailClientPluma/QuillEditor/index.html");
+            wv2.CoreWebView2.Navigate(new Uri(editorPath).AbsoluteUri);
+
         }
     }
 }

@@ -109,7 +109,9 @@
                 Opacity="1"
                 Stretch="UniformToFill" />
             <!--  Main TextBox  -->
-            <wv2:WebView2 x:Name="WebViewControl" Loaded="WebViewControl_Loaded" />
+            <wv2:WebView2 x:Name="WebViewControl" 
+                          Loaded="WebViewControl_Loaded" 
+                          behaviors:WebView2Editor.Html="{Binding Body}" />
         </Grid>
         <StackPanel
             Grid.Row="2"
@@ -118,7 +120,7 @@
             Orientation="Horizontal">
             <Button
                 Background="#0b57d0"
-                Command="{Binding SendCommand}"
+                Command="{Binding SendCommand, Mode=TwoWay}"
                 Foreground="White">
                 Send
             </Button>

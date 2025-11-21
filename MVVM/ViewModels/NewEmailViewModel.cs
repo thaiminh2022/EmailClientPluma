@@ -54,19 +54,21 @@ namespace EmailClientPluma.MVVM.ViewModels
                     To = ToAddresses,
                     Date = DateTime.Now
                 };
-                try
-                {
-                    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
-                    if (validated)
-                    {
-                        await _emailService.SendEmailAsync(SelectedAccount, email);
-                        MessageBox.Show("Message was sent");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                MessageBox.Show(email.ToString());
+
+                //try
+                //{
+                //    var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
+                //    if (validated)
+                //    {
+                //        await _emailService.SendEmailAsync(SelectedAccount, email);
+                //        MessageBox.Show("Message was sent");
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show(ex.Message);
+                //}
 
             });
         }

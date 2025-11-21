@@ -421,18 +421,17 @@
 
 
         <!--  Accounts  -->
-        <Button
-            x:Name="AccountSettingsButton"
-            Grid.Row="0"
-            Grid.Column="1"
-            Width="auto"
-            Height="auto"
-            Margin="0,0,20,0"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Click="Button_Click">
-            Accounts
-        </Button>
+        <Button x:Name="AccountSettingsButton"
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="auto"
+                Height="auto"
+                Margin="0,0,20,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Click="Button_Click"
+                Content="Accounts">
+            </Button>
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
