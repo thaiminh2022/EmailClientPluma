@@ -1,4 +1,5 @@
-﻿using Microsoft.Web.WebView2.Wpf;
+﻿using EmailClientPluma.Core.Services;
+using Microsoft.Web.WebView2.Wpf;
 using System.Windows;
 
 namespace EmailClientPluma.Behaviors
@@ -42,12 +43,13 @@ namespace EmailClientPluma.Behaviors
             }
             else if (score >= 50)
             {
-                MessageBox.Show(
-                    "This email has some suspicious signs.",
-                    "Low warning",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
+                /// Sus is not enough bro
+                //MessageBox.Show(
+                //    "This email has some suspicious signs.",
+                //    "Low warning",
+                //    MessageBoxButton.OK,
+                //    MessageBoxImage.Information
+                //);
             }
             // ----------------------------------------------------
 

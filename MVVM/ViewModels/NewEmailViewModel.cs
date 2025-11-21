@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
+using EmailClientPluma.Core.Services.Accounting;
+using EmailClientPluma.Core.Services.Emailing;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -8,8 +9,8 @@ namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class NewEmailViewModel : ObserableObject
     {
-        IAccountService _accountService;
-        IEmailService _emailService;
+        readonly IAccountService _accountService;
+        readonly IEmailService _emailService;
 
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
@@ -44,13 +45,14 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 
-                var email = new Email.OutgoingEmail {  
+                var email = new Email.OutgoingEmail
+                {
                     Subject = Subject,
                     Body = Body,
                     ReplyTo = null,
                     From = SelectedAccount.Email,
                     To = ToAddresses,
-                    Date= DateTime.Now 
+                    Date = DateTime.Now
                 };
                 try
                 {

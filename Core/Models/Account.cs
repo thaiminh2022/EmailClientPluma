@@ -1,4 +1,4 @@
-﻿using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Services.Accounting;
 using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Models

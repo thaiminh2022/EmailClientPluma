@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Storaging;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
@@ -7,7 +8,7 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
 using System.Windows;
 
-namespace EmailClientPluma.Core.Services
+namespace EmailClientPluma.Core.Services.Accounting
 {
 
     /// <summary>

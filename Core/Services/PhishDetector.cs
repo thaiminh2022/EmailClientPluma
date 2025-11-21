@@ -1,7 +1,8 @@
-﻿using System.Net;
+﻿using HtmlAgilityPack;
+using System.Net;
 using System.Text.RegularExpressions;
-using HtmlAgilityPack;
 
+namespace EmailClientPluma.Core.Services;
 public class PhishDetector
 {
     public static List<(string href, string display)> ExtractUrlsFromHtml(string html)

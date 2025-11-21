@@ -2,7 +2,7 @@
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 
-namespace EmailClientPluma.Core.Models
+namespace EmailClientPluma.Core.Services.Storaging
 {
     internal class SQLiteDataStore : IDataStore
     {
