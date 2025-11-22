@@ -1,4 +1,4 @@
-﻿using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Services.Accounting;
 using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Models
@@ -19,8 +19,8 @@ namespace EmailClientPluma.Core.Models
 
 
         // NOT STORED
-        public bool IsHeadersFetched => Emails.Count > 0;
-        public int UnreadCount { get; set; }
+        public bool FirstTimeHeaderFetched = false;
+
 
         public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
         {

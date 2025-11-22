@@ -35,7 +35,7 @@
 
             public IEnumerable<Attachment> Attachments { get; set; } = [];
         }
-        
+
         internal class OutgoingEmail : DataParts
         {
             required public string? ReplyTo { get; set; }
@@ -55,7 +55,7 @@
         }
     }
 
- 
+
 
     internal record Attachment
     {

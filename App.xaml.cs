@@ -1,5 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
+using EmailClientPluma.Core.Services.Accounting;
+using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;

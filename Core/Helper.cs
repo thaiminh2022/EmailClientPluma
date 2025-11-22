@@ -1,7 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
+using EmailClientPluma.Core.Services.Accounting;
 using MailKit;
-using System;
 using System.IO;
 
 namespace EmailClientPluma.Core
