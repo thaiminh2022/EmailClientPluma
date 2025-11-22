@@ -9,12 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="QuillEditor\quilljs.js" />
     <None Remove="QuillEditor\script.js" />
     <None Remove="QuillEditor\style.css" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="QuillEditor\index.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="QuillEditor\quilljs.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="QuillEditor\script.js">

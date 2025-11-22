@@ -53,6 +53,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             IList<IMessageSummary> summaries;
 
             // We dont have any emails of this account in the database
+            // first fetch
             if (lastUid is null)
             {
 
