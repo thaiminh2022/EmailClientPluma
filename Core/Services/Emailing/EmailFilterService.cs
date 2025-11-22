@@ -94,9 +94,9 @@ public class EmailFilterOptions : INotifyPropertyChanged
         set { if (_hasAttachment != value) { _hasAttachment = value; OnPropertyChanged(); } }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected void OnPropertyChanged(string propertyName = null)
+    protected void OnPropertyChanged(string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
