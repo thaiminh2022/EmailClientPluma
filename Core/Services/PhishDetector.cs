@@ -209,23 +209,23 @@ namespace EmailClientPluma.Core.Services
                 "yahoo.co.jp", "proton.me", "protonmail.com","gmail.com", 
 
                 // --- Identity / authentication ---
-                "accounts.google.com", "login.microsoftonline.com", 
+                "accounts.google.com", "login.microsoftonline.com",
                 "appleid.apple.com", "auth0.com", "okta.com",
 
                 // --- Banks & payment (global) ---
                 "paypal.com", "stripe.com", "visa.com", "mastercard.com", "americanexpress.com",
 
                 // --- E-commerce ---
-                "amazonaws.com", "alibaba.com", "aliexpress.com", 
+                "amazonaws.com", "alibaba.com", "aliexpress.com",
                 "ebay.com", "shopify.com", "amazon.com",
 
                 // --- Social media ---
                 "facebook.com", "fb.com", "messenger.com",
-                "instagram.com", "tiktok.com", "x.com", "twitter.com", 
+                "instagram.com", "tiktok.com", "x.com", "twitter.com",
                 "linkedin.com", "reddit.com", "discord.com",
 
                 // --- Developer / code hosting ---
-                "github.com", "githubusercontent.com", "gitlab.com", "bitbucket.org", 
+                "github.com", "githubusercontent.com", "gitlab.com", "bitbucket.org",
                 "stackexchange.com", "stackoverflow.com", "cloudflare.com", "vercel.com",
 
                 // --- Cloud platforms ---

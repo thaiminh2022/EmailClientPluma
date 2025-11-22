@@ -1,10 +1,10 @@
-﻿using EmailClientPluma.Core.Models;
+﻿using Dapper;
+using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Accounting;
+using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
 using System.Windows;
-using Dapper;
-using EmailClientPluma.Core.Services.Accounting;
-using EmailClientPluma.Core.Services.Storaging;
 
 namespace EmailClientPluma.Core.Services
 {
@@ -74,7 +74,7 @@ namespace EmailClientPluma.Core.Services
                             VALUES (@ProviderUID, @Provider, @Email, @DisplayName);
                           ";
 
-            var affected = await connection.ExecuteAsync(sql, new 
+            var affected = await connection.ExecuteAsync(sql, new
             {
                 account.ProviderUID,
                 Provider = account.Provider.ToString(),

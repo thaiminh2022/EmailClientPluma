@@ -17,15 +17,16 @@ namespace EmailClientPluma.Core.Services
 
         TView IWindowFactory.CreateWindow<TView, TViewModel>()
         {
-             var vm = _serviceProvider.GetRequiredService<TViewModel>();
-             var window = new TView
-             {
+            var vm = _serviceProvider.GetRequiredService<TViewModel>();
+            var window = new TView
+            {
                 DataContext = vm
-             };
+            };
 
             if (vm is IRequestClose rc)
             {
-                rc.RequestClose += (_, result) => { 
+                rc.RequestClose += (_, result) =>
+                {
                     window.DialogResult = result;
                     window.Close();
                 };

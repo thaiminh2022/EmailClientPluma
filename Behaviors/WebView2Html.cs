@@ -1,5 +1,4 @@
-﻿using EmailClientPluma.Core.Services;
-using Microsoft.Web.WebView2.Wpf;
+﻿using Microsoft.Web.WebView2.Wpf;
 using System.Windows;
 
 namespace EmailClientPluma.Behaviors

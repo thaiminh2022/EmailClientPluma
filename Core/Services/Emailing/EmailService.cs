@@ -65,7 +65,8 @@ namespace EmailClientPluma.Core.Services.Emailing
                     MessageSummaryItems.Envelope |
                     MessageSummaryItems.UniqueId |
                     MessageSummaryItems.Size);
-            }else
+            }
+            else
             {
                 if (!inbox.UidNext.HasValue)
                 {
@@ -79,7 +80,8 @@ namespace EmailClientPluma.Core.Services.Emailing
                         MessageSummaryItems.Envelope |
                         MessageSummaryItems.UniqueId |
                         MessageSummaryItems.Size);
-                }else
+                }
+                else
                 {
                     var maxUidOnServer = inbox.UidNext.Value.Id - 1u;
                     if (maxUidOnServer <= lastUid.Value)
@@ -109,8 +111,8 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                 if (item.Size != null)
                     email.MessageParts.EmailSizeInKb = item.Size.Value / 1024.0;
-                
-                acc.Emails.Add(email);  
+
+                acc.Emails.Add(email);
                 await _storageService.StoreEmailAsync(acc, email);
             }
 

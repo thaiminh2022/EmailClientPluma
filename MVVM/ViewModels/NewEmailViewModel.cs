@@ -74,7 +74,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                     MessageBox.Show(ex.Message);
                     RequestClose?.Invoke(this, false);
                 }
-                
+
 
             });
 
@@ -85,7 +85,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
         // This should not be matter because this is for UI type hinting
-        #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public NewEmailViewModel() { }
     }
 }

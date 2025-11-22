@@ -6,9 +6,7 @@ using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Windows;
-using System.Windows.Data;
 using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels
@@ -21,9 +19,10 @@ namespace EmailClientPluma.MVVM.ViewModels
         readonly IEmailFilterService _filterService;
 
         // A list of logined account
-        public ObservableCollection<Account> Accounts { 
-            get; 
-            private set; 
+        public ObservableCollection<Account> Accounts
+        {
+            get;
+            private set;
         }
         // Account selected in the list view
 
@@ -184,7 +183,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                     default:
                         return;
                 }
-                
+
 
             }, _ => SelectedAccount is not null);
 
