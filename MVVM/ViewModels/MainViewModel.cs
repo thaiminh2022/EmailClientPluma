@@ -136,19 +136,20 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService, IEmailFilterService emailFilterService)
         {
-            FilteredEmails = new();
             _accountService = accountService;
             _windowFactory = windowFactory;
             _emailService = emailService;
             _filterService = emailFilterService;
 
-            Accounts = _accountService.GetAccounts();
-
-            //SelectedAccount = Accounts.First();
+            // make list auto sort descending by date
+            FilteredEmails = [];
             Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
 
 
+            Accounts = _accountService.GetAccounts();
+            SelectedAccount = Accounts.First();
 
+            // COMMANDS
             AddAccountCommand = new RelayCommand(async _ =>
             {
                 // TODO: ADd more provider
@@ -211,7 +212,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             var token = _filterCts.Token;
 
             FilteredEmails.Clear();
-            foreach (var email in SelectedAccount.Emails)
+            foreach (var email in SelectedAccount.Emails.OrderByDescending(x => x.MessageParts.Date))
             {
                 if (await _filterService.MatchFiltersAsync(email, Filters, token))
                 {
