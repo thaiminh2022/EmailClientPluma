@@ -5,6 +5,7 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
@@ -30,17 +31,35 @@ namespace EmailClientPluma.MVVM.ViewModels
         private Account? _selectedAccount;
         public Account? SelectedAccount
         {
-            get { return _selectedAccount; }
+            get => _selectedAccount;
             set
             {
+                if (_selectedAccount == value) return;
+
+                if (_selectedAccount != null)
+                    _selectedAccount.Emails.CollectionChanged -= Emails_CollectionChanged;
+
                 _selectedAccount = value;
                 OnPropertyChanges();
 
-                //Mouse.OverrideCursor = Cursors.Wait;
+                FilteredEmails.Clear();
 
-                //_ = FetchNewHeaders();
-                _ = UpdateFilteredEmailsAsync();
+                if (_selectedAccount != null)
+                {
+                    _selectedAccount.Emails.CollectionChanged += Emails_CollectionChanged;
+
+                    // Initial fill
+                    _ = UpdateFilteredEmailsAsync();
+                }
+
+                // _ = FetchNewHeaders();
             }
+        }
+
+        private async void Emails_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            MessageBox.Show("Message recieved");
+            await UpdateFilteredEmailsAsync();
         }
 
         private async Task FetchNewHeaders()
@@ -85,7 +104,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
 
         private CancellationTokenSource? _filterCts; //cancellation when filtering
-        public ICollectionView? FilteredEmails { get; private set; }
+        public ObservableCollection<Email> FilteredEmails { get; private set; }
         public EmailFilterOptions Filters { get; } = new(); // Filter options
 
         async Task FetchEmailBody()
@@ -117,6 +136,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService, IEmailFilterService emailFilterService)
         {
+            FilteredEmails = new();
             _accountService = accountService;
             _windowFactory = windowFactory;
             _emailService = emailService;
@@ -163,7 +183,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                     default:
                         return;
                 }
-                ;
+                
 
             }, _ => SelectedAccount is not null);
 
@@ -181,29 +201,23 @@ namespace EmailClientPluma.MVVM.ViewModels
         {
             if (SelectedAccount == null)
             {
-                FilteredEmails = null;
-                OnPropertyChanges(nameof(FilteredEmails));
+                FilteredEmails.Clear();
                 return;
             }
-
-            var emails = SelectedAccount.Emails;
 
             // Cancel previous filter if running
             _filterCts?.Cancel();
             _filterCts = new CancellationTokenSource();
             var token = _filterCts.Token;
 
-            var filteredList = new List<Email>();
-            foreach (var email in emails)
+            FilteredEmails.Clear();
+            foreach (var email in SelectedAccount.Emails)
             {
                 if (await _filterService.MatchFiltersAsync(email, Filters, token))
                 {
-                    filteredList.Add(email);
+                    FilteredEmails.Add(email);
                 }
             }
-
-            FilteredEmails = CollectionViewSource.GetDefaultView(filteredList);
-            OnPropertyChanges(nameof(FilteredEmails));
         }
         #endregion
 
