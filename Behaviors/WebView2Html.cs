@@ -1,4 +1,5 @@
-﻿using Microsoft.Web.WebView2.Wpf;
+﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 using System.Windows;
 
 namespace EmailClientPluma.Behaviors
@@ -26,6 +27,7 @@ namespace EmailClientPluma.Behaviors
                 await wv2.EnsureCoreWebView2Async();
 
             // Continue viewing email
+            wv2.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
             wv2.CoreWebView2.NavigateToString(html);
         }
 

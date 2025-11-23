@@ -161,11 +161,15 @@ namespace EmailClientPluma.Core.Services.Emailing
                             if (fetchCount <= 0)
                                 continue;
 
-                            // fetch the headers only of course, 
+                            // fetch the headers
                             var start = Math.Max(0, newInboxCount - fetchCount);
-                            var summaries = await inbox.FetchAsync(start, newInboxCount - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId, cancellationToken);
+                            var summaries = await inbox.FetchAsync(start, newInboxCount - 1,
+                                MessageSummaryItems.Envelope |
+                                MessageSummaryItems.UniqueId,
+                                cancellationToken
+                            );
 
-                            // Rebuilding the email from summary
+                            // Rebuilding the email from summaries
                             List<Email> emails = [];
                             foreach (var item in summaries)
                             {
@@ -177,17 +181,20 @@ namespace EmailClientPluma.Core.Services.Emailing
                                     continue;
                                 }
 
+                                //fetch the full body
                                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+                                var message = await inbox.GetMessageAsync(item.UniqueId, cancellationToken);
+                                email.MessageParts.Body = message.HtmlBody;
 
                                 // Store the newly fetched email
                                 await _storageService.StoreEmailAsync(acc, email);
 
                                 // Does not support UI change from a different thread, so we calling the original thread
-
                                 emails.Add(email);
 
                                 // No point of doing this, since if we reconnect, we gonna recall ids anyway
                                 // just put this here so i dont forget why we should not do this
+
                                 //monitor.KnownUids.Add(email.MessageIdentifiers.ImapUID);
                             }
 
@@ -203,7 +210,6 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                         // Disconnect and be ready for the next reconnect
                         await imap.DisconnectAsync(true);
-
                     }
                     catch (OperationCanceledException)
                     {

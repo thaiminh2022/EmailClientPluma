@@ -17,6 +17,7 @@ namespace EmailClientPluma.Core.Services.Emailing
         Task SendEmailAsync(Account acc, Email.OutgoingEmail email);
 
         Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30);
+        Task<bool> FetchOlderHeadersAsync(Account acc, int window, CancellationToken token = default);
     }
     internal class EmailService : IEmailService
     {
@@ -62,6 +63,21 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             return maxUid;
         }
+        private async Task<uint?> GetOldestSyncedUidAsync(Account acc, string folderFullName, uint uidValidity)
+        {
+            var emails = await _storageService.GetEmailsAsync(acc);
+
+            var minUid = emails
+               .Where(e =>
+                   string.Equals(e.MessageIdentifiers.FolderFullName, folderFullName, StringComparison.OrdinalIgnoreCase)
+                   && e.MessageIdentifiers.ImapUIDValidity == uidValidity)
+               .Select(e => (uint?)e.MessageIdentifiers.ImapUID)
+               .DefaultIfEmpty(null)
+               .Min();
+
+            return minUid;
+        }
+
         static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
         {
             var message = new MimeMessage();
@@ -199,7 +215,8 @@ namespace EmailClientPluma.Core.Services.Emailing
                 await FetchEmailBodyInternal(imap, email);
 
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 MessageBoxHelper.Error(ex.Message);
             }
         }
@@ -213,33 +230,33 @@ namespace EmailClientPluma.Core.Services.Emailing
             var uniqueID = new UniqueId(email.MessageIdentifiers.ImapUID);
 
 
-                var bodies = await folder.FetchAsync([uniqueID], MessageSummaryItems.BodyStructure);
-                var bodyParts = bodies?.FirstOrDefault();
-                if (bodies is null || bodyParts is null)
-                {
-                    email.MessageParts.Body = "(Unable to fetch body)";
-                    return;
-                }
+            var bodies = await folder.FetchAsync([uniqueID], MessageSummaryItems.BodyStructure);
+            var bodyParts = bodies?.FirstOrDefault();
+            if (bodies is null || bodyParts is null)
+            {
+                email.MessageParts.Body = "(Unable to fetch body)";
+                return;
+            }
 
-                var chosen = bodyParts.HtmlBody ?? bodyParts.TextBody;
-                if (chosen is null)
+            var chosen = bodyParts.HtmlBody ?? bodyParts.TextBody;
+            if (chosen is null)
+            {
+                email.MessageParts.Body = "(No Body)";
+            }
+            else
+            {
+                var entity = await folder.GetBodyPartAsync(uniqueID, chosen);
+                if (entity is TextPart textPart)
                 {
-                    email.MessageParts.Body = "(No Body)";
+                    email.MessageParts.Body = textPart.Text;
                 }
                 else
                 {
-                    var entity = await folder.GetBodyPartAsync(uniqueID, chosen);
-                    if (entity is TextPart textPart)
-                    {
-                        email.MessageParts.Body = textPart.Text;
-                    }
-                    else
-                    {
-                        email.MessageParts.Body = "(No Body)";
-                    }
+                    email.MessageParts.Body = "(No Body)";
                 }
+            }
 
-                await _storageService.UpdateEmailBodyAsync(email);
+            await _storageService.UpdateEmailBodyAsync(email);
         }
 
         public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
@@ -253,7 +270,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             if (candidates.Count == 0)
                 return;
 
-            using var imap =await ConnectImapAsync(acc);
+            using var imap = await ConnectImapAsync(acc);
             try
             {
                 foreach (var candidate in candidates)
@@ -263,10 +280,69 @@ namespace EmailClientPluma.Core.Services.Emailing
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.Error(ex.Message);    
+                MessageBoxHelper.Error(ex.Message);
             }
         }
+        public async Task<bool> FetchOlderHeadersAsync(Account acc, int window, CancellationToken token = default)
+        {
+            if (acc.NoMoreOlderEmail) return false;
 
+            using var imap = await ConnectImapAsync(acc, token);
+            var inbox = imap.Inbox;
+            await inbox.OpenAsync(FolderAccess.ReadOnly, token);
+
+            if (inbox.Count == 0)
+                return false;
+
+            var serverUidValidity = inbox.UidValidity;
+
+            // oldest cache locally
+            uint? oldestUid = await GetOldestSyncedUidAsync(acc, inbox.FullName, serverUidValidity);
+
+            // no emails, let the other function handle
+            if (oldestUid is null)
+                return false;
+
+            if (oldestUid.Value <= 1)
+            {
+                acc.NoMoreOlderEmail = true;
+                return false;
+            }
+
+            // Compute range of UIDs to fetch: [startUid .. endUid]
+            uint endId = oldestUid.Value - 1; // just before our oldest
+            uint startId = endId >= (uint)window
+                ? endId - (uint)window + 1
+                : 1u;
+
+            var startUid = new UniqueId(startId);
+            var endUid = new UniqueId(endId);
+            var range = new UniqueIdRange(startUid, endUid);
+
+            var summaries = await inbox.FetchAsync(
+                range,
+                MessageSummaryItems.Envelope |
+                MessageSummaryItems.UniqueId |
+                MessageSummaryItems.Size,
+                token);
+
+            if (summaries == null || summaries.Count == 0)
+                return false;
+
+            // Make sure we add them in ascending UID order
+            foreach (var item in summaries.OrderBy(s => s.UniqueId.Id))
+            {
+                var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+
+                if (item.Size != null)
+                    email.MessageParts.EmailSizeInKb = item.Size.Value / 1024.0;
+
+                acc.Emails.Add(email);
+                await _storageService.StoreEmailAsync(acc, email);
+            }
+
+            return true;
+        }
         public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
         {
             // Constructing the email
@@ -279,11 +355,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
- 
+
         #endregion
-
-
-
-     
     }
 }

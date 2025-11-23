@@ -23,6 +23,8 @@ namespace EmailClientPluma.Core
             }
         }
 
+
+
         public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
         {
             _execute = execute;

@@ -20,6 +20,7 @@ namespace EmailClientPluma.Core.Models
 
         // NOT STORED
         public bool FirstTimeHeaderFetched = false;
+        public bool NoMoreOlderEmail = false;
 
 
         public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
