@@ -4,7 +4,7 @@ using MailKit.Net.Imap;
 using MailKit.Security;
 using System.Windows;
 
-namespace EmailClientPluma.Core.Services
+namespace EmailClientPluma.Core.Services.Emailing
 {
 
     interface IEmailMonitoringService
@@ -39,7 +39,7 @@ namespace EmailClientPluma.Core.Services
 
         public void StartMonitor(Account acc)
         {
-            lock(_lock)
+            lock (_lock)
             {
                 if (_monitors.ContainsKey(acc.ProviderUID))
                     return;
@@ -50,14 +50,15 @@ namespace EmailClientPluma.Core.Services
 
                 // SPAWN A THREAD (tiểu trình) to monitor 
                 // Hệ Điều Hành bài tiến trình =))
-                _ = StartMonitorEmail(acc, monitor).ContinueWith(task => { 
+                _ = StartMonitorEmail(acc, monitor).ContinueWith(task =>
+                {
                     if (task.IsFaulted)
                     {
-                        
+                        // idk
                     }
                 });
             }
-            
+
         }
 
         async Task StartMonitorEmail(Account acc, AccountMonitor monitor)
@@ -118,7 +119,8 @@ namespace EmailClientPluma.Core.Services
                                 {
                                     // THIS BLOCK WILL WAIT UNTIL TIMEOUT OR A CHANGE IN INBOX (NEW MESSAGE ARRIVE, MESSAGE DELETED)
                                     await imap.IdleAsync(linked.Token).ConfigureAwait(false);
-                                }else
+                                }
+                                else
                                 {
                                     // Incase the server does not have the idle feature
                                     // PING it manually every 9 minutes
@@ -159,11 +161,15 @@ namespace EmailClientPluma.Core.Services
                             if (fetchCount <= 0)
                                 continue;
 
-                            // fetch the headers only of course, 
+                            // fetch the headers
                             var start = Math.Max(0, newInboxCount - fetchCount);
-                            var summaries = await inbox.FetchAsync(start, newInboxCount - 1, MessageSummaryItems.Envelope | MessageSummaryItems.UniqueId, cancellationToken);
+                            var summaries = await inbox.FetchAsync(start, newInboxCount - 1,
+                                MessageSummaryItems.Envelope |
+                                MessageSummaryItems.UniqueId,
+                                cancellationToken
+                            );
 
-                            // Rebuilding the email from summary
+                            // Rebuilding the email from summaries
                             List<Email> emails = [];
                             foreach (var item in summaries)
                             {
@@ -174,8 +180,15 @@ namespace EmailClientPluma.Core.Services
                                 {
                                     continue;
                                 }
+                            
 
+                                //fetch the full body
                                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+                                if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
+                                    continue;
+
+                                var message = await inbox.GetMessageAsync(item.UniqueId, cancellationToken);
+                                email.MessageParts.Body = message.HtmlBody;
 
                                 // Store the newly fetched email
                                 await _storageService.StoreEmailAsync(acc, email);
@@ -183,9 +196,10 @@ namespace EmailClientPluma.Core.Services
                                 // Does not support UI change from a different thread, so we calling the original thread
 
                                 emails.Add(email);
-                                
+
                                 // No point of doing this, since if we reconnect, we gonna recall ids anyway
                                 // just put this here so i dont forget why we should not do this
+
                                 //monitor.KnownUids.Add(email.MessageIdentifiers.ImapUID);
                             }
 
@@ -193,16 +207,17 @@ namespace EmailClientPluma.Core.Services
                             {
                                 foreach (var email in emails)
                                 {
+                                    if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
+                                        continue;
+
                                     acc.Emails.Add(email);
                                 }
                             });
 
-                            
                         }
 
                         // Disconnect and be ready for the next reconnect
                         await imap.DisconnectAsync(true);
-
                     }
                     catch (OperationCanceledException)
                     {
@@ -213,14 +228,14 @@ namespace EmailClientPluma.Core.Services
                     {
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            MessageBox.Show($"Problem with monitoring email: {ex.Message}");
+                            MessageBoxHelper.Error($"Problem with monitoring email: {ex.Message}");
                         });
 
                         // Wait 10 sec to retry connect
                         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                     }
                 }
-            } 
+            }
             finally
             {
                 // Exit the tracking, meaning someone finally called stop

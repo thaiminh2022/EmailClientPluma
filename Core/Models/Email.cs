@@ -1,4 +1,6 @@
-﻿namespace EmailClientPluma.Core.Models
+﻿using System.Globalization;
+
+namespace EmailClientPluma.Core.Models
 {
     internal class Email : ObserableObject
     {
@@ -30,16 +32,17 @@
             required public string From { get; set; }
             required public string To { get; set; }
             required public DateTimeOffset? Date { get; set; }
+            public string DateDisplay => Date?.ToLocalTime().DateTime.ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
 
             public double EmailSizeInKb { get; set; } = 0;
 
             public IEnumerable<Attachment> Attachments { get; set; } = [];
         }
-        
+
         internal class OutgoingEmail : DataParts
         {
+            required public string? InReplyTo { get; set; }
             required public string? ReplyTo { get; set; }
-
         }
 
 
@@ -55,7 +58,7 @@
         }
     }
 
- 
+
 
     internal record Attachment
     {

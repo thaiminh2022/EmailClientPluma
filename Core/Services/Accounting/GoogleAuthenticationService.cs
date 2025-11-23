@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Storaging;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
@@ -7,7 +8,7 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
 using System.Windows;
 
-namespace EmailClientPluma.Core.Services
+namespace EmailClientPluma.Core.Services.Accounting
 {
 
     /// <summary>
@@ -54,7 +55,7 @@ namespace EmailClientPluma.Core.Services
                 var userInfo = await oauth2.Userinfo.Get().ExecuteAsync();
                 if (userInfo == null)
                 {
-                    MessageBox.Show("Cannot find user info");
+                    MessageBoxHelper.Error("Cannot find user info");
                     return null;
                 }
 
@@ -72,16 +73,16 @@ namespace EmailClientPluma.Core.Services
                 if (ex.HttpStatusCode == System.Net.HttpStatusCode.Unauthorized ||
                     ex.HttpStatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    MessageBox.Show("Nguoi dung khong duoc phep dang nhap");
+                    MessageBoxHelper.Error("Nguoi dung khong duoc phep dang nhap");
                 }
             }
             catch (TokenResponseException ex)
             {
-                MessageBox.Show($"Nguoi dung huy dang nhap: {ex.Error}");
+                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex.Error}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
             return null;
         }
@@ -97,7 +98,6 @@ namespace EmailClientPluma.Core.Services
 
             if (tokenRes.IsStale)
             {
-                //MessageBox.Show("Token is stale");
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
                 {
                     ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
@@ -135,7 +135,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (TaskCanceledException ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
             return false;
         }

@@ -1,10 +1,10 @@
 ﻿using EmailClientPluma.Core.Models;
-
+using EmailClientPluma.Core.Services.Emailing;
 using System.Collections.ObjectModel;
 using System.Windows;
 
 
-namespace EmailClientPluma.Core.Services
+namespace EmailClientPluma.Core.Services.Accounting
 {
     enum Provider
     {
@@ -36,7 +36,7 @@ namespace EmailClientPluma.Core.Services
         readonly ObservableCollection<Account> _accounts;
 
         public AccountService(
-            IEnumerable<IAuthenticationService> authServices, 
+            IEnumerable<IAuthenticationService> authServices,
             IStorageService storageService,
             IEmailService emailService,
             IEmailMonitoringService emailMonitoringService
@@ -50,7 +50,7 @@ namespace EmailClientPluma.Core.Services
 
             _accounts.CollectionChanged += Accounts_CollectionChanged;
 
-            var _ = Initialize();
+            _ = Initialize();
         }
 
         private async void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -88,13 +88,13 @@ namespace EmailClientPluma.Core.Services
 
                     if (await ValidateAccountAsync(acc))
                     {
-                        await StartMonitoringAsync(acc);  
+                        await StartMonitoringAsync(acc);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Account intialize exception: " + ex.Message);
+                MessageBoxHelper.Error("Account intialize exception: ", ex.Message);
             }
 
         }
@@ -179,7 +179,7 @@ namespace EmailClientPluma.Core.Services
 
         public async Task StartMonitoringAsync(Account acc)
         {
-            bool accountValid= await  ValidateAccountAsync(acc);
+            bool accountValid = await ValidateAccountAsync(acc);
             if (!accountValid)
                 return;
             _emailMonitoringService.StartMonitor(acc);
@@ -187,7 +187,7 @@ namespace EmailClientPluma.Core.Services
 
         public void StopMonitoring(Account acc)
         {
-             _emailMonitoringService.StopMonitor(acc);
+            _emailMonitoringService.StopMonitor(acc);
         }
     }
 }

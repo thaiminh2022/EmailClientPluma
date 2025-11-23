@@ -1,6 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
 using System.ComponentModel;
-using System.Windows.Interop;
 
 public class EmailFilterOptions : INotifyPropertyChanged
 {
@@ -95,9 +94,9 @@ public class EmailFilterOptions : INotifyPropertyChanged
         set { if (_hasAttachment != value) { _hasAttachment = value; OnPropertyChanged(); } }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    protected void OnPropertyChanged(string propertyName = null)
+    protected void OnPropertyChanged(string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
@@ -207,10 +206,10 @@ class EmailFilterService : IEmailFilterService
         switch (opt.MailboxIndex)
         {
             case 1: // Inbox
-               
+
                 break;
             case 2: // Sent
-                
+
                 break;
         }
 
@@ -226,7 +225,7 @@ class EmailFilterService : IEmailFilterService
             if (!match) return false;
         }
 
-        if(opt.HasAttachment)
+        if (opt.HasAttachment)
         {
             if (email.Attachments == null || !email.Attachments.Any())
                 return false;

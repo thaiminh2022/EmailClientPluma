@@ -1,7 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
+using EmailClientPluma.Core.Services.Accounting;
 using MailKit;
-using System;
 using System.IO;
 
 namespace EmailClientPluma.Core
@@ -64,6 +63,12 @@ namespace EmailClientPluma.Core
             );
 
             return email;
+        }
+
+        public static bool IsEmailEqual(Email a, Email b)
+        {
+            return string.Equals(a.MessageIdentifiers.OwnerAccountID, b.MessageIdentifiers.OwnerAccountID) && 
+                   string.Equals(a.MessageIdentifiers.MessageID, b.MessageIdentifiers.MessageID);
         }
     }
 }

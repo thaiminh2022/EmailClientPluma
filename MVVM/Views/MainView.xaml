@@ -16,51 +16,69 @@
     mc:Ignorable="d">
 
     <Window.DataContext>
-        <viewmodels:MainViewModel />
+        <viewmodels:MainViewModel/>
     </Window.DataContext>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!--  Filter  -->
-        <Grid Grid.Row="1" Margin="10">
+        <Grid Grid.Row="1"
+              Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" />
-                <ColumnDefinition x:Name="CenterColumn" Width="*" />
-                <ColumnDefinition x:Name="RightColumn" Width="auto" />
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition x:Name="CenterColumn"
+                                  Width="*"/>
+                <ColumnDefinition x:Name="RightColumn"
+                                  Width="auto"/>
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0">
                 <StackPanel VerticalAlignment="top">
-                    <Button Margin="0,0,0,2" Content="Inbox" />
-                    <Button Margin="0,0,0,2" Content="Flagged" />
-                    <Button Margin="0,0,0,2" Content="Sent" />
-                    <Button Margin="0,0,0,2" Content="Drafts" />
-                    <Button Margin="0,0,0,2" Content="Important" />
-                    <Button Margin="0,0,0,2" Content="Scheduled" />
-                    <Button Margin="0,0,0,2" Content="Spam" />
-                    <Button Margin="0,0,0,2" Content="Trash" />
+                    <Button Margin="0,0,0,2"
+                            Content="Inbox"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Flagged"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Sent"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Drafts"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Important"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Scheduled"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Spam"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Trash"/>
                     <Separator
                         Height="5"
                         Margin="0,2"
                         Background="{DynamicResource TextBrush}"
-                        Opacity="1" />
-                    <TextBlock FontWeight="Bold" Text="Category" />
-                    <Button Margin="0,2" Content="Ad" />
-                    <Button Margin="0,2" Content="Social" />
-                    <Button Margin="0,2" Content="Forum" />
-                    <Button Margin="0,2" Content="Promotions" />
+                        Opacity="1"/>
+                    <TextBlock FontWeight="Bold"
+                               Text="Category"/>
+                    <Button Margin="0,2"
+                            Content="Ad"/>
+                    <Button Margin="0,2"
+                            Content="Social"/>
+                    <Button Margin="0,2"
+                            Content="Forum"/>
+                    <Button Margin="0,2"
+                            Content="Promotions"/>
                     <Separator
                         Height="5"
                         Margin="0,2"
                         Background="{DynamicResource TextBrush}"
-                        Opacity="1" />
-                    <Button Margin="0,0,0,2" Content="Create new label" />
-                    <TextBlock FontWeight="Bold" Text="Labels" />
-                    <ListView />
+                        Opacity="1"/>
+                    <Button Margin="0,0,0,2"
+                            Content="Create new label"/>
+                    <TextBlock FontWeight="Bold"
+                               Text="Labels"/>
+                    <ListView/>
 
                 </StackPanel>
             </Border>
@@ -93,7 +111,7 @@
                                     <TextBlock
                                         Foreground="{DynamicResource TextBrush}"
                                         Text="{Binding MessageParts.Subject}"
-                                        TextTrimming="CharacterEllipsis" />
+                                        TextTrimming="CharacterEllipsis"/>
                                 </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -112,9 +130,9 @@
                 Visibility="Collapsed">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <!--  Toolbar  -->
@@ -123,16 +141,18 @@
                         Width="50"
                         HorizontalAlignment="Left"
                         Click="CloseBtn_Click"
-                        Content="Close" />
+                        Content="Close"/>
                     <StackPanel
                         Margin="0,0,0,0"
                         HorizontalAlignment="Right"
                         Orientation="Horizontal">
 
-                        <ToggleButton Margin="5,0" Background="{DynamicResource AccentBrush}">
+                        <ToggleButton Margin="5,0"
+                                      Background="{DynamicResource AccentBrush}">
                             IsFlag
                         </ToggleButton>
                         <Button Command="{Binding ReplyCommand}">Reply</Button>
+
                     </StackPanel>
 
 
@@ -143,24 +163,40 @@
                         DataContext="{Binding SelectedEmail}">
                         <StackPanel.Style>
                             <Style TargetType="{x:Type StackPanel}">
-                                <Setter Property="Visibility" Value="Visible" />
+                                <Setter Property="Visibility"
+                                        Value="Visible"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    <DataTrigger Binding="{Binding}"
+                                                 Value="{x:Null}">
+                                        <Setter Property="Visibility"
+                                                Value="Collapsed"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
 
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock FontWeight="Bold" Text="From: " />
-                            <TextBlock Text="{Binding MessageParts.From}" />
+                            <TextBlock FontWeight="Bold"
+                                       Text="Date: "/>
+                            <TextBlock Text="{Binding MessageParts.DateDisplay}"/>
                         </StackPanel>
 
-                        <TextBlock Text="To: YOU" />
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock FontWeight="Bold" Text="Subject: " />
-                            <TextBlock Text="{Binding MessageParts.Subject}" />
+                            <TextBlock FontWeight="Bold"
+                                       Text="From: "/>
+                            <TextBlock Text="{Binding MessageParts.From}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold"
+                                       Text="To: "/>
+                            <TextBlock Text="{Binding MessageParts.To}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold"
+                                       Text="Subject: "/>
+                            <TextBlock Text="{Binding MessageParts.Subject}"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -169,7 +205,7 @@
                         Grid.Row="2"
                         Margin="0,10,0,0"
                         Style="{StaticResource WebViewContainerStyle}">
-                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" />
+                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}"/>
                     </Border>
                 </Grid>
             </Border>
@@ -180,105 +216,164 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Orientation="Horizontal">
-            <TextBlock FontWeight="Bold" Text="Search Mail" />
-            <TextBox Width="200"
-                 Margin="10,0,0,0"
-                 Text="{Binding Filters.SearchText, UpdateSourceTrigger=PropertyChanged}" />    
+            <TextBlock FontWeight="Bold"
+                       Text="Search Mail"/>
+            <TextBox
+                Width="200"
+                Margin="10,0,0,0"
+                Text="{Binding Filters.SearchText, UpdateSourceTrigger=PropertyChanged}"/>
             <Button
                 x:Name="MoreSearch"
                 Click="MoreSearch_Click"
-                Content="..." />
-            <Popup x:Name="MoreSearchPopup"
-       Placement="Bottom"
-       PlacementTarget="{Binding ElementName=MoreSearch}"
-       PopupAnimation="Scroll"
-       StaysOpen="False">
+                Content="..."/>
+            <Popup
+                x:Name="MoreSearchPopup"
+                Placement="Bottom"
+                PlacementTarget="{Binding ElementName=MoreSearch}"
+                PopupAnimation="Scroll"
+                StaysOpen="False">
                 <Border>
                     <StackPanel Margin="0,0,0,0">
-                        <!-- From -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="From" />
-                            <TextBox Width="300" Text="{Binding Filters.From, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  From  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="From"/>
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.From, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- To -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="To" />
-                            <TextBox Width="300" Text="{Binding Filters.To, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  To  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="To"/>
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.To, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Subject -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Subject" />
-                            <TextBox Width="300" Text="{Binding Filters.Subject, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  Subject  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Subject"/>
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.Subject, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Has the words -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Has the words" />
-                            <TextBox Width="300" Text="{Binding Filters.HasWords, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  Has the words  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Has the words"/>
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.HasWords, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Doesn’t have -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Doesn’t have" />
-                            <TextBox Width="300" Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  Doesn’t have  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Doesn’t have"/>
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Size -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Size" />
-                            <ComboBox Width="100"
-                          SelectedIndex="{Binding Filters.SizeOperatorIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" 
-                          Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="greater than" />
-                                <ComboBoxItem Content="less than" />
+                        <!--  Size  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Size"/>
+                            <ComboBox
+                                Width="100"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                SelectedIndex="{Binding Filters.SizeOperatorIndex, Mode=TwoWay}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="greater than"/>
+                                <ComboBoxItem Content="less than"/>
                             </ComboBox>
-                            <TextBox Width="60" Margin="10,0" Text="{Binding Filters.SizeValue, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox Width="70"
-                          SelectedIndex="{Binding Filters.SizeUnitIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" 
-                          Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="MB" />
-                                <ComboBoxItem Content="KB" />
+                            <TextBox
+                                Width="60"
+                                Margin="10,0"
+                                Text="{Binding Filters.SizeValue, UpdateSourceTrigger=PropertyChanged}"/>
+                            <ComboBox
+                                Width="70"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                SelectedIndex="{Binding Filters.SizeUnitIndex, Mode=TwoWay}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="MB"/>
+                                <ComboBoxItem Content="KB"/>
                             </ComboBox>
                         </StackPanel>
 
-                        <!-- Date -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Date within" />
-                            <ComboBox Width="150"
-                          SelectedIndex="{Binding Filters.DateRangeIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" 
-                          Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="1 day" />
-                                <ComboBoxItem Content="1 week" />
-                                <ComboBoxItem Content="1 month" />
+                        <!--  Date  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Date within"/>
+                            <ComboBox
+                                Width="150"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                SelectedIndex="{Binding Filters.DateRangeIndex, Mode=TwoWay}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="1 day"/>
+                                <ComboBoxItem Content="1 week"/>
+                                <ComboBoxItem Content="1 month"/>
                             </ComboBox>
-                            <DatePicker Width="120" Margin="10,0,0,0" SelectedDate="{Binding Filters.SelectedDate, Mode=TwoWay}" />
+                            <DatePicker
+                                Width="120"
+                                Margin="10,0,0,0"
+                                SelectedDate="{Binding Filters.SelectedDate, Mode=TwoWay}"/>
                         </StackPanel>
 
-                        <!-- Search -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock Width="100" VerticalAlignment="Center" Text="Search" />
-                            <ComboBox Width="200"
-                          SelectedIndex="{Binding Filters.MailboxIndex, Mode=TwoWay}" 
-                          ItemContainerStyle="{StaticResource CustomComboItem}" 
-                          Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="All Mail" />
-                                <ComboBoxItem Content="Inbox" />
-                                <ComboBoxItem Content="Sent" />
+                        <!--  Search  -->
+                        <StackPanel Margin="0,5"
+                                    Orientation="Horizontal">
+                            <TextBlock
+                                Width="100"
+                                VerticalAlignment="Center"
+                                Text="Search"/>
+                            <ComboBox
+                                Width="200"
+                                ItemContainerStyle="{StaticResource CustomComboItem}"
+                                SelectedIndex="{Binding Filters.MailboxIndex, Mode=TwoWay}"
+                                Style="{StaticResource CustomCombo}">
+                                <ComboBoxItem Content="All Mail"/>
+                                <ComboBoxItem Content="Inbox"/>
+                                <ComboBoxItem Content="Sent"/>
                             </ComboBox>
                         </StackPanel>
 
-                        <!-- Footer -->
-                        <StackPanel Margin="0,15,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
-                            <CheckBox Margin="0,0,20,0" Content="Has attachment" 
-                          IsChecked="{Binding Filters.HasAttachment, Mode=TwoWay}" 
-                          Foreground="{DynamicResource TextBrush}" />
-                            <Button Width="100" Margin="0,0,10,0" Content="Create filter" Command="{Binding CreateFilterCommand}" />
-                            <Button Width="80" Content="Search" Command="{Binding ApplyFilterCommand}" />
+                        <!--  Footer  -->
+                        <StackPanel
+                            Margin="0,15,0,0"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                            <CheckBox
+                                Margin="0,0,20,0"
+                                Content="Has attachment"
+                                Foreground="{DynamicResource TextBrush}"
+                                IsChecked="{Binding Filters.HasAttachment, Mode=TwoWay}"/>
+                            <Button
+                                Width="100"
+                                Margin="0,0,10,0"
+                                Content="Create filter"/>
+                            <Button Width="80"
+                                    Content="Search"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -288,17 +383,39 @@
 
 
         <!--  Accounts  -->
-        <Button
-            x:Name="AccountSettingsButton"
-            Grid.Row="0"
-            Grid.Column="1"
-            Width="auto"
-            Height="auto"
-            Margin="0,0,20,0"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Click="Button_Click">
-            Accounts
+        <Button x:Name="AccountSettingsButton"
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="auto"
+                Height="auto"
+                Margin="0,0,20,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Click="Button_Click"
+        >
+            <TextBlock>
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <!-- default: SelectedAccount.DisplayName -->
+                        <Setter Property="Text"
+                                Value="{Binding SelectedAccount.DisplayName}" />
+                        <Style.Triggers>
+                            <!-- SelectedAccount is null -->
+                            <DataTrigger Binding="{Binding SelectedAccount}"
+                                         Value="{x:Null}">
+                                <Setter Property="Text"
+                                        Value="Accounts" />
+                            </DataTrigger>
+                            <!-- DisplayName is empty -->
+                            <DataTrigger Binding="{Binding SelectedAccount.DisplayName}"
+                                         Value="">
+                                <Setter Property="Text"
+                                        Value="Accounts" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+                </TextBlock>
         </Button>
         <Popup
             x:Name="AccountSettingsPopup"
@@ -317,7 +434,7 @@
                     <TextBlock
                         Margin="0,0,0,6"
                         FontWeight="Bold"
-                        Text="Accounts" />
+                        Text="Accounts"/>
                     <ListView
                         Height="120"
                         ItemsSource="{Binding Accounts}"
@@ -329,14 +446,17 @@
                                     Padding="6"
                                     Background="White"
                                     CornerRadius="5">
-                                    <TextBlock FontWeight="Medium" Text="{Binding DisplayName}" />
+                                    <TextBlock FontWeight="Medium"
+                                               Text="{Binding DisplayName}"/>
                                 </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0" Command="{Binding AddAccountCommand}">Add Account</Button>
-                    <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
+                    <Button Margin="0,8,0,0"
+                            Command="{Binding AddAccountCommand}">Add Account</Button>
+                    <Button Margin="0,4,0,0"
+                            Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>
         </Popup>
@@ -355,12 +475,17 @@
                 Background="{DynamicResource PrimaryBrush}"
                 Foreground="{DynamicResource ButtonForegroundBrush}"
                 Width="70" Height="30"/>
-
+            <Button Command="{Binding PreviousCommand}"
+                    Content="Prev"/>
+            <Button Command="{Binding NextCommand}"
+                    Content="Next"/>
+       
+            
             <Button
                 x:Name="ThemeToggle"
                 HorizontalAlignment="Left"
                 Click="ThemeToggle_Click"
-                Content="Theme" />
+                Content="Theme"/>
             <Popup
                 x:Name="ThemePopup"
                 AllowsTransparency="True"
@@ -376,21 +501,27 @@
                         <TextBlock
                             Margin="0,0,0,6"
                             FontWeight="Bold"
-                            Text="Choose theme" />
+                            Text="Choose theme"/>
                         <Button
                             x:Name="LightModeBtn"
                             Width="160"
                             Click="LightModeBtn_Click"
-                            Content="Light Mode" />
+                            Content="Light Mode"/>
                         <Button
                             x:Name="DarkModeBtn"
                             Width="160"
                             Margin="0,6,0,0"
                             Click="DarkModeBtn_Click"
-                            Content="Dark Mode" />
+                            Content="Dark Mode"/>
                     </StackPanel>
                 </Border>
             </Popup>
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding CurrentPage}" />
+                <TextBlock Text="/" />
+                <TextBlock Text="{Binding TotalPages}" />
+            </StackPanel>
         </StackPanel>
 
 
