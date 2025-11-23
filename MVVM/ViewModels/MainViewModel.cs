@@ -49,19 +49,18 @@ namespace EmailClientPluma.MVVM.ViewModels
 
                     // Initial fill
                     _ = UpdateFilteredEmailsAsync();
+                    _ = FetchNewHeadersAndPrefetchBody();
                 }
 
-                // _ = FetchNewHeaders();
             }
         }
 
         private async void Emails_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            MessageBox.Show("Message recieved");
             await UpdateFilteredEmailsAsync();
         }
 
-        private async Task FetchNewHeaders()
+        private async Task FetchNewHeadersAndPrefetchBody()
         {
             if (_selectedAccount is null)
                 return;
@@ -77,6 +76,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             await _emailService.FetchEmailHeaderAsync(_selectedAccount);
             _selectedAccount.FirstTimeHeaderFetched = true;
             Mouse.OverrideCursor = null;
+
+            await _emailService.PrefetchRecentBodiesAsync(_selectedAccount, 30);
         }
 
         private Email? _selectedEmail;
@@ -90,13 +91,12 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = Cursors.Wait;
                 var _ = FetchEmailBody();
                 OnPropertyChanges();
-                // MessageBox.Show(_selectedEmail.MessageParts.From);
 
 
                 if (_selectedEmail is not null && _selectedEmail.BodyFetched)
                 {
                     var result = PhishDetector.ValidateHtmlContent(_selectedEmail.MessageParts.Body ?? "");
-                    MessageBox.Show(result.ToString());
+                    MessageBoxHelper.Info(result.ToString());
                 }
 
             }
@@ -165,7 +165,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
                 if (sucess == true)
                 {
-                    MessageBox.Show("Message was sent");
+                    MessageBoxHelper.Info("Message was sent");
                 }
             }, _ => Accounts.Count > 0);
 
@@ -173,18 +173,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 if (SelectedAccount == null) return;
 
-                var result = MessageBox.Show($"Are you sure to remove {SelectedAccount.Email}?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                switch (result)
-                {
-                    case MessageBoxResult.Yes:
-                        _accountService.RemoveAccountAsync(SelectedAccount);
-                        SelectedAccount = null;
-                        break;
-                    default:
-                        return;
-                }
+                var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
+                if (result is null || result is false) return;
 
-
+                _accountService.RemoveAccountAsync(SelectedAccount);
+                SelectedAccount = null;
             }, _ => SelectedAccount is not null);
 
             ReplyCommand = new RelayCommand(_ =>

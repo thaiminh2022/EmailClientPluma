@@ -60,7 +60,7 @@ namespace EmailClientPluma.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBoxHelper.Error(ex.Message);
                 }
             }
 
@@ -171,7 +171,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+             MessageBoxHelper.Error(ex.Message);
             }
         }
 

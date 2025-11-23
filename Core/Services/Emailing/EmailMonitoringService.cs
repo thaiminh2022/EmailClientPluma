@@ -199,7 +199,6 @@ namespace EmailClientPluma.Core.Services.Emailing
                                 }
                             });
 
-
                         }
 
                         // Disconnect and be ready for the next reconnect
@@ -215,7 +214,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                     {
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            MessageBox.Show($"Problem with monitoring email: {ex.Message}");
+                            MessageBoxHelper.Error($"Problem with monitoring email: {ex.Message}");
                         });
 
                         // Wait 10 sec to retry connect

@@ -4,6 +4,8 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using Org.BouncyCastle.Crypto;
+using System.Threading;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Emailing
@@ -13,6 +15,8 @@ namespace EmailClientPluma.Core.Services.Emailing
         Task FetchEmailHeaderAsync(Account acc);
         Task FetchEmailBodyAsync(Account acc, Email email);
         Task SendEmailAsync(Account acc, Email.OutgoingEmail email);
+
+        Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30);
     }
     internal class EmailService : IEmailService
     {
@@ -25,13 +29,79 @@ namespace EmailClientPluma.Core.Services.Emailing
             _storageService = storageService;
         }
 
+        #region Helper
+
+        private async Task<ImapClient> ConnectImapAsync(Account acc, CancellationToken cancellationToken = default)
+        {
+            var imap = new ImapClient();
+
+            await imap.ConnectAsync(
+                Helper.GetImapHostByProvider(acc.Provider),
+                993,
+                SecureSocketOptions.SslOnConnect,
+                cancellationToken);
+
+            var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
+            await imap.AuthenticateAsync(oauth2, cancellationToken);
+
+            return imap;
+
+        }
+
+        private async Task<uint?> GetLastSyncedUidAsync(Account acc, string folderFullName, uint uidValidity)
+        {
+            var emails = await _storageService.GetEmailsAsync(acc);
+
+            var maxUid = emails
+               .Where(e =>
+                   string.Equals(e.MessageIdentifiers.FolderFullName, folderFullName, StringComparison.OrdinalIgnoreCase)
+                   && e.MessageIdentifiers.ImapUIDValidity == uidValidity) // NEW
+               .Select(e => (uint?)e.MessageIdentifiers.ImapUID)
+               .DefaultIfEmpty(null)
+               .Max();
+
+            return maxUid;
+        }
+        static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
+        {
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(acc.Email));
+
+            InternetAddressList internetAddresses = [];
+            foreach (var item in email.To.Split(','))
+            {
+                internetAddresses.Add(InternetAddress.Parse(item));
+            }
+            message.To.AddRange(internetAddresses);
+
+            message.Subject = email.Subject;
+            if (email.ReplyTo != null)
+            {
+                message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
+            }
+
+            var bodyBuilder = new BodyBuilder
+            {
+                HtmlBody = email.Body
+            };
+
+            foreach (var item in email.Attachments)
+            {
+                bodyBuilder.Attachments.Add(item.FileName, item.Content);
+            }
+            message.Body = bodyBuilder.ToMessageBody();
+
+            message.Date = email.Date ?? DateTimeOffset.Now;
+            return message;
+        }
+
+        #endregion
+
+        #region Interface Methods
         public async Task FetchEmailHeaderAsync(Account acc)
         {
             // authenticating process
-            using var imap = new ImapClient();
-            await imap.ConnectAsync(Helper.GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
-            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
-            await imap.AuthenticateAsync(oauth2);
+            using var imap = await ConnectImapAsync(acc);
 
             // open inbox
             var inbox = imap.Inbox;
@@ -105,7 +175,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                 }
             }
 
-            //Map summaries to Email + store
+            //Map summaries to Email and save to storage
             foreach (var item in summaries)
             {
                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
@@ -117,41 +187,32 @@ namespace EmailClientPluma.Core.Services.Emailing
                 await _storageService.StoreEmailAsync(acc, email);
             }
 
-            await imap.DisconnectAsync(true);
-
-        }
-
-        private async Task<uint?> GetLastSyncedUidAsync(Account acc, string folderFullName, uint uidValidity)
-        {
-            var emails = await _storageService.GetEmailsAsync(acc);
-
-            var maxUid = emails
-               .Where(e =>
-                   string.Equals(e.MessageIdentifiers.FolderFullName, folderFullName, StringComparison.OrdinalIgnoreCase)
-                   && e.MessageIdentifiers.ImapUIDValidity == uidValidity) // NEW
-               .Select(e => (uint?)e.MessageIdentifiers.ImapUID)
-               .DefaultIfEmpty(null)
-               .Max();
-
-            return maxUid;
         }
 
         public async Task FetchEmailBodyAsync(Account acc, Email email)
         {
             // authenticating process
-            using var imap = new ImapClient();
-            await imap.ConnectAsync(Helper.GetImapHostByProvider(acc.Provider), 993, SecureSocketOptions.SslOnConnect);
-            var oauth2 = new SaslMechanismOAuth2(new(acc.Email, acc.Credentials.SessionToken));
-            await imap.AuthenticateAsync(oauth2);
+            using var imap = await ConnectImapAsync(acc);
 
+            try
+            {
+                await FetchEmailBodyInternal(imap, email);
+
+            }
+            catch (Exception ex) {
+                MessageBoxHelper.Error(ex.Message);
+            }
+        }
+
+        private async Task FetchEmailBodyInternal(ImapClient imap, Email email)
+        {
             // open the folder the message is in
             var folder = await imap.GetFolderAsync(email.MessageIdentifiers.FolderFullName);
             await folder.OpenAsync(FolderAccess.ReadOnly);
 
             var uniqueID = new UniqueId(email.MessageIdentifiers.ImapUID);
 
-            try
-            {
+
                 var bodies = await folder.FetchAsync([uniqueID], MessageSummaryItems.BodyStructure);
                 var bodyParts = bodies?.FirstOrDefault();
                 if (bodies is null || bodyParts is null)
@@ -179,14 +240,30 @@ namespace EmailClientPluma.Core.Services.Emailing
                 }
 
                 await _storageService.UpdateEmailBodyAsync(email);
+        }
+
+        public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
+        {
+            var candidates = acc.Emails
+                .Where(e => !e.BodyFetched)
+                .OrderByDescending(e => e.MessageParts.Date)
+                .Take(maxToPrefetch)
+                .ToList();
+
+            if (candidates.Count == 0)
+                return;
+
+            using var imap =await ConnectImapAsync(acc);
+            try
+            {
+                foreach (var candidate in candidates)
+                {
+                    await FetchEmailBodyInternal(imap, candidate);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
-            }
-            finally
-            {
-                await imap.DisconnectAsync(true);
+                MessageBoxHelper.Error(ex.Message);    
             }
         }
 
@@ -198,43 +275,15 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             await smtp.ConnectAsync(Helper.GetSmtpHostByProvider(acc.Provider), 587, SecureSocketOptions.StartTls);
             var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
-            //MessageBox.Show($"{acc.Email}\n{acc.Credentials.SessionToken}");
             await smtp.AuthenticateAsync(oauth2);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
+ 
+        #endregion
 
-        static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
-        {
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(acc.Email));
 
-            InternetAddressList internetAddresses = [];
-            foreach (var item in email.To.Split(','))
-            {
-                internetAddresses.Add(InternetAddress.Parse(item));
-            }
-            message.To.AddRange(internetAddresses);
 
-            message.Subject = email.Subject;
-            if (email.ReplyTo != null)
-            {
-                message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
-            }
-
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = email.Body
-            };
-
-            foreach (var item in email.Attachments)
-            {
-                bodyBuilder.Attachments.Add(item.FileName, item.Content);
-            }
-            message.Body = bodyBuilder.ToMessageBody();
-
-            message.Date = email.Date ?? DateTimeOffset.Now;
-            return message;
-        }
+     
     }
 }

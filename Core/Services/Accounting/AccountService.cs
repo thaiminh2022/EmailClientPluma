@@ -94,7 +94,7 @@ namespace EmailClientPluma.Core.Services.Accounting
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Account intialize exception: " + ex.Message);
+                MessageBoxHelper.Error("Account intialize exception: ", ex.Message);
             }
 
         }

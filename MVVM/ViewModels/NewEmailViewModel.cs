@@ -71,11 +71,9 @@ namespace EmailClientPluma.MVVM.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBoxHelper.Error(ex.Message);
                     RequestClose?.Invoke(this, false);
                 }
-
-
             });
 
             CancelCommand = new RelayCommand(_ =>

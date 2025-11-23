@@ -55,7 +55,7 @@ namespace EmailClientPluma.Core.Services.Accounting
                 var userInfo = await oauth2.Userinfo.Get().ExecuteAsync();
                 if (userInfo == null)
                 {
-                    MessageBox.Show("Cannot find user info");
+                    MessageBoxHelper.Error("Cannot find user info");
                     return null;
                 }
 
@@ -73,16 +73,16 @@ namespace EmailClientPluma.Core.Services.Accounting
                 if (ex.HttpStatusCode == System.Net.HttpStatusCode.Unauthorized ||
                     ex.HttpStatusCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    MessageBox.Show("Nguoi dung khong duoc phep dang nhap");
+                    MessageBoxHelper.Error("Nguoi dung khong duoc phep dang nhap");
                 }
             }
             catch (TokenResponseException ex)
             {
-                MessageBox.Show($"Nguoi dung huy dang nhap: {ex.Error}");
+                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex.Error}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
             return null;
         }
@@ -98,7 +98,6 @@ namespace EmailClientPluma.Core.Services.Accounting
 
             if (tokenRes.IsStale)
             {
-                //MessageBox.Show("Token is stale");
                 var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
                 {
                     ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
@@ -136,7 +135,7 @@ namespace EmailClientPluma.Core.Services.Accounting
             }
             catch (TaskCanceledException ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
             return false;
         }
