@@ -217,12 +217,12 @@ namespace EmailClientPluma.Core.Services
 
                 // --- E-commerce ---
                 "amazonaws.com", "alibaba.com", "aliexpress.com",
-                "ebay.com", "shopify.com", "amazon.com",
+                "ebay.com", "shopify.com", "amazon.com", 
 
                 // --- Social media ---
                 "facebook.com", "fb.com", "messenger.com",
                 "instagram.com", "tiktok.com", "x.com", "twitter.com",
-                "linkedin.com", "reddit.com", "discord.com",
+                "linkedin.com", "reddit.com", "discord.com","quora.com",
 
                 // --- Developer / code hosting ---
                 "github.com", "githubusercontent.com", "gitlab.com", "bitbucket.org",

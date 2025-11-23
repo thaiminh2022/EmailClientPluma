@@ -64,5 +64,11 @@ namespace EmailClientPluma.Core
 
             return email;
         }
+
+        public static bool IsEmailEqual(Email a, Email b)
+        {
+            return string.Equals(a.MessageIdentifiers.OwnerAccountID, b.MessageIdentifiers.OwnerAccountID) && 
+                   string.Equals(a.MessageIdentifiers.MessageID, b.MessageIdentifiers.MessageID);
+        }
     }
 }
