@@ -4,9 +4,6 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using Org.BouncyCastle.Crypto;
-using System.Threading;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Emailing
 {
@@ -85,18 +82,28 @@ namespace EmailClientPluma.Core.Services.Emailing
             address.Name = acc.DisplayName;
             message.From.Add(address);
 
+            message.Subject = email.Subject;
+            
+            if (!string.IsNullOrEmpty(email.InReplyTo))
+                message.InReplyTo = email.InReplyTo;
+
             InternetAddressList internetAddresses = [];
+
+            if (!string.IsNullOrEmpty(email.ReplyTo))
+            {
+                foreach (var item in email.ReplyTo.Split(','))
+                {
+                    internetAddresses.Add(InternetAddress.Parse(item));
+                }
+                message.ReplyTo.AddRange(internetAddresses);
+            }
+
+            internetAddresses = [];
             foreach (var item in email.To.Split(','))
             {
                 internetAddresses.Add(InternetAddress.Parse(item));
             }
             message.To.AddRange(internetAddresses);
-
-            message.Subject = email.Subject;
-            if (email.ReplyTo != null)
-            {
-                message.ReplyTo.Add(MailboxAddress.Parse(email.ReplyTo));
-            }
 
             var bodyBuilder = new BodyBuilder
             {
@@ -200,6 +207,10 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                 if (item.Size != null)
                     email.MessageParts.EmailSizeInKb = item.Size.Value / 1024.0;
+
+
+                if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
+                    continue;
 
                 acc.Emails.Add(email);
                 await _storageService.StoreEmailAsync(acc, email);

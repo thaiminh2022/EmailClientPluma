@@ -27,7 +27,7 @@ namespace EmailClientPluma.Behaviors
                 await wv2.EnsureCoreWebView2Async();
 
             // Continue viewing email
-            wv2.CoreWebView2.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
+            wv2.CoreWebView2!.Profile.PreferredColorScheme = CoreWebView2PreferredColorScheme.Light;
             wv2.CoreWebView2.NavigateToString(html);
         }
 

@@ -180,9 +180,13 @@ namespace EmailClientPluma.Core.Services.Emailing
                                 {
                                     continue;
                                 }
+                            
 
                                 //fetch the full body
                                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
+                                if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
+                                    continue;
+
                                 var message = await inbox.GetMessageAsync(item.UniqueId, cancellationToken);
                                 email.MessageParts.Body = message.HtmlBody;
 
@@ -190,6 +194,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                                 await _storageService.StoreEmailAsync(acc, email);
 
                                 // Does not support UI change from a different thread, so we calling the original thread
+
                                 emails.Add(email);
 
                                 // No point of doing this, since if we reconnect, we gonna recall ids anyway
@@ -202,6 +207,9 @@ namespace EmailClientPluma.Core.Services.Emailing
                             {
                                 foreach (var email in emails)
                                 {
+                                    if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
+                                        continue;
+
                                     acc.Emails.Add(email);
                                 }
                             });

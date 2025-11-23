@@ -92,10 +92,6 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Mouse.OverrideCursor = Cursors.Wait;
                 var _ = FetchEmailBody();
                 OnPropertyChanges();
-
-
-               
-
             }
         }
 
@@ -214,8 +210,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
                 
                 if (newEmailWindow.DataContext is not NewEmailViewModel vm) return;
-
-                vm.ReplyTo = SelectedEmail.MessageParts.From;
+                vm.SetupReply(SelectedAccount, SelectedEmail);
 
                 bool? sucess = newEmailWindow.ShowDialog();
                 if (sucess is null)

@@ -50,7 +50,7 @@ namespace EmailClientPluma.Core.Services.Accounting
 
             _accounts.CollectionChanged += Accounts_CollectionChanged;
 
-            var _ = Initialize();
+            _ = Initialize();
         }
 
         private async void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
