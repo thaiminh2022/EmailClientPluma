@@ -81,7 +81,9 @@ namespace EmailClientPluma.Core.Services.Emailing
         static MimeMessage ConstructEmail(Account acc, Email.OutgoingEmail email)
         {
             var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(acc.Email));
+            var address = MailboxAddress.Parse(acc.Email);
+            address.Name = acc.DisplayName;
+            message.From.Add(address);
 
             InternetAddressList internetAddresses = [];
             foreach (var item in email.To.Split(','))

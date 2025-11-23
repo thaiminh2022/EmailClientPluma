@@ -308,7 +308,12 @@
                             <TextBlock Text="{Binding MessageParts.From}"/>
                         </StackPanel>
 
-                        <TextBlock Text="To: YOU"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold"
+                                       Text="To: "/>
+                            <TextBlock Text="{Binding MessageParts.To}"/>
+                        </StackPanel>
+
                         <StackPanel Orientation="Horizontal">
                             <TextBlock FontWeight="Bold"
                                        Text="Subject: "/>
@@ -499,17 +504,40 @@
 
 
         <!--  Accounts  -->
-        <Button
-            x:Name="AccountSettingsButton"
-            Grid.Row="0"
-            Grid.Column="1"
-            Width="auto"
-            Height="auto"
-            Margin="0,0,20,0"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Click="Button_Click"
-            Content="Accounts"/>
+        <Button x:Name="AccountSettingsButton"
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="auto"
+                Height="auto"
+                Margin="0,0,20,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Click="Button_Click"
+        >
+            <TextBlock>
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <!-- default: SelectedAccount.DisplayName -->
+                        <Setter Property="Text"
+                                Value="{Binding SelectedAccount.DisplayName}" />
+                        <Style.Triggers>
+                            <!-- SelectedAccount is null -->
+                            <DataTrigger Binding="{Binding SelectedAccount}"
+                                         Value="{x:Null}">
+                                <Setter Property="Text"
+                                        Value="Accounts" />
+                            </DataTrigger>
+                            <!-- DisplayName is empty -->
+                            <DataTrigger Binding="{Binding SelectedAccount.DisplayName}"
+                                         Value="">
+                                <Setter Property="Text"
+                                        Value="Accounts" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+                </TextBlock>
+        </Button>
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
@@ -565,6 +593,8 @@
                     Content="Prev"/>
             <Button Command="{Binding NextCommand}"
                     Content="Next"/>
+       
+            
             <Button
                 x:Name="ThemeToggle"
                 HorizontalAlignment="Left"
@@ -600,6 +630,12 @@
                     </StackPanel>
                 </Border>
             </Popup>
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding CurrentPage}" />
+                <TextBlock Text="/" />
+                <TextBlock Text="{Binding TotalPages}" />
+            </StackPanel>
         </StackPanel>
 
 

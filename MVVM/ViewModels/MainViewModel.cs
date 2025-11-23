@@ -176,7 +176,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
             Accounts = _accountService.GetAccounts();
-            SelectedAccount = Accounts.First();
+            //SelectedAccount = Accounts.First();
 
             // COMMANDS
             AddAccountCommand = new RelayCommand(async _ =>
@@ -321,8 +321,6 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 // normal exit
             }
-
-
         }
 
         // This should not be matter because this is for UI type hinting
