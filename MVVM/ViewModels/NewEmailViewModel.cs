@@ -14,6 +14,10 @@ namespace EmailClientPluma.MVVM.ViewModels
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
         private string? _replyTo;
+        private string? _inReplyTo;
+        private bool _isEnable = true;
+        private string? _subject;
+        private string? _toAddresses;
 
         public event EventHandler<bool?>? RequestClose;
 
@@ -30,16 +34,22 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand CancelCommand { get; set; }
 
 
-        public string? ToAddresses { get; set; }
-        public string? ReplyTo { get => _replyTo; set { 
-                ToAddresses = value;
-                _replyTo = value; 
-                OnPropertyChanges(ToAddresses);
-            }
-        }
-        public string? Subject { get; set; }
+        public string? ToAddresses { get => _toAddresses; set { _toAddresses = value; OnPropertyChanges(); } }
+        public string? Subject { get => _subject; set {_subject = value; OnPropertyChanges(); } }
         public string? Body { get; set; }
+        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); } }
 
+
+        public void SetupReply(Account acc, Email email)
+        {
+            SelectedAccount = acc;
+            ToAddresses = email.MessageParts.From;
+            Subject = $"Re: {email.MessageParts.Subject}";
+            _inReplyTo = email.MessageIdentifiers.MessageID;
+            _replyTo = email.MessageParts.From;
+            IsEnable = false;
+
+        }
 
         public NewEmailViewModel(IAccountService accountService, IEmailService emailService)
         {
@@ -60,10 +70,11 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     Subject = Subject,
                     Body = Body,
-                    ReplyTo = ReplyTo,
+                    ReplyTo = _replyTo,
                     From = SelectedAccount.Email,
                     To = ToAddresses,
-                    Date = DateTime.Now
+                    Date = DateTime.Now,
+                    InReplyTo = _inReplyTo
                 };
 
                 try

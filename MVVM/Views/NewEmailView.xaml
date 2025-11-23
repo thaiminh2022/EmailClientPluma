@@ -56,7 +56,7 @@
                     MinWidth="300"
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
-                    IsEnabled="{Binding IsComboBoxEnable}"
+                          IsEnabled="{Binding IsEnable}"
                     ItemsSource="{Binding Accounts}"
                     SelectedItem="{Binding SelectedAccount}"
                     >
@@ -84,8 +84,7 @@
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
                     Text="{Binding ToAddresses}"
-                    IsEnabled="{Binding IsComboBoxEnable}"
-                    />
+                    IsEnabled="{Binding IsEnable}" />
                 <!--  Subject  -->
                 <TextBlock
                     Grid.Row="2"
