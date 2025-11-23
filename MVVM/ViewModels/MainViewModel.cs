@@ -94,24 +94,33 @@ namespace EmailClientPluma.MVVM.ViewModels
                 OnPropertyChanges();
 
 
-                if (_selectedEmail is not null && _selectedEmail.BodyFetched)
-                {
-                    var result = PhishDetector.ValidateHtmlContent(_selectedEmail.MessageParts.Body ?? "");
-                    if (result == PhishDetector.SuspiciousLevel.None || result == PhishDetector.SuspiciousLevel.Minor)
-                    {
-                        return;
-                    }
-                    MessageBoxHelper.Info("Cảnh báo phishing: ", result.ToString());
-                }
+               
 
             }
         }
 
         async Task FetchEmailBody()
         {
-            if (_selectedAccount is null || _selectedEmail is null || _selectedEmail.BodyFetched)
+            if (_selectedAccount is null || _selectedEmail is null)
             {
                 Mouse.OverrideCursor = null;
+                return;
+            }
+
+            void CheckPhishing()
+            {
+                var check = PhishDetector.ValidateHtmlContent(_selectedEmail.MessageParts.Body ?? "");
+                if (check == PhishDetector.SuspiciousLevel.None || check == PhishDetector.SuspiciousLevel.Minor)
+                {
+                    return;
+                }
+                MessageBoxHelper.Info("Cảnh báo phishing: ", check.ToString());
+            }
+
+            if (_selectedEmail.BodyFetched)
+            {
+                Mouse.OverrideCursor = null;
+                CheckPhishing();
                 return;
             }
 
@@ -125,6 +134,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
 
+            CheckPhishing();
             Mouse.OverrideCursor = null;
         }
         #endregion
