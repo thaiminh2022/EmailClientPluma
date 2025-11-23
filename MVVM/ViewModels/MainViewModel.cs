@@ -211,7 +211,20 @@ namespace EmailClientPluma.MVVM.ViewModels
             ReplyCommand = new RelayCommand(_ =>
             {
                 if (SelectedAccount == null || SelectedEmail == null) return;
-                // too lazy to implement for now
+                var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
+                
+                if (newEmailWindow.DataContext is not NewEmailViewModel vm) return;
+
+                vm.ReplyTo = SelectedEmail.MessageParts.From;
+
+                bool? sucess = newEmailWindow.ShowDialog();
+                if (sucess is null)
+                    return;
+
+                if (sucess == true)
+                {
+                    MessageBoxHelper.Info("Message was sent");
+                }
 
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);

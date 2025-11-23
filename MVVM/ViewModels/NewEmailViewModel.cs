@@ -3,7 +3,6 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -14,6 +13,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
+        private string? _replyTo;
 
         public event EventHandler<bool?>? RequestClose;
 
@@ -31,6 +31,12 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
         public string? ToAddresses { get; set; }
+        public string? ReplyTo { get => _replyTo; set { 
+                ToAddresses = value;
+                _replyTo = value; 
+                OnPropertyChanges(ToAddresses);
+            }
+        }
         public string? Subject { get; set; }
         public string? Body { get; set; }
 
@@ -54,7 +60,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     Subject = Subject,
                     Body = Body,
-                    ReplyTo = null,
+                    ReplyTo = ReplyTo,
                     From = SelectedAccount.Email,
                     To = ToAddresses,
                     Date = DateTime.Now
