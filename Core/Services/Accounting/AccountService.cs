@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Emailing;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -16,10 +17,6 @@ namespace EmailClientPluma.Core.Services.Accounting
         Task RemoveAccountAsync(Account account);
         Task<bool> ValidateAccountAsync(Account acc);
         ObservableCollection<Account> GetAccounts();
-
-        Task StartMonitoringAsync(Account acc);
-        void StopMonitoring(Account acc);
-
     }
 
     /// <summary>
@@ -34,6 +31,7 @@ namespace EmailClientPluma.Core.Services.Accounting
 
         readonly IEmailMonitoringService _emailMonitoringService;
         readonly ObservableCollection<Account> _accounts;
+        readonly ConcurrentDictionary<string, SemaphoreSlim> _accountValidationLocks;
 
         public AccountService(
             IEnumerable<IAuthenticationService> authServices,
@@ -47,31 +45,9 @@ namespace EmailClientPluma.Core.Services.Accounting
             _storageService = storageService;
             _emailMonitoringService = emailMonitoringService;
             _accounts = [];
-
-            _accounts.CollectionChanged += Accounts_CollectionChanged;
+            _accountValidationLocks = new();
 
             _ = Initialize();
-        }
-
-        private async void Accounts_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            if (e.NewItems is not null)
-            {
-                foreach (Account item in e.NewItems)
-                {
-                    await StartMonitoringAsync(item);
-                }
-            }
-
-
-            if (e.OldItems is not null)
-            {
-                foreach (Account item in e.OldItems)
-                {
-                    StopMonitoring(item);
-                }
-            }
-
         }
 
         // Call the storage service to get all the saved account
@@ -79,16 +55,17 @@ namespace EmailClientPluma.Core.Services.Accounting
         {
             try
             {
-                var accs = await _storageService.GetAccountsAsync();
+                var accs = await _storageService.GetAccountsAsync().ConfigureAwait(false);
                 foreach (var acc in accs)
                 {
                     var emails = await _storageService.GetEmailsAsync(acc);
                     acc.Emails = new(emails);
+
                     _accounts.Add(acc);
 
                     if (await ValidateAccountAsync(acc))
                     {
-                        await StartMonitoringAsync(acc);
+                        _emailMonitoringService.StartMonitor(acc);
                     }
                 }
             }
@@ -149,6 +126,11 @@ namespace EmailClientPluma.Core.Services.Accounting
             // fetching them emails header
             await _emailService.FetchEmailHeaderAsync(acc);
 
+            if (await ValidateAccountAsync(acc))
+            {
+                _emailMonitoringService.StartMonitor(acc);
+            }
+
         }
         /// <summary>
         /// Get all the added accounts
@@ -166,28 +148,29 @@ namespace EmailClientPluma.Core.Services.Accounting
         /// <returns>true if valid else false</returns>
         public async Task<bool> ValidateAccountAsync(Account acc)
         {
-            return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
+            ArgumentNullException.ThrowIfNull(acc);
+            if (string.IsNullOrEmpty(acc.ProviderUID))
+                return false;
+
+            var validationLock = _accountValidationLocks.GetOrAdd(acc.ProviderUID, _ => new SemaphoreSlim(1, 1));
+            await validationLock.WaitAsync();
+
+            try
+            {
+                 return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
+            }finally
+            {
+                validationLock.Release();
+            }
         }
         public async Task RemoveAccountAsync(Account account)
         {
+            _emailMonitoringService.StopMonitor(account);
+
             _accounts.Remove(account);
             await _storageService.RemoveAccountAsync(account);
 
-            // This should be handled by the _accounts changed event, but i dont trust it
-            StopMonitoring(account);
         }
 
-        public async Task StartMonitoringAsync(Account acc)
-        {
-            bool accountValid = await ValidateAccountAsync(acc);
-            if (!accountValid)
-                return;
-            _emailMonitoringService.StartMonitor(acc);
-        }
-
-        public void StopMonitoring(Account acc)
-        {
-            _emailMonitoringService.StopMonitor(acc);
-        }
     }
 }
