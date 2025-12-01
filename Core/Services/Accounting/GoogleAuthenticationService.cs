@@ -119,7 +119,7 @@ namespace EmailClientPluma.Core.Services.Accounting
                 }
                 catch (TokenResponseException)
                 {
-                    MessageBoxHelper.Error($"Please login again your {acc.Email} account");
+                    MessageBoxHelper.Error($"Hay dang nhap lai tai khoan: {acc.Email}");
                 }
             }
             else
