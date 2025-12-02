@@ -11,69 +11,234 @@
         <viewmodels:SettingsViewModel/>
     </Window.DataContext>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <DockPanel>
 
-        <!-- Header -->
-        <TextBlock Text="Settings"
-                   FontSize="24"
-                   FontWeight="Bold"
-                   Margin="0,0,0,20"
-                   Grid.Row="0"/>
+        <!-- HEADER -->
+        <Border Background="#fafafa" Height="52" DockPanel.Dock="Top"
+                Padding="15" BorderBrush="#ddd" BorderThickness="0 0 0 1">
+            <TextBlock Text="Settings" FontSize="20" FontWeight="Bold"/>
+        </Border>
 
-        <!-- Settings Sections -->
-        <ScrollViewer Grid.Row="1">
-            <StackPanel>
-                <!-- General Settings -->
-                <GroupBox Header="General" Margin="0,0,0,20"
-                          Background="{DynamicResource PanelBackgroundBrush}"
-                          Foreground="{DynamicResource TextBrush}">
-                    <StackPanel Margin="10">
-                        <CheckBox Content="Enable notifications" Margin="0,5"/>
-                        <CheckBox Content="Auto-sync emails" Margin="0,5"/>
-                        <CheckBox Content="Show preview pane" Margin="0,5"/>
+        <!-- MAIN TABS -->
+        <TabControl BorderThickness="0" Padding="0">
+
+            <!-- GENERAL -->
+            <TabItem Header="General">
+                <ScrollViewer>
+                    <StackPanel Margin="20" >
+
+                        <!-- Theme -->
+                        <GroupBox Header="Appearance">
+                            <StackPanel Margin="10" >
+                                <DockPanel>
+                                    <TextBlock Width="200" Text="Theme"/>
+                                    <ComboBox Width="200"
+                                              ItemsSource="{Binding ThemeOptions}"
+                                              SelectedItem="{Binding SelectedTheme}"/>
+                                </DockPanel>
+
+                                <CheckBox Content="Use compact message list"
+                                          IsChecked="{Binding CompactMode}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Refresh Rate -->
+                        <GroupBox Header="Sync  Refresh">
+                            <StackPanel Margin="10">
+                                <DockPanel>
+                                    <TextBlock Width="200" Text="Auto refresh (seconds)"/>
+                                    <TextBox Width="100"
+                                             Text="{Binding AutoRefreshSeconds}"/>
+                                </DockPanel>
+
+                                <CheckBox Content="Background message sync"
+                                          IsChecked="{Binding EnableBackgroundSync}"/>
+                            </StackPanel>
+                        </GroupBox>
+
                     </StackPanel>
-                </GroupBox>
+                </ScrollViewer>
+            </TabItem>
 
-                <!-- Appearance -->
-                <GroupBox Header="Appearance" Margin="0,0,0,20"
-                          Background="{DynamicResource PanelBackgroundBrush}"
-                          Foreground="{DynamicResource TextBrush}">
-                    <StackPanel Margin="10">
-                        <TextBlock Text="Theme:" Margin="0,5"/>
-                        <ComboBox SelectedIndex="0" Width="200"
-                                  Style="{DynamicResource CustomCombo}">
-                            <ComboBoxItem Style="{DynamicResource CustomComboItem}">Light</ComboBoxItem>
-                            <ComboBoxItem Style="{DynamicResource CustomComboItem}">Dark</ComboBoxItem>
-                            <ComboBoxItem Style="{DynamicResource CustomComboItem}">System Default</ComboBoxItem>
-                        </ComboBox>
+            <!-- ACCOUNTS -->
+            <TabItem Header="Accounts">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+
+                        <!-- GOOGLE AUTH -->
+                        <GroupBox Header="Google Account">
+                            <StackPanel Margin="10">
+                                <Button Width="250" Content="Add Google Account"
+                                        Command="{Binding AddGoogleAccountCommand}"/>
+
+                                <ItemsControl ItemsSource="{Binding Accounts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel Margin="5">
+                                                <TextBlock Text="{Binding Email}"
+                                                           VerticalAlignment="Center" Width="300"/>
+                                                <Button Content="Remove"
+                                                        Command="{Binding DataContext.RemoveAccountCommand,
+                                                                         RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </GroupBox>
+
                     </StackPanel>
-                </GroupBox>
+                </ScrollViewer>
+            </TabItem>
 
-                <!-- Account -->
-                <GroupBox Header="Account" Margin="0,0,0,20"
-                          Background="{DynamicResource PanelBackgroundBrush}"
-                          Foreground="{DynamicResource TextBrush}">
-                    <StackPanel Margin="10">
-                        <TextBlock Text="Default email account:" Margin="0,5"/>
-                        <ComboBox Width="300"
-                                  Style="{DynamicResource CustomCombo}">
-                            <ComboBoxItem Style="{DynamicResource CustomComboItem}">thinh@gmail.com</ComboBoxItem>
-                            <ComboBoxItem Style="{DynamicResource CustomComboItem}">work@company.com</ComboBoxItem>
-                        </ComboBox>
+            <!-- FILTERS -->
+            <TabItem Header="Filters">
+                <ScrollViewer>
+                    <StackPanel Margin="20">
+
+                        <GroupBox Header="Email Filters">
+                            <StackPanel Margin="10">
+
+                                <Button Content="Create new filter"
+                                        Width="200"
+                                        Command="{Binding CreateFilterCommand}"/>
+
+                                <ItemsControl ItemsSource="{Binding Filters}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#ddd" BorderThickness="1"
+                                                    Padding="8" Margin="4">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                                    <TextBlock Text="Conditions:" FontStyle="Italic"/>
+                                                    <TextBlock Text="{Binding Summary}" Margin="0 0 0 5"/>
+                                                    <Button Content="Edit Filter"
+                                                            Command="{Binding DataContext.EditFilterCommand,
+                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </StackPanel>
+                        </GroupBox>
+
                     </StackPanel>
-                </GroupBox>
-            </StackPanel>
-        </ScrollViewer>
+                </ScrollViewer>
+            </TabItem>
 
-        <!-- Footer Buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Content="Cancel" Width="100" Margin="5"/>
-            <Button Content="Save" Width="100" Margin="5"/>
-        </StackPanel>
-    </Grid>
+            <!-- MONITORING -->
+            <TabItem Header="Monitoring">
+                <ScrollViewer>
+                    <StackPanel Margin="20" >
+
+                        <GroupBox Header="Email Monitoring">
+                            <StackPanel Margin="10" >
+                                <CheckBox Content="Enable real-time monitoring"
+                                          IsChecked="{Binding MonitoringEnabled}"/>
+                                <CheckBox Content="Show toast notifications"
+                                          IsChecked="{Binding ShowNotifications}"/>
+                                <CheckBox Content="Play sound on new mail"
+                                          IsChecked="{Binding PlaySound}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- SECURITY -->
+            <TabItem Header="Security">
+                <ScrollViewer>
+                    <StackPanel Margin="20" >
+
+                        <GroupBox Header="Phishing Protection">
+                            <StackPanel Margin="10" >
+                                <CheckBox Content="Enable phishing detector"
+                                          IsChecked="{Binding PhishDetectEnabled}"/>
+                                <CheckBox Content="Auto-quarantine suspicious emails"
+                                          IsChecked="{Binding AutoQuarantine}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Privacy">
+                            <StackPanel Margin="10">
+                                <CheckBox Content="Block remote images"
+                                          IsChecked="{Binding BlockRemoteImages}"/>
+                                <CheckBox Content="Disable tracking pixels"
+                                          IsChecked="{Binding DisableTrackingPixels}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- STORAGE -->
+            <TabItem Header="Storage">
+                <ScrollViewer>
+                    <StackPanel Margin="20" >
+
+                        <GroupBox Header="Data Store (SQLite)">
+                            <StackPanel Margin="10">
+
+                                <DockPanel>
+                                    <TextBlock Width="200" Text="Database Path"/>
+                                    <TextBox Width="350" 
+                                             Text="{Binding DatabasePath}" 
+                                             IsReadOnly="True"/>
+                                </DockPanel>
+
+                                <Button Width="180" Content="Open Folder"
+                                        Command="{Binding OpenDatabaseFolderCommand}"/>
+
+                                <Button Width="180" Content="Migrate Storage"
+                                        Command="{Binding MigrateStorageCommand}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Cache">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="Local message cache may take up space over time."/>
+                                <Button Width="180" Content="Clear Cache"
+                                        Command="{Binding ClearCacheCommand}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ADVANCED -->
+            <TabItem Header="Advanced">
+                <ScrollViewer>
+                    <StackPanel Margin="20" >
+
+                        <GroupBox Header="Developer Options">
+                            <StackPanel Margin="10">
+                                <CheckBox Content="Enable debug logs" 
+                                          IsChecked="{Binding DebugLogging}"/>
+                                <CheckBox Content="Verbose email sync logs"
+                                          IsChecked="{Binding VerboseLogging}"/>
+                                <CheckBox Content="Show performance stats"
+                                          IsChecked="{Binding ShowStats}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="Window Factory">
+                            <StackPanel Margin="10">
+                                <CheckBox Content="Enable experimental window transitions"
+                                          IsChecked="{Binding ExperimentalWindows}"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
 </Window>
