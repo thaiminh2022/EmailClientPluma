@@ -30,8 +30,8 @@ function setEditorContent(html) {
 window.setEditorContent ??= setEditorContent;
 
 quill.on("text-change", function () {
-    if (!window.chrome.webview)
-        return;
+  if (!window.chrome.webview)
+    return;
 
   const html = quill.root.innerHTML;
   window.chrome.webview.postMessage({ type: "html", value: html });
@@ -41,14 +41,12 @@ quill.on("text-change", function () {
 
 //#region email select
 
-function setEmailContent(subject, {from, to, date}, email) {
-    document.querySelector(".email-subject").textContent = subject;
-    document.getElementById("from").textContent = from;
-    document.getElementById("to").textContent = to;
-    document.getElementById("date").textContent = date;
-    document.querySelector(".email-body").setHTMLUnsafe(email);
-
-    console.log(meta);
+function setEmailContent(subject, { from, to, date }, email) {
+  document.querySelector(".email-subject").textContent = subject;
+  document.getElementById("from").textContent = from;
+  document.getElementById("to").textContent = to;
+  document.getElementById("date").textContent = date;
+  document.querySelector(".email-body").innerHTML = email;
 };
 
 window.setEmailContent = setEmailContent;
@@ -130,7 +128,7 @@ document.addEventListener("mousedown", (e) => {
 // Example reply action
 bubble.addEventListener("click", () => {
   const text = lastSelection.trim();
-const lines = text.split(/\r?\n/);
+  const lines = text.split(/\r?\n/);
 
   // Where to insert (end of editor)
   let index = quill.getLength() - 1;
