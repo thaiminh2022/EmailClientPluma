@@ -9,20 +9,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="QuillEditor\quillEditor.js" />
     <None Remove="QuillEditor\quilljs.js" />
     <None Remove="QuillEditor\script.js" />
+    <None Remove="QuillEditor\selectReplyEditor.html" />
+    <None Remove="QuillEditor\selectReplyEditor.js" />
     <None Remove="QuillEditor\style.css" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="QuillEditor\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="QuillEditor\quillEditor.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="QuillEditor\quillEditor.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="QuillEditor\quilljs.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="QuillEditor\script.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="QuillEditor\selectReplyEditor.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="QuillEditor\selectReplyEditor.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="QuillEditor\style.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
