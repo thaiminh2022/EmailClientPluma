@@ -49,12 +49,15 @@ namespace EmailClientPluma.Core.Models
         public Identifiers MessageIdentifiers { get; set; }
         public DataParts MessageParts { get; set; }
 
+        public List<EmailLabel> Labels { get; private set; }
+
         public bool BodyFetched => !string.IsNullOrEmpty(MessageParts.Body);
 
         public Email(Identifiers messageIdentifiers, DataParts messagesParts)
         {
             MessageIdentifiers = messageIdentifiers;
             MessageParts = messagesParts;
+            Labels = [];
         }
     }
 

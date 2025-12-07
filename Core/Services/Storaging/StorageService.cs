@@ -4,7 +4,6 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services
 {
@@ -24,14 +23,14 @@ namespace EmailClientPluma.Core.Services
     {
         readonly string _connectionString;
         readonly SQLiteDataStore _tokenStore;
-        readonly StorageMigratior _migrator;
+        readonly StorageMigrator _migrator;
 
         private SqliteConnection CreateConnection() => new SqliteConnection(_connectionString);
 
         public StorageService()
         {
             _connectionString = $"Data Source={Helper.DatabasePath}";
-            _migrator = new StorageMigratior(_connectionString);
+            _migrator = new StorageMigrator(_connectionString);
             _tokenStore = new SQLiteDataStore(Helper.DatabasePath);
 
             _migrator.Migrate();
@@ -171,7 +170,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (Exception ex)
             {
-             MessageBoxHelper.Error(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
         }
 

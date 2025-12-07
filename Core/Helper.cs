@@ -67,7 +67,7 @@ namespace EmailClientPluma.Core
 
         public static bool IsEmailEqual(Email a, Email b)
         {
-            return string.Equals(a.MessageIdentifiers.OwnerAccountID, b.MessageIdentifiers.OwnerAccountID) && 
+            return string.Equals(a.MessageIdentifiers.OwnerAccountID, b.MessageIdentifiers.OwnerAccountID) &&
                    string.Equals(a.MessageIdentifiers.MessageID, b.MessageIdentifiers.MessageID);
         }
     }

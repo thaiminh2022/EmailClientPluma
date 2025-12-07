@@ -1,5 +1,4 @@
 ﻿using EmailClientPluma.Core.Models;
-using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using System.Text.Json;
 using System.Windows;
