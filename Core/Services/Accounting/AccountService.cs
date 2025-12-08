@@ -2,7 +2,6 @@
 using EmailClientPluma.Core.Services.Emailing;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Windows;
 
 
 namespace EmailClientPluma.Core.Services.Accounting
@@ -157,8 +156,9 @@ namespace EmailClientPluma.Core.Services.Accounting
 
             try
             {
-                 return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
-            }finally
+                return await GetAuthServiceByProvider(acc.Provider).ValidateAsync(acc);
+            }
+            finally
             {
                 validationLock.Release();
             }
