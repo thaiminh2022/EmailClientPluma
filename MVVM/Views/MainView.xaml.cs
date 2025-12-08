@@ -35,33 +35,21 @@ namespace EmailClientPluma
         // Helper to fetch brush resource and set its Color
         private void SetBrushColor(string key, Color color)
         {
-            if (TryFindResource(key) is SolidColorBrush originalBrush)
+            if (Application.Current.Resources[key] is SolidColorBrush brush)
             {
-                if (originalBrush.IsFrozen)
+                if (brush.IsFrozen)
                 {
-                    SolidColorBrush newBrush = originalBrush.Clone();
-                    newBrush.Color = color;
-                    Resources[key] = newBrush;
+                    var clone = brush.Clone();
+                    clone.Color = color;
+                    Application.Current.Resources[key] = clone;
                 }
                 else
                 {
-                    originalBrush.Color = color;
-                }
-            }
-            else if (Application.Current.Resources.Contains(key) && Application.Current.Resources[key] is SolidColorBrush appBrush)
-            {
-                if (appBrush.IsFrozen)
-                {
-                    SolidColorBrush newBrush = appBrush.Clone();
-                    newBrush.Color = color;
-                    Application.Current.Resources[key] = newBrush;
-                }
-                else
-                {
-                    appBrush.Color = color;
+                    brush.Color = color;
                 }
             }
         }
+
 
         private void LightModeBtn_Click(object sender, RoutedEventArgs e)
         {

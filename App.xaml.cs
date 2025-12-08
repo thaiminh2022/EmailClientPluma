@@ -46,6 +46,8 @@ namespace EmailClientPluma
 
             services.AddTransient<SettingsViewModel>();
 
+            services.AddTransient<WhichProvViewModel>();
+
             Services = services.BuildServiceProvider();
         }
     }

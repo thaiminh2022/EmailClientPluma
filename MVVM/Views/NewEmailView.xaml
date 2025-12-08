@@ -15,8 +15,12 @@
     mc:Ignorable="d">
     <Window.DataContext>
         <viewmodels:NewEmailViewModel />
-        
     </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource GBTB}" />
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions />
         <Grid.RowDefinitions>
