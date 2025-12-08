@@ -122,7 +122,6 @@ namespace EmailClientPluma.Core.Services.Storaging
 
         private void ApplyV2_BetterUnique(SqliteConnection connection)
         {
-            // We assume we're on v2 schema: EMAILS already has the flag columns.
             // 1) Create new table with correct schema
 
             using var tx = connection.BeginTransaction();
@@ -186,6 +185,8 @@ namespace EmailClientPluma.Core.Services.Storaging
             // 3) Drop old table and rename new one
             connection.Execute("DROP TABLE EMAILS;", transaction: tx);
             connection.Execute("ALTER TABLE EMAILS_NEW RENAME TO EMAILS;", transaction: tx);
+
+            tx.Commit();
         }
 
         #endregion
@@ -198,94 +199,31 @@ namespace EmailClientPluma.Core.Services.Storaging
             using var tx = connection.BeginTransaction();
 
             // add read to emails
-            connection.Execute(@"ALTER TABLE EMAILS ADD COLUMN IS_SEEN INTEGER NOT NULL DEFAULT 0;", transaction: tx);
-
-            // Soft delete marker (for local trash / sync logic)
-            connection.Execute("ALTER TABLE EMAILS ADD COLUMN IS_DELETED INTEGER NOT NULL DEFAULT 0;", transaction: tx);
+            connection.Execute(@"ALTER TABLE EMAILS ADD COLUMN FLAGS INTEGER NOT NULL DEFAULT 0;", transaction: tx);
 
 
             // label table
             connection.Execute(@"
                 CREATE TABLE IF NOT EXISTS LABELS (
-                    LABEL_NAME      TEXT    PRIMARY KEY,
-                    ACCOUNT_ID      TEXT,                   -- if this is null, it's a global label
+                    ID              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    LABEL_NAME      TEXT,
+                    OWNER_ID        TEXT,                   -- if this is null, it's a global label
                     COLOR           INT,
-                    IS_SYSTEM       BOOLEAN NOT NULL DEFAULT 0,
-                    IS_DELETABLE    BOOLEAN NOT NULL DEFAULT 0,
-                    FOREIGN KEY (ACCOUNT_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
+                    IS_EDITABLE    BOOLEAN NOT NULL DEFAULT 1,
+                    FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
                 );", transaction: tx);
 
             // emails label table
             connection.Execute(@"
                 CREATE TABLE IF NOT EXISTS EMAIL_LABELS (
-                    LABEL_NAME      TEXT NOT NULL,
+                    LABEL_ID        INTEGER NOT NULL,
                     EMAIL_ID        INTEGER NOT NULL,
-                    PRIMARY KEY (EMAIL_ID, LABEL_NAME),
+                    PRIMARY KEY (EMAIL_ID, LABEL_ID),
                     FOREIGN KEY (EMAIL_ID) REFERENCES EMAILS(EMAIL_ID) ON DELETE CASCADE,
-                    FOREIGN KEY (LABEL_NAME) REFERENCES LABELS(LABEL_NAME) ON DELETE CASCADE
+                    FOREIGN KEY (LABEL_ID) REFERENCES LABELS(ID) ON DELETE CASCADE
                 );", transaction: tx);
 
-            // ADD DEFAULT LABELS
-            var defaultLabels = EmailLabel.Labels;
-
-            foreach (var item in defaultLabels)
-            {
-                connection.Execute(@"
-                    INSERT INTO LABELS (LABEL_NAME, COLOR, IS_SYSTEM, IS_DELETABLE)
-                    VALUES (@LabelName, @Color, @IsSystem, @IsDeletable)
-                    ON CONFLICT(LABEL_NAME) DO NOTHING;
-                ", new
-                {
-                    LabelName = item.Name,
-                    Color = item.Color.ToArgb(),
-                    IsSystem = item.IsSystem ? 1 : 0,
-                    IsDeletable = item.IsDeletable ? 1 : 0
-                }, transaction: tx);
-            }
-
-            // SENT: where FROM_ADDRESS contains the account email
-            connection.Execute(@"
-    INSERT INTO EMAIL_LABELS (EMAIL_ID, LABEL_NAME)
-    SELECT e.EMAIL_ID, 'Inbox'
-    FROM EMAILS e
-    JOIN ACCOUNTS a ON a.PROVIDER_UID = e.OWNER_ID
-    LEFT JOIN EMAIL_LABELS elInbox
-        ON elInbox.EMAIL_ID = e.EMAIL_ID
-       AND elInbox.LABEL_NAME = 'Inbox'
-    WHERE elInbox.EMAIL_ID IS NULL
-      AND lower(e.TO_ADDRESS) LIKE '%' || lower(a.EMAIL) || '%'
-      AND NOT EXISTS (
-          SELECT 1
-          FROM EMAIL_LABELS els
-          WHERE els.EMAIL_ID = e.EMAIL_ID
-            AND els.LABEL_NAME = 'Sent'
-      );
-", transaction: tx);
-
-            // INBOX: TO contains account email, FROM does not
-            connection.Execute(@"
-    INSERT INTO EMAIL_LABELS (EMAIL_ID, LABEL_NAME)
-    SELECT e.EMAIL_ID, 'Inbox'
-    FROM EMAILS e
-    JOIN ACCOUNTS a ON a.PROVIDER_UID = e.OWNER_ID
-    LEFT JOIN EMAIL_LABELS el
-        ON el.EMAIL_ID = e.EMAIL_ID
-       AND el.LABEL_NAME = 'Inbox'
-    WHERE el.EMAIL_ID IS NULL
-      AND lower(e.TO_ADDRESS)   LIKE '%' || lower(a.EMAIL) || '%'
-      AND lower(e.FROM_ADDRESS) NOT LIKE '%' || lower(a.EMAIL) || '%';
-", transaction: tx);
-
-            // ALL: every email gets 'All'
-            connection.Execute(@"
-    INSERT INTO EMAIL_LABELS (EMAIL_ID, LABEL_NAME)
-    SELECT e.EMAIL_ID, 'All'
-    FROM EMAILS e
-    LEFT JOIN EMAIL_LABELS el
-        ON el.EMAIL_ID = e.EMAIL_ID
-       AND el.LABEL_NAME = 'All'
-    WHERE el.EMAIL_ID IS NULL;
-", transaction: tx);
+            
 
             tx.Commit();
         }

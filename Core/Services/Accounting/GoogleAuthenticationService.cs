@@ -76,11 +76,11 @@ namespace EmailClientPluma.Core.Services.Accounting
             }
             catch (TokenResponseException ex)
             {
-                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex.Error}");
+                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex}");
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.Error(ex.Message);
+                MessageBoxHelper.Error(ex);
             }
             return null;
         }

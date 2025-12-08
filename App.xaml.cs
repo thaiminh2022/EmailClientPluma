@@ -5,6 +5,8 @@ using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using EmailClientPluma.Core.Services.Storaging;
+using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
 namespace EmailClientPluma
 {

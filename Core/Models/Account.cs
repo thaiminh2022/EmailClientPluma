@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Services.Accounting;
 using System.Collections.ObjectModel;
+using System.Management;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -22,22 +23,26 @@ namespace EmailClientPluma.Core.Models
         public bool FirstTimeHeaderFetched = false;
         public bool NoMoreOlderEmail = false;
 
+        public ObservableCollection<EmailLabel> OwnedLabels { get; set; }
 
-        public Account(string providerUID, string email, string displayName, Provider provider, Credentials credentials)
+
+        public Account(string providerUid, string email, string displayName, Provider provider, Credentials credentials)
         {
-            ProviderUID = providerUID;
+            ProviderUID = providerUid;
             Email = email;
             DisplayName = displayName;
             Provider = provider;
             Credentials = credentials;
+            OwnedLabels = new (EmailLabel.Labels);
         }
-        public Account(AuthResponce authResponce)
+        public Account(AuthResponce authResponse)
         {
-            ProviderUID = authResponce.ProviderUID;
-            Email = authResponce.Email;
-            DisplayName = authResponce.DisplayName;
-            Provider = authResponce.Provider;
-            Credentials = authResponce.Credentials;
+            ProviderUID = authResponse.ProviderUID;
+            Email = authResponse.Email;
+            DisplayName = authResponse.DisplayName;
+            Provider = authResponse.Provider;
+            Credentials = authResponse.Credentials;
+            OwnedLabels = new(EmailLabel.Labels);
         }
 
 

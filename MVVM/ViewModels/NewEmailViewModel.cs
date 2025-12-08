@@ -46,7 +46,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             SelectedAccount = acc;
             ToAddresses = email.MessageParts.From;
             Subject = $"Re: {email.MessageParts.Subject}";
-            _inReplyTo = email.MessageIdentifiers.MessageID;
+            _inReplyTo = email.MessageIdentifiers.MessageId;
             _replyTo = email.MessageParts.From;
             IsEnable = false;
             ReplyToEmail = email;

@@ -199,7 +199,18 @@
                             Content="Create new label"/>
                     <TextBlock FontWeight="Bold"
                                Text="Labels"/>
-                    <ListView/>
+                    <ListView ItemsSource="{Binding SelectedAccount.OwnedLabels, FallbackValue=[]}" SelectedItem="{Binding SelectedLabel}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" >
+                                    <TextBlock.Foreground>
+                                        <SolidColorBrush Color="{Binding Color}"></SolidColorBrush>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </DataTemplate>
+                            
+                        </ListView.ItemTemplate>
+                    </ListView>
 
                 </StackPanel>
             </Border>
@@ -318,6 +329,12 @@
                             <TextBlock FontWeight="Bold"
                                        Text="Subject: "/>
                             <TextBlock Text="{Binding MessageParts.Subject}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Light"
+                                       FontStyle="Italic"
+                                       Text="Tags: " />
+                            <TextBlock Text="{Binding LabelsDisplay}" />
                         </StackPanel>
                     </StackPanel>
 

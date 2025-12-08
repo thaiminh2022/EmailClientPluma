@@ -28,7 +28,7 @@ namespace EmailClientPluma.Core
             {
                 MessageBoxResult.Yes => true,
                 MessageBoxResult.No => false,
-                MessageBoxResult.None or _ => null
+                _ => null
             };
         }
 

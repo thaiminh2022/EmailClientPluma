@@ -1,13 +1,10 @@
-﻿namespace EmailClientPluma.Core.Services
+﻿namespace EmailClientPluma.Core.Models
 {
-    internal partial class StorageService
+    public sealed class AccountRow
     {
-        private sealed class AccountRow
-        {
-            public string PROVIDER_UID { get; set; } = "";
-            public string PROVIDER { get; set; } = "";
-            public string EMAIL { get; set; } = "";
-            public string DISPLAY_NAME { get; set; } = "";
-        }
+        public string PROVIDER_UID { get; set; } = "";
+        public string PROVIDER { get; set; } = "";
+        public string EMAIL { get; set; } = "";
+        public string DISPLAY_NAME { get; set; } = "";
     }
 }
