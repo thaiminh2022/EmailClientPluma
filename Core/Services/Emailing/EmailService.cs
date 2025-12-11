@@ -211,7 +211,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             foreach (var item in summaries)
             {
                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);
-                
+
                 if (item.Size != null)
                     email.MessageParts.EmailSizeInKb = item.Size.Value / 1024.0;
 

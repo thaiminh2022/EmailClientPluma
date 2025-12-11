@@ -1,6 +1,5 @@
 ﻿using EmailClientPluma.Core.Services.Accounting;
 using System.Collections.ObjectModel;
-using System.Management;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -33,7 +32,7 @@ namespace EmailClientPluma.Core.Models
             DisplayName = displayName;
             Provider = provider;
             Credentials = credentials;
-            OwnedLabels = new (EmailLabel.Labels);
+            OwnedLabels = new(EmailLabel.Labels);
         }
         public Account(AuthResponce authResponse)
         {

@@ -15,11 +15,15 @@ namespace EmailClientPluma.Core.Services.Storaging
         Task UpdateEmailBodyAsync(Email email);
 
         Task<IEnumerable<EmailLabel>> GetLabelsAsync(Account acc);
+        Task StoreLabelAsync(Account acc);
+        Task StoreLabelsAsync(Email mail);
+        Task DeleteLabelAsync(EmailLabel label);
+        Task DeleteEmailLabelAsync(EmailLabel label, Email email);
 
     }
     internal class StorageService : IStorageService
     {
-        private readonly AccountStorage _accountStorage; 
+        private readonly AccountStorage _accountStorage;
         private readonly EmailStorage _emailStorage;
         private readonly LabelStorage _labelStorage;
 
@@ -45,9 +49,9 @@ namespace EmailClientPluma.Core.Services.Storaging
         }
         public async Task<int> StoreAccountAsync(Account account)
         {
-           var affected =  await _accountStorage.StoreAccountAsync(account);
-           await _labelStorage.StoreDefaultLabel(account);
-           return affected;
+            var affected = await _accountStorage.StoreAccountAsync(account);
+            await _labelStorage.StoreDefaultLabel(account);
+            return affected;
         }
 
         public async Task RemoveAccountAsync(Account account)
@@ -56,7 +60,7 @@ namespace EmailClientPluma.Core.Services.Storaging
         }
 
         #endregion
-        
+
         #region Emails
         public async Task StoreEmailsInternal(Account acc, IEnumerable<Email> mails)
         {
@@ -81,7 +85,7 @@ namespace EmailClientPluma.Core.Services.Storaging
             foreach (var mail in emails)
             {
                 var labels = await _labelStorage.GetLabelsAsync(mail);
-                mail.Labels.AddRange(labels);
+                mail.Labels = new(labels);
             }
 
             return emails;
@@ -98,6 +102,26 @@ namespace EmailClientPluma.Core.Services.Storaging
         public async Task<IEnumerable<EmailLabel>> GetLabelsAsync(Account acc)
         {
             return await _labelStorage.GetLabelsAsync(acc);
+        }
+
+        public async Task StoreLabelAsync(Account acc)
+        {
+            await _labelStorage.StoreLabelAsync(acc);
+        }
+
+        public async Task StoreLabelsAsync(Email mail)
+        {
+            await _labelStorage.StoreLabelsAsync(mail);
+        }
+
+        public async Task DeleteLabelAsync(EmailLabel label)
+        {
+            await _labelStorage.DeleteLabelAsync(label);
+        }
+
+        public async Task DeleteEmailLabelAsync(EmailLabel label, Email email)
+        {
+            await _labelStorage.DeleteEmailLabelAsync(label, email);
         }
 
         #endregion

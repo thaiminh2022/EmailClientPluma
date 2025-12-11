@@ -8,8 +8,8 @@ namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class NewEmailViewModel : ObserableObject, IRequestClose
     {
-        readonly IAccountService _accountService;
-        readonly IEmailService _emailService;
+        private readonly IAccountService _accountService;
+        private readonly IEmailService _emailService;
 
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
@@ -24,7 +24,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public Account? SelectedAccount
         {
-            get { return _selectedAccount; }
+            get => _selectedAccount;
             set
             {
                 _selectedAccount = value;

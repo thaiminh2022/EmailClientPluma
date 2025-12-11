@@ -1,6 +1,6 @@
-﻿using System.Globalization;
-using EmailClientPluma.Core.Services.Storaging;
-using MailKit;
+﻿using MailKit;
+using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -53,7 +53,7 @@ namespace EmailClientPluma.Core.Models
         public Identifiers MessageIdentifiers { get; set; }
         public DataParts MessageParts { get; set; }
 
-        public List<EmailLabel> Labels { get; private set; }
+        public ObservableCollection<EmailLabel> Labels { get; set; }
 
         public bool BodyFetched => !string.IsNullOrEmpty(MessageParts.Body);
         public bool Seen => MessageIdentifiers.Flags.HasFlag(MessageFlags.Seen);
@@ -75,9 +75,9 @@ namespace EmailClientPluma.Core.Models
     internal record Attachment
     {
         public int AttachmentID { get; set; } // set by database    
-        required public int OwnerEmailID { get; set; }
-        required public string FileName { get; set; }
-        required public byte[] Content { get; set; }
+        public required int OwnerEmailID { get; set; }
+        public required string FileName { get; set; }
+        public required byte[] Content { get; set; }
 
     }
 

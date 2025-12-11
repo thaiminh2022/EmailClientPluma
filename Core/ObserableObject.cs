@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace EmailClientPluma.Core
 {
-    internal class ObserableObject : INotifyPropertyChanged
+    public class ObserableObject : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 

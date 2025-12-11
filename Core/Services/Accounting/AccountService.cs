@@ -1,8 +1,8 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Emailing;
+using EmailClientPluma.Core.Services.Storaging;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using EmailClientPluma.Core.Services.Storaging;
 
 
 namespace EmailClientPluma.Core.Services.Accounting
@@ -112,7 +112,8 @@ namespace EmailClientPluma.Core.Services.Accounting
 
             // Check if account already exists
             var haveAcc = false;
-            foreach (var v in _accounts) {
+            foreach (var v in _accounts)
+            {
                 if (v.Email != res.Email) continue;
 
                 haveAcc = true;

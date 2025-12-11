@@ -1,7 +1,7 @@
-﻿using EmailClientPluma.Core.Models;
-using Microsoft.Data.Sqlite;
-using Dapper;
+﻿using Dapper;
+using EmailClientPluma.Core.Models;
 using MailKit;
+using Microsoft.Data.Sqlite;
 
 namespace EmailClientPluma.Core.Services.Storaging
 {
@@ -55,11 +55,11 @@ namespace EmailClientPluma.Core.Services.Storaging
                     DATE         = excluded.DATE
                 RETURNING EMAIL_ID;
             ";
-            
-            
+
+
             await using var connection = CreateConnection();
             await connection.OpenAsync();
-            
+
             try
             {
                 foreach (var m in mails)
@@ -93,7 +93,7 @@ namespace EmailClientPluma.Core.Services.Storaging
                 MessageBoxHelper.Error("Storing email exception: ", ex);
             }
         }
-        
+
         public async Task<List<Email>> GetEmailsAsync(Account acc)
         {
             await using var connection = CreateConnection();

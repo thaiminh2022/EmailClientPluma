@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using EmailClientPluma.Core.Models;
 using Microsoft.Data.Sqlite;
 
 namespace EmailClientPluma.Core.Services.Storaging
@@ -223,7 +222,7 @@ namespace EmailClientPluma.Core.Services.Storaging
                     FOREIGN KEY (LABEL_ID) REFERENCES LABELS(ID) ON DELETE CASCADE
                 );", transaction: tx);
 
-            
+
 
             tx.Commit();
         }

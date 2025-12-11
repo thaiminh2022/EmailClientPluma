@@ -1,9 +1,9 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using MailKit;
+using MimeKit;
 using System.IO;
 using System.Windows.Media;
-using MimeKit;
 
 namespace EmailClientPluma.Core
 {

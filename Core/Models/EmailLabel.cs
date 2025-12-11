@@ -2,24 +2,41 @@
 
 namespace EmailClientPluma.Core.Models
 {
-    internal record EmailLabel
+    internal class EmailLabel : ObserableObject
     {
-        public int Id { get; set; } = 0; // for database use
-        public string Name { get; private set; }
+        public int Id { get; set; } = -1; // for database use
+
+        private string _name;
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanges();
+            }
+        }
 
         // null is global for every account
-        public string? OwnerAccountId { get; private set; }
+        public string? OwnerAccountId { get; set; }
 
-        public Color Color { get; private set; }
+        private Color _color;
 
-        public bool IsEditable { get; private set; }
+        public Color Color
+        {
+            get => _color;
+            set { _color = value; OnPropertyChanges(); }
+        }
+
+        public bool IsEditable { get; set; }
 
 
         public EmailLabel(string name, Color color, bool isEditable)
         {
-            Name = name;
-            Color = color;
-            IsEditable = isEditable;    
+            _name = name;
+            _color = color;
+            IsEditable = isEditable;
         }
 
 

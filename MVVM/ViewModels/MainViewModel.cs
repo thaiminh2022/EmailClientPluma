@@ -21,7 +21,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         #region Accounts
         // A list of login account
-        public ObservableCollection<Account> Accounts { get; private set; }
+        public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
         public Account? SelectedAccount
         {
@@ -157,7 +157,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         #region Filter
         private CancellationTokenSource? _filterCts; //cancellation when filtering
-        public ObservableCollection<Email> FilteredEmails { get; private set; }
+        public ObservableCollection<Email> FilteredEmails { get; set; }
         public EmailFilterOptions Filters { get; } = new(); // Filter options
         #endregion
 
@@ -187,7 +187,12 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand PreviousCommand { get; set; }
 
         public RelayCommand NewLabelCommand { get; set; }
+        public RelayCommand EditEmailLabelCommand { get; set; }
+
         #endregion
+
+
+
 
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService, IEmailFilterService emailFilterService)
         {
@@ -200,14 +205,15 @@ namespace EmailClientPluma.MVVM.ViewModels
             FilteredEmails = [];
             Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
 
-
             Accounts = _accountService.GetAccounts();
             SelectedAccount = Accounts.FirstOrDefault();
+
+
 
             // COMMANDS
             AddAccountCommand = new RelayCommand(async _ =>
             {
-                // TODO: ADd more provider
+                // TODO: Add more provider
                 await _accountService.AddAccountAsync(Provider.Google);
             });
 
@@ -295,8 +301,26 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 // OPEN NEW LABEL DIALOG
 
-                // TODO: implement
-            }, _selectedAccount is not null);
+                var labelEditorWindow = _windowFactory.CreateWindow<LabelEditorView, LabelEditorViewModel>();
+                if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
+                vm.SelectedAccount = SelectedAccount;
+                labelEditorWindow.ShowDialog();
+
+            }, _ => _selectedAccount is not null);
+
+            EditEmailLabelCommand = new RelayCommand(_ =>
+            {
+                if (SelectedAccount is null || SelectedEmail is null) return;
+
+                var emailLabelEditorWindow = _windowFactory.CreateWindow<EmailLabelEditView, EmailLabelEditViewModel>();
+
+                if (emailLabelEditorWindow.DataContext is EmailLabelEditViewModel vm)
+                {
+                    vm.Setup(SelectedAccount, SelectedEmail);
+                }
+
+                emailLabelEditorWindow.ShowDialog();
+            }, _ => SelectedEmail is not null && SelectedAccount is not null);
         }
 
         public async Task UpdateFilteredEmailsAsync()

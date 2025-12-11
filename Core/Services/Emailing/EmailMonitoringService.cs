@@ -1,9 +1,9 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Storaging;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Security;
 using System.Windows;
-using EmailClientPluma.Core.Services.Storaging;
 
 namespace EmailClientPluma.Core.Services.Emailing
 {
