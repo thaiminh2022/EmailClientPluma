@@ -38,7 +38,8 @@ namespace EmailClientPluma.MVVM.ViewModels
         public string? ToAddresses { get => _toAddresses; set { _toAddresses = value; OnPropertyChanges(); } }
         public string? Subject { get => _subject; set { _subject = value; OnPropertyChanges(); } }
         public string? Body { get; set; }
-        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); } }
+        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); OnPropertyChanges("IsNotEnable"); } }
+        public bool IsNotEnable { get => !_isEnable; set { _isEnable = !value; OnPropertyChanges(); OnPropertyChanges("IsEnable"); } }
         public Email? ReplyToEmail { get => _replyToEmail; set { _replyToEmail = value; OnPropertyChanges(); } }
 
         public void SetupReply(Account acc, Email email)

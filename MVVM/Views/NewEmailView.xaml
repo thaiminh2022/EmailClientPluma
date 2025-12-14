@@ -118,7 +118,7 @@
                     <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True"
                                   behaviors:WebView2Editor.HtmlContent="{Binding Body}" />
                 </TabItem>
-                <TabItem Header="Select Reply">
+                <TabItem Header="Select Reply" IsEnabled="{Binding IsNotEnable}">
                     <wv2:WebView2 behaviors:WebView2SelectEditor.EnableBinding="True"
                                   behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}" 
                                   behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}"
