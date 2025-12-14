@@ -1,6 +1,6 @@
 ﻿namespace EmailClientPluma.Core.Models;
 
-enum Provider
+internal enum Provider
 {
     Google,
     Microsoft,

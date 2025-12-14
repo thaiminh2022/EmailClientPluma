@@ -1,60 +1,57 @@
 ﻿using System.Windows.Input;
 
-namespace EmailClientPluma.Core
+namespace EmailClientPluma.Core;
+
+internal class RelayCommandAsync : ICommand
 {
-    internal class RelayCommandAsync : ICommand
+    protected readonly Predicate<object?>? _canExecute;
+    protected readonly Func<object?, Task> _execute;
+    private bool _isExecuting;
+
+    public RelayCommandAsync(Func<object?, Task> execute, Predicate<object?>? canExecute = null)
     {
-        protected readonly Func<object?, Task> _execute;
-        protected readonly Predicate<object?>? _canExecute;
-        private bool _isExecuting;
+        _execute = execute;
+        _canExecute = canExecute;
+    }
 
-        public event EventHandler? CanExecuteChanged
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+
+    public bool CanExecute(object? parameter)
+    {
+        return !_isExecuting && (_canExecute?.Invoke(parameter) ?? true);
+    }
+
+    public async void Execute(object? parameter)
+    {
+        if (!CanExecute(parameter)) return;
+
+        try
         {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
-        }
+            // 1. Set execution state and notify UI that CanExecute has changed (now false)
+            _isExecuting = true;
+            RaiseCanExecuteChanged();
 
-        public RelayCommandAsync(Func<object?, Task> execute, Predicate<object?>? canExecute = null)
+            // 2. Execute the asynchronous task
+            await _execute(parameter);
+        }
+        catch (Exception ex)
         {
-            _execute = execute;
-            _canExecute = canExecute;
+            MessageBoxHelper.Error("Error on RelayCommandAsync", ex);
         }
-
-        public bool CanExecute(object? parameter)
+        finally
         {
-            return !_isExecuting && (_canExecute?.Invoke(parameter) ?? true);
+            // 3. Reset execution state and notify UI that CanExecute has changed (now true)
+            _isExecuting = false;
+            RaiseCanExecuteChanged();
         }
+    }
 
-        public async void Execute(object? parameter)
-        {
-            if (!CanExecute(parameter))
-            {
-                return;
-            }
-
-            try
-            {
-                // 1. Set execution state and notify UI that CanExecute has changed (now false)
-                _isExecuting = true;
-                RaiseCanExecuteChanged();
-
-                // 2. Execute the asynchronous task
-                await _execute(parameter);
-            }
-            catch (Exception ex)
-            {
-                MessageBoxHelper.Error("Error on RelayCommandAsync", ex);
-            }
-            finally
-            {
-                // 3. Reset execution state and notify UI that CanExecute has changed (now true)
-                _isExecuting = false;
-                RaiseCanExecuteChanged();
-            }
-        }
-        public void RaiseCanExecuteChanged()
-        {
-            CommandManager.InvalidateRequerySuggested();
-        }
+    public void RaiseCanExecuteChanged()
+    {
+        CommandManager.InvalidateRequerySuggested();
     }
 }

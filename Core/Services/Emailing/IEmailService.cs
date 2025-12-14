@@ -2,7 +2,7 @@
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
-interface IEmailService
+internal interface IEmailService
 {
     Task FetchEmailHeaderAsync(Account acc);
     Task FetchEmailBodyAsync(Account acc, Email email);

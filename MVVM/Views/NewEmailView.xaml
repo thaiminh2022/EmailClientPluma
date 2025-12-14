@@ -4,21 +4,19 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="clr-namespace:EmailClientPluma.Behaviors"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:EmailClientPluma.MVVM.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:EmailClientPluma.MVVM.ViewModels"
     xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
     Title="New Email"
-    
+
     Width="800"
     Height="450"
     mc:Ignorable="d">
     <Window.DataContext>
         <viewmodels:NewEmailViewModel />
-        
+
     </Window.DataContext>
     <Grid>
-        <Grid.ColumnDefinitions />
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="149*" />
@@ -56,10 +54,9 @@
                     MinWidth="300"
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
-                          IsEnabled="{Binding IsEnable}"
+                    IsEnabled="{Binding IsEnable}"
                     ItemsSource="{Binding Accounts}"
-                    SelectedItem="{Binding SelectedAccount}"
-                    >
+                    SelectedItem="{Binding SelectedAccount}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Email}" />
@@ -112,7 +109,7 @@
                 Opacity="1"
                 Stretch="UniformToFill" />
             <!--  Main TextBox  -->
-            
+
             <TabControl>
                 <TabItem Header="Normal Mode">
                     <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True"
@@ -120,9 +117,8 @@
                 </TabItem>
                 <TabItem Header="Select Reply" IsEnabled="{Binding IsNotEnable}">
                     <wv2:WebView2 behaviors:WebView2SelectEditor.EnableBinding="True"
-                                  behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}" 
-                                  behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}"
-                                  />
+                                  behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}"
+                                  behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}" />
                 </TabItem>
             </TabControl>
         </Grid>

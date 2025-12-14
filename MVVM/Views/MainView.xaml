@@ -21,15 +21,12 @@
 
     <Window.Resources>
         <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
-        <converters:ReverseBoolToVisibilityConverter x:Key="ReverseBoolToVisibilityConverter" />
         <!--  Color palette  -->
         <SolidColorBrush x:Key="BackgroundBrush" Color="#F7F4FB" />
         <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FAF8FF" />
         <SolidColorBrush x:Key="PrimaryBrush" Color="#7E57C2" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#B39DDB" />
         <SolidColorBrush x:Key="TextBrush" Color="Black" />
         <SolidColorBrush x:Key="ButtonForegroundBrush" Color="White" />
-        <SolidColorBrush x:Key="GoldBrush" Color="#FFD700" />
         <SolidColorBrush x:Key="DarkPurple" Color="#5E35B1" />
         <SolidColorBrush x:Key="LightPurple" Color="#D1C4E9" />
 
@@ -420,7 +417,8 @@
                                 Width="100"
                                 VerticalAlignment="Center"
                                 Text="Doesn’t have" />
-                            <TextBox Width="300" Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Width="300"
+                                     Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
                         <!--  Size  -->

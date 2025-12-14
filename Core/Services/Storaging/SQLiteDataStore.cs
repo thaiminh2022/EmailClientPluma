@@ -2,86 +2,83 @@
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 
-namespace EmailClientPluma.Core.Services.Storaging
+namespace EmailClientPluma.Core.Services.Storaging;
+
+internal class SQLiteDataStore : IDataStore
 {
-    internal class SQLiteDataStore : IDataStore
+    private readonly string _connectionString;
+
+    public SQLiteDataStore(string dbPath)
     {
-        readonly string _connectionString;
-        public SQLiteDataStore(string dbPath)
-        {
-            _connectionString = $"Data Source={dbPath}";
-            Initialize();
-        }
+        _connectionString = $"Data Source={dbPath}";
+        Initialize();
+    }
 
-        private void Initialize()
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+    public async Task ClearAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
 
-            var command = connection.CreateCommand();
-            command.CommandText = @" CREATE TABLE IF NOT EXISTS GOOGLE_STORE (
-                                    KEY TEXT PRIMARY KEY,
-                                    VALUE TEXT NOT NULL
-                                   );
-                                  ";
-            command.ExecuteNonQuery();
-        }
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "DELETE FROM GOOGLE_STORE";
+        await cmd.ExecuteNonQueryAsync();
+    }
 
-        public async Task ClearAsync()
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync();
+    public async Task DeleteAsync<T>(string key)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
 
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "DELETE FROM GOOGLE_STORE";
-            await cmd.ExecuteNonQueryAsync();
-        }
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "DELETE FROM GOOGLE_STORE WHERE KEY = $key";
+        cmd.Parameters.AddWithValue("$key", key);
 
-        public async Task DeleteAsync<T>(string key)
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync();
+        await cmd.ExecuteNonQueryAsync();
+    }
 
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "DELETE FROM GOOGLE_STORE WHERE KEY = $key";
-            cmd.Parameters.AddWithValue("$key", key);
+    public async Task<T> GetAsync<T>(string key)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
 
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        public async Task<T> GetAsync<T>(string key)
-        {
-            using var connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "SELECT VALUE FROM GOOGLE_STORE WHERE KEY = $key";
-            cmd.Parameters.AddWithValue("$key", key);
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT VALUE FROM GOOGLE_STORE WHERE KEY = $key";
+        cmd.Parameters.AddWithValue("$key", key);
 
 
-            if (await cmd.ExecuteScalarAsync() is string result)
-            {
-                return JsonConvert.DeserializeObject<T>(result)!;
-            }
-            return default!;
-        }
+        if (await cmd.ExecuteScalarAsync() is string result) return JsonConvert.DeserializeObject<T>(result)!;
+        return default!;
+    }
 
-        public async Task StoreAsync<T>(string key, T value)
-        {
-            var json = JsonConvert.SerializeObject(value);
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+    public async Task StoreAsync<T>(string key, T value)
+    {
+        var json = JsonConvert.SerializeObject(value);
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
 
-            var command = connection.CreateCommand();
-            command.CommandText = @"INSERT INTO GOOGLE_STORE (KEY, VALUE) 
+        var command = connection.CreateCommand();
+        command.CommandText = @"INSERT INTO GOOGLE_STORE (KEY, VALUE) 
                                     VALUES ($key, $value)
                                     ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value;
                                    ";
 
-            command.Parameters.AddWithValue("$key", key);
-            command.Parameters.AddWithValue("$value", json);
+        command.Parameters.AddWithValue("$key", key);
+        command.Parameters.AddWithValue("$value", json);
 
-            await command.ExecuteNonQueryAsync();
-        }
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private void Initialize()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = @" CREATE TABLE IF NOT EXISTS GOOGLE_STORE (
+                                    KEY TEXT PRIMARY KEY,
+                                    VALUE TEXT NOT NULL
+                                   );
+                                  ";
+        command.ExecuteNonQuery();
     }
 }

@@ -1,55 +1,53 @@
-﻿using EmailClientPluma.Core.Models;
+﻿using System.Windows;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
-using System.Windows;
 using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
-namespace EmailClientPluma
+namespace EmailClientPluma;
+
+/// <summary>
+///     Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    public App()
     {
-        public IServiceProvider Services { get; private set; }
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+        var services = new ServiceCollection();
+        services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
+        services.AddSingleton<IStorageService, StorageService>();
+        services.AddSingleton<IAccountService, AccountService>();
+        services.AddSingleton<IEmailService, GmailApiEmailService>();
+        services.AddSingleton<IWindowFactory, WindowFactory>();
+        services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 
-            var mainWindow = new MainView()
-            {
-                DataContext = Services.GetRequiredService<MainViewModel>()
-            };
-            mainWindow.Show();
-        }
+        //Binhs property
+        services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
-        public App()
-        {
-            var services = new ServiceCollection();
-            services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
-            services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<IAccountService, AccountService>();
-            services.AddSingleton<IEmailService, GmailApiEmailService>();
-            services.AddSingleton<IWindowFactory, WindowFactory>();
-            services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
+        //window
+        services.AddTransient<NewEmailViewModel>();
+        services.AddTransient<LabelEditorViewModel>();
+        services.AddTransient<EmailLabelEditViewModel>();
 
-            //Binhs property
-            services.AddSingleton<IEmailFilterService, EmailFilterService>();
+        // Might change this later, it's a singleton due to application design
+        services.AddSingleton<MainViewModel>();
 
-            //window
-            services.AddTransient<NewEmailViewModel>();
-            services.AddTransient<LabelEditorViewModel>();
-            services.AddTransient<EmailLabelEditViewModel>();
-
-            // Might change this later, it's a singleton due to application design
-            services.AddSingleton<MainViewModel>();
-
-            Services = services.BuildServiceProvider();
-        }
+        Services = services.BuildServiceProvider();
     }
 
+    public IServiceProvider Services { get; }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        var mainWindow = new MainView
+        {
+            DataContext = Services.GetRequiredService<MainViewModel>()
+        };
+        mainWindow.Show();
+    }
 }
