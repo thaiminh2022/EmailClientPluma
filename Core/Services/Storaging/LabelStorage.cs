@@ -61,7 +61,7 @@ namespace EmailClientPluma.Core.Services.Storaging
 
             var insertSql = """
                             INSERT INTO LABELS (LABEL_NAME, OWNER_ID, COLOR, IS_EDITABLE)
-                            VALUES (@LabelName, @OwnerId, @Color, 1);
+                            VALUES (@LabelName, @OwnerId, @Color, 1)
                             RETURNING ID;
                             """;
 

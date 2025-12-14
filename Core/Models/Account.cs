@@ -15,6 +15,8 @@ namespace EmailClientPluma.Core.Models
         public Provider Provider { get; set; }
         public ObservableCollection<Email> Emails { get; set; } = [];
 
+        public string? PaginationToken { get; set; }
+        public string? LastSyncToken { get; set; }
         public Credentials Credentials { get; set; }
 
 

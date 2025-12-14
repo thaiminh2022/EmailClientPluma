@@ -1,28 +1,23 @@
 ﻿using MailKit;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using EmailClientPluma.Core.Services.Accounting;
 
 namespace EmailClientPluma.Core.Models
 {
-    // Provider type enum
-    internal enum EmailProvider
-    {
-        Gmail,
-        Outlook,
-        IMAP
-    }
     
     // Universal email flags that work across all providers
     [Flags]
     internal enum EmailFlags
     {
         None = 0,
-        Seen = 1,        // Read/Unread
-        Answered = 2,    // Has been replied to
-        Flagged = 4,     // Starred/Important
-        Deleted = 8,     // Marked for deletion
-        Draft = 16,       // Draft message
-        Recent = 32,      // Recently arrived (IMAP only)
+        Seen = 1 << 0,      
+        Flagged = 1 << 2,     
+        Deleted = 1 << 3,    
+        Draft = 1 << 4,       
+        Spam = 1 << 5,
+        Sent = 1 << 6,
+        Important = 1 << 7,
     }
 
     internal class Email : ObserableObject
@@ -37,7 +32,7 @@ namespace EmailClientPluma.Core.Models
             
             public required string FolderFullName { get; set; }
             
-            public required EmailProvider Provider { get; set; }
+            public required Provider Provider { get; set; }
             
             public required string OwnerAccountId { get; set; }
             public string? InReplyTo { get; set; }
@@ -118,10 +113,6 @@ namespace EmailClientPluma.Core.Models
         {
             var flags = EmailFlags.None;
 
-            if (labelIds.Count == 0)
-                return flags;
-
-            // Gmail uses inverse logic: UNREAD label means NOT seen
             if (!labelIds.Contains("UNREAD"))
                 flags |= EmailFlags.Seen;
 
@@ -133,6 +124,15 @@ namespace EmailClientPluma.Core.Models
 
             if (labelIds.Contains("TRASH"))
                 flags |= EmailFlags.Deleted;
+            
+            if (labelIds.Contains("SPAM"))
+                flags |= EmailFlags.Spam;
+            
+            if (labelIds.Contains("SENT"))
+                flags |= EmailFlags.Sent;
+            
+            if (labelIds.Contains("IMPORTANT"))
+                flags |= EmailFlags.Important;
 
             return flags;
         }

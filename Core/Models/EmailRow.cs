@@ -3,7 +3,7 @@
     public sealed class EmailRow
     {
         public int EMAIL_ID { get; set; }
-        public string PROVIDERR_MESSAGE_ID { get; init; }
+        public string PROVIDER_MESSAGE_ID { get; init; }
         public string? PROVIDER_THREAD_ID { get; init; }
         public string? PROVIDER_HISTORY_ID { get; init; }
         public string? INTERNET_MESSAGE_ID { get; init; }

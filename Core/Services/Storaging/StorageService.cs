@@ -14,6 +14,7 @@ namespace EmailClientPluma.Core.Services.Storaging
         Task<IEnumerable<Account>> GetAccountsAsync();
         Task<int> StoreAccountAsync(Account account);
         Task RemoveAccountAsync(Account account);
+        Task UpdatePaginationAndNextTokenAsync(Account account);
 
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
@@ -65,6 +66,10 @@ namespace EmailClientPluma.Core.Services.Storaging
             await _accountStorage.RemoveAccountAsync(account);
         }
 
+        public async Task UpdatePaginationAndNextTokenAsync(Account account)
+        {
+            await _accountStorage.UpdatePaginationAndNextTokenAsync(account);
+        }
         #endregion
 
         #region Emails

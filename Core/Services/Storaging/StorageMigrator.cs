@@ -43,6 +43,7 @@ namespace EmailClientPluma.Core.Services.Storaging
 
             if (currentVersion < 4)
             {
+                ApplyV4_API_EMAIL_FETCH(connection);
                 SetVersion(connection, 4);
                 currentVersion = 4;
             }
@@ -94,6 +95,8 @@ namespace EmailClientPluma.Core.Services.Storaging
                             PROVIDER         TEXT NOT NULL,            
                             EMAIL            TEXT NOT NULL,
                             DISPLAY_NAME     TEXT,
+                            PAGINATION_TOKEN TEXT,
+                            LAST_SYNC_TOKEN  TEXT,
                             UNIQUE (PROVIDER, PROVIDER_UID, EMAIL)
                         );";
 
@@ -271,7 +274,7 @@ namespace EmailClientPluma.Core.Services.Storaging
                                       IMAP_UID,
                                       IMAP_UID_VALIDITY,
                                       FOLDER_FULLNAME,
-                                      INTERNET_MESSAGE_ID,
+                                      PROVIDER_MESSAGE_ID,
                                       OWNER_ID,
                                       IN_REPLY_TO,
                                       SUBJECT,

@@ -127,16 +127,20 @@ internal class GmailApiEmailService : IEmailService
     }
     private Email CreateEmailFromMessage(Account acc, Message message)
     {
-        var indentifier = new Email.Identifiers
+        var flags = EmailIdentifierExtensions.FromGmailLabels(message.LabelIds);
+        
+        var identifiers = new Email.Identifiers
         {
             OwnerAccountId = acc.ProviderUID,
             ProviderMessageId = message.Id,
             ProviderThreadId = message.ThreadId,
             ProviderHistoryId = message.HistoryId?.ToString(),
             FolderFullName = "INBOX",
-            Provider = EmailProvider.Gmail,
-            Flags = EmailIdentifierExtensions.FromGmailLabels(message.LabelIds),
+            Provider = Provider.Google,
+            Flags = flags,
         };
+        
+        
 
         var data = new Email.DataParts
         {
@@ -153,7 +157,6 @@ internal class GmailApiEmailService : IEmailService
         {
             foreach (var header in message.Payload.Headers)
             {
-                
                 switch (header.Name.ToLower())
                 {
                     case "from":
@@ -167,13 +170,20 @@ internal class GmailApiEmailService : IEmailService
                         break;
                     case "date":
                         if (DateTimeOffset.TryParse(header.Value, out var date))
+                        {
                             data.Date = date;
+                        }
+                        else if (message.InternalDate.HasValue)
+                        {
+                            var dto = DateTimeOffset.FromUnixTimeMilliseconds(message.InternalDate.Value);
+                            data.Date = dto;
+                        }
                         break;
                     case "message-id":
-                        indentifier.InternetMessageId = header.Value;
+                        identifiers.InternetMessageId = header.Value;
                         break;
                     case "in-reply-to":
-                        indentifier.InReplyTo = header.Value;
+                        identifiers.InReplyTo = header.Value;
                         break;
                 }
             }
@@ -183,7 +193,12 @@ internal class GmailApiEmailService : IEmailService
         if (message.SizeEstimate.HasValue)
             data.EmailSizeInKb = message.SizeEstimate.Value / 1024.0;
 
-        return new Email(indentifier, data);
+        var e  = new Email(identifiers, data);
+
+        e.Labels.Add(EmailLabel.All);
+        e.Labels.Add(flags.HasFlag(EmailFlags.Sent) ? EmailLabel.Sent : EmailLabel.Inbox);
+
+        return e;
     }
     #endregion
     
@@ -202,6 +217,13 @@ internal class GmailApiEmailService : IEmailService
             request.LabelIds = "INBOX";
             
             response = await request.ExecuteAsync();
+            
+            acc.PaginationToken = response.NextPageToken;
+            if (string.IsNullOrEmpty(response.NextPageToken))
+            {
+                acc.NoMoreOlderEmail = true;
+            }
+            await _storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
         else
         {
@@ -315,24 +337,31 @@ internal class GmailApiEmailService : IEmailService
 
         using var service = CreateGmailService(acc);
 
-        var oldestMessageId = await GetOldestSyncedMessageIdAsync(acc);
-
-        if (oldestMessageId == null)
-            return false;
-
         var request = service.Users.Messages.List("me");
         request.MaxResults = window;
         request.LabelIds = "INBOX";
-        request.PageToken = oldestMessageId; // Use as page token to get older messages
             
-        var response = await request.ExecuteAsync();
+        // Use the pagination token if we have one
+        if (!string.IsNullOrEmpty(acc.PaginationToken))
+        {
+            request.PageToken = acc.PaginationToken;
+        }
+        var response = await request.ExecuteAsync(token);
 
-        if (response.Messages == null || response.Messages.Count == 0)
+        if (response.Messages is null || response.Messages.Count == 0)
         {
             acc.NoMoreOlderEmail = true;
             return false;
         }
+        
+        acc.PaginationToken = response.NextPageToken;
+        if (string.IsNullOrEmpty(response.NextPageToken))
+        {
+            acc.NoMoreOlderEmail = true;
+        }
 
+        await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+        
         // Fetch and store older messages
         foreach (var msgRef in response.Messages)
         {
@@ -343,8 +372,8 @@ internal class GmailApiEmailService : IEmailService
                 continue;
 
             acc.Emails.Add(email);
-            await _storageService.StoreEmailAsync(acc, email);
         }
+        await _storageService.StoreEmailAsync(acc);
 
         return true;
     }

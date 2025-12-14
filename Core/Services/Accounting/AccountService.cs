@@ -7,10 +7,6 @@ using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Services.Accounting
 {
-    enum Provider
-    {
-        Google,
-    }
     interface IAccountService
     {
         Task AddAccountAsync(Provider prodiver);

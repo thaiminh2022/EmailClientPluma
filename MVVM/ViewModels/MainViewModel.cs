@@ -15,7 +15,6 @@ namespace EmailClientPluma.MVVM.ViewModels
         #region Services
         readonly IAccountService _accountService;
         readonly IEmailService _emailService;
-        readonly IWindowFactory _windowFactory;
         readonly IEmailFilterService _filterService;
         #endregion
 
@@ -183,8 +182,8 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand ComposeCommand { get; set; }
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
-        public RelayCommand NextCommand { get; set; }
-        public RelayCommand PreviousCommand { get; set; }
+        public RelayCommandAsync NextCommand { get; set; }
+        public RelayCommandAsync PreviousCommand { get; set; }
 
         public RelayCommand NewLabelCommand { get; set; }
         public RelayCommand EditEmailLabelCommand { get; set; }
@@ -197,7 +196,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService, IEmailFilterService emailFilterService)
         {
             _accountService = accountService;
-            _windowFactory = windowFactory;
+            var windowFactory1 = windowFactory;
             _emailService = emailService;
             _filterService = emailFilterService;
 
@@ -219,7 +218,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             ComposeCommand = new RelayCommand(_ =>
             {
-                var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
+                var newEmailWindow = windowFactory1.CreateWindow<NewEmailView, NewEmailViewModel>();
                 var success = newEmailWindow.ShowDialog();
 
                 if (success is null)
@@ -233,7 +232,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             ReplyCommand = new RelayCommand(_ =>
             {
                 if (SelectedAccount == null || SelectedEmail == null) return;
-                var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
+                var newEmailWindow = windowFactory1.CreateWindow<NewEmailView, NewEmailViewModel>();
 
                 if (newEmailWindow.DataContext is not NewEmailViewModel vm) return;
                 vm.SetupReply(SelectedAccount, SelectedEmail);
@@ -262,7 +261,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => SelectedAccount is not null);
 
 
-            NextCommand = new RelayCommand(async _ =>
+            NextCommand = new RelayCommandAsync(async _ =>
             {
                 if (SelectedAccount is null || SelectedAccount.NoMoreOlderEmail)
                     return;
@@ -290,7 +289,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 await UpdateFilteredEmailsAsync();
             }, _ => SelectedAccount is not null && !SelectedAccount.NoMoreOlderEmail);
 
-            PreviousCommand = new RelayCommand(async _ =>
+            PreviousCommand = new RelayCommandAsync(async _ =>
             {
                 if (_currentPage <= 0) return;
                 _currentPage--;
@@ -301,7 +300,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 // OPEN NEW LABEL DIALOG
 
-                var labelEditorWindow = _windowFactory.CreateWindow<LabelEditorView, LabelEditorViewModel>();
+                var labelEditorWindow = windowFactory1.CreateWindow<LabelEditorView, LabelEditorViewModel>();
                 if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
                 vm.SelectedAccount = SelectedAccount;
                 labelEditorWindow.ShowDialog();
@@ -312,7 +311,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 if (SelectedAccount is null || SelectedEmail is null) return;
 
-                var emailLabelEditorWindow = _windowFactory.CreateWindow<EmailLabelEditView, EmailLabelEditViewModel>();
+                var emailLabelEditorWindow = windowFactory1.CreateWindow<EmailLabelEditView, EmailLabelEditViewModel>();
 
                 if (emailLabelEditorWindow.DataContext is EmailLabelEditViewModel vm)
                 {

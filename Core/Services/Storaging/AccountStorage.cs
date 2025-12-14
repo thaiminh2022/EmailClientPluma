@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Windows.Xps;
+using Dapper;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using Google.Apis.Auth.OAuth2.Responses;
@@ -22,7 +23,7 @@ namespace EmailClientPluma.Core.Services.Storaging
         {
             await using var connection = CreateConnection();
             var rows = await connection.QueryAsync<AccountRow>(
-                @"SELECT PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME FROM ACCOUNTS"
+                @"SELECT PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME, PAGINATION_TOKEN, LAST_SYNC_TOKEN FROM ACCOUNTS"
             );
             List<Account> accounts = [];
             foreach (var row in rows)
@@ -32,8 +33,12 @@ namespace EmailClientPluma.Core.Services.Storaging
                     var token = await _tokenStore.GetAsync<TokenResponse>(row.PROVIDER_UID);
                     var cred = new Credentials(token.AccessToken, token.RefreshToken);
                     var provider = Enum.Parse<Provider>(row.PROVIDER);
-
-                    var acc = new Account(row.PROVIDER_UID, row.EMAIL, row.DISPLAY_NAME, provider, cred);
+                    
+                    var acc = new Account(row.PROVIDER_UID, row.EMAIL, row.DISPLAY_NAME, provider, cred)
+                    {
+                        PaginationToken = row.PAGINATION_TOKEN,
+                        LastSyncToken = row.LAST_SYNC_TOKEN
+                    };
                     accounts.Add(acc);
                 }
                 catch (Exception ex)
@@ -46,21 +51,55 @@ namespace EmailClientPluma.Core.Services.Storaging
         }
         public async Task<int> StoreAccountAsync(Account account)
         {
-            using var connection = CreateConnection();
+            await using var connection = CreateConnection();
 
-            string sql = @" INSERT INTO ACCOUNTS (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME) 
-                            VALUES (@ProviderUID, @Provider, @Email, @DisplayName);
-                          ";
+            string sql = """
+                         INSERT INTO ACCOUNTS
+                             (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME, PAGINATION_TOKEN, LAST_SYNC_TOKEN)
+                         VALUES
+                             (@ProviderUID, @Provider, @Email, @DisplayName, @PaginationToken, @LastSyncToken)
+                         ON CONFLICT (PROVIDER_UID)
+                         DO UPDATE SET
+                             PROVIDER         = excluded.PROVIDER,
+                             EMAIL            = excluded.EMAIL,
+                             DISPLAY_NAME     = excluded.DISPLAY_NAME,
+                             PAGINATION_TOKEN = excluded.PAGINATION_TOKEN,
+                             LAST_SYNC_TOKEN  = excluded.LAST_SYNC_TOKEN;
+                         """;
 
             var affected = await connection.ExecuteAsync(sql, new
             {
                 account.ProviderUID,
                 Provider = account.Provider.ToString(),
                 account.Email,
-                account.DisplayName
+                account.DisplayName,
+                account.PaginationToken,
+                account.LastSyncToken
             });
 
             return affected;
+        }
+
+        public async Task UpdatePaginationAndNextTokenAsync(Account account)
+        {
+            await using var connection = CreateConnection();
+            await connection.OpenAsync();
+            var tx = connection.BeginTransaction();
+
+            var sql = """
+                        UPDATE ACCOUNTS SET PAGINATION_TOKEN = @PaginationToken, LAST_SYNC_TOKEN = @LastSyncToken
+                        WHERE  PROVIDER_UID = @ProviderUID
+                      """;
+            
+            await connection.ExecuteAsync(sql, new
+            {
+                account.PaginationToken,
+                account.LastSyncToken,
+                account.ProviderUID
+            }, transaction: tx);
+
+            await tx.CommitAsync();
+            
         }
 
         public async Task RemoveAccountAsync(Account account)
