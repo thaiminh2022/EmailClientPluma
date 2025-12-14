@@ -1,6 +1,6 @@
-﻿using EmailClientPluma.Core.Services.Accounting;
+﻿using EmailClientPluma.Core.Models;
 
-namespace EmailClientPluma.Core.Models
+namespace EmailClientPluma.Core.Services.Accounting
 {
     /// <summary>
     /// Interface for all the authentication services (Google, Microsoft, Yahoo)

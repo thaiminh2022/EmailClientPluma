@@ -40,6 +40,12 @@ namespace EmailClientPluma.Core.Services.Storaging
                 SetVersion(connection, 3);
                 currentVersion = 3;
             }
+
+            if (currentVersion < 4)
+            {
+                SetVersion(connection, 4);
+                currentVersion = 4;
+            }
         }
 
 
@@ -149,7 +155,7 @@ namespace EmailClientPluma.Core.Services.Storaging
                         ";
 
             var copyDataSql = @" INSERT INTO EMAILS_NEW (
-                                    EMAIL_ID,
+                                    EMAIL_ID ,
                                     IMAP_UID,
                                     IMAP_UID_VALIDITY,
                                     FOLDER_FULLNAME,
@@ -190,7 +196,6 @@ namespace EmailClientPluma.Core.Services.Storaging
 
         #endregion
 
-
         #region // ---------------- v3: add label ----------------
 
         private void ApplyV3_Label(SqliteConnection connection)
@@ -227,6 +232,78 @@ namespace EmailClientPluma.Core.Services.Storaging
             tx.Commit();
         }
 
+        #endregion
+        
+        #region VERSION 4, API EMAIL FETCHING
+
+        private void ApplyV4_API_EMAIL_FETCH(SqliteConnection connection)
+        {
+            var tx = connection.BeginTransaction();
+
+            var createSql = """
+                      CREATE TABLE IF NOT EXISTS EMAILS_NEW (
+                         EMAIL_ID                   INTEGER PRIMARY KEY AUTOINCREMENT,
+                         PROVIDER_MESSAGE_ID        TEXT    NOT NULL,
+                         PROVIDER_THREAD_ID         TEXT,
+                         PROVIDER_HISTORY_ID        TEXT,
+                         INTERNET_MESSAGE_ID        TEXT,
+                         FOLDER_FULLNAME            TEXT,
+                         PROVIDER                   INTEGER,
+                         OWNER_ID                   TEXT    NOT NULL,
+                         IN_REPLY_TO                TEXT,
+                         FLAGS                      INTEGER,
+                         IMAP_UID                   INTEGER,
+                         IMAP_UID_VALIDITY          INTEGER,
+                         SUBJECT                    TEXT    NOT NULL,
+                         BODY                       TEXT,
+                         FROM_ADDRESS               TEXT NOT NULL,
+                         TO_ADDRESS                 TEXT NOT NULL,
+                         DATE                       TEXT,
+                         
+                         FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE,
+                         UNIQUE (OWNER_ID, FOLDER_FULLNAME, PROVIDER_MESSAGE_ID)
+                      )
+                      """;
+            
+            var copyDataSql = """
+                              INSERT INTO EMAILS_NEW (
+                                      EMAIL_ID,
+                                      IMAP_UID,
+                                      IMAP_UID_VALIDITY,
+                                      FOLDER_FULLNAME,
+                                      INTERNET_MESSAGE_ID,
+                                      OWNER_ID,
+                                      IN_REPLY_TO,
+                                      SUBJECT,
+                                      BODY,
+                                      FROM_ADDRESS,
+                                      TO_ADDRESS,
+                                      DATE
+                                  )
+                                  SELECT
+                                      EMAIL_ID,
+                                      IMAP_UID,
+                                      IMAP_UID_VALIDITY,
+                                      FOLDER_FULLNAME,
+                                      MESSAGE_ID,
+                                      OWNER_ID,
+                                      IN_REPLY_TO,
+                                      SUBJECT,
+                                      BODY,
+                                      FROM_ADDRESS,
+                                      TO_ADDRESS,
+                                      DATE
+                                  FROM EMAILS;
+                              """;
+            
+            connection.Execute(createSql, transaction: tx);
+            connection.Execute(copyDataSql, transaction: tx);
+            
+            connection.Execute("DROP TABLE EMAILS;", transaction: tx);
+            connection.Execute("ALTER TABLE EMAILS_NEW RENAME TO EMAILS;", transaction: tx);
+            
+            tx.Commit();
+        }
         #endregion
     }
 }

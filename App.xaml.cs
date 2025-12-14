@@ -33,7 +33,7 @@ namespace EmailClientPluma
             services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
             services.AddSingleton<IStorageService, StorageService>();
             services.AddSingleton<IAccountService, AccountService>();
-            services.AddSingleton<IEmailService, EmailService>();
+            services.AddSingleton<IEmailService, GmailApiEmailService>();
             services.AddSingleton<IWindowFactory, WindowFactory>();
             services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 

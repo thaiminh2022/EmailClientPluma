@@ -40,6 +40,7 @@ namespace EmailClientPluma.Core.Services.Emailing
 
         public void StartMonitor(Account acc)
         {
+            /*
             lock (_lock)
             {
                 if (_monitors.ContainsKey(acc.ProviderUID))
@@ -59,12 +60,13 @@ namespace EmailClientPluma.Core.Services.Emailing
                     }
                 });
             }
+            */
 
         }
 
         async Task StartMonitorEmail(Account acc, AccountMonitor monitor)
         {
-            CancellationToken cancellationToken = monitor.Cancellation.Token;
+            /*CancellationToken cancellationToken = monitor.Cancellation.Token;
 
             try
             {
@@ -246,7 +248,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                     if (_monitors.TryGetValue(acc.ProviderUID, out var existing) && existing == monitor)
                         _monitors.Remove(acc.ProviderUID);
                 }
-            }
+            }*/
         }
 
 

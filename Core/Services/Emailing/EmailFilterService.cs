@@ -127,7 +127,6 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             if (opt.HasAttachment)
             {
-                if (email.Attachments == null || !email.Attachments.Any())
                     return false;
             }
 
