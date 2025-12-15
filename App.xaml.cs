@@ -18,6 +18,8 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
         services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
+        services.AddSingleton<IAuthenticationService, MicrosoftAuthenticationService>();
+
         services.AddSingleton<IStorageService, StorageService>();
         services.AddSingleton<IAccountService, AccountService>();
         services.AddSingleton<IEmailService, GmailApiEmailService>();

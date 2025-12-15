@@ -25,7 +25,7 @@ internal class GmailApiEmailService : IEmailService
     public async Task FetchEmailHeaderAsync(Account acc)
     {
         var service = CreateGmailService(acc);
-        var lastHistoryId = await GetLastSyncedHistoryIdAsync(acc);
+        var lastHistoryId = await EmailAPIHelper.GetLastSyncedHistoryIdAsync(acc, _storageService);
 
         ListMessagesResponse response;
 
@@ -253,25 +253,6 @@ internal class GmailApiEmailService : IEmailService
             HttpClientInitializer = credentials,
             ApplicationName = "EmailClientPluma"
         });
-    }
-
-    private async Task<string?> GetLastSyncedHistoryIdAsync(Account acc)
-    {
-        var emails = await _storageService.GetEmailsAsync(acc);
-        return emails
-            .Where(e => !string.IsNullOrEmpty(e.MessageIdentifiers.ProviderHistoryId))
-            .OrderByDescending(e => ulong.Parse(e.MessageIdentifiers.ProviderHistoryId ?? "0"))
-            .Select(e => e.MessageIdentifiers.ProviderHistoryId)
-            .FirstOrDefault();
-    }
-
-    private async Task<string?> GetOldestSyncedMessageIdAsync(Account acc)
-    {
-        var emails = await _storageService.GetEmailsAsync(acc);
-        return emails
-            .OrderBy(e => e.MessageParts.Date)
-            .Select(e => e.MessageIdentifiers.ProviderMessageId)
-            .FirstOrDefault();
     }
 
     private async Task ProcessAndStoreMessage(Account acc, Message msg)
