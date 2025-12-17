@@ -5,6 +5,7 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.IO;
 
 namespace EmailClientPluma.Core.Services.Emailing
 {
@@ -341,7 +342,36 @@ namespace EmailClientPluma.Core.Services.Emailing
                 }
             }
 
+            var attachments = new List<Attachment>();
+
+            if (bodyParts.Attachments != null)
+            {
+                foreach (var attachment in bodyParts.Attachments)
+                {
+                    var entity = await folder.GetBodyPartAsync(uniqueID, attachment);
+
+                    if (entity is MimePart mimePart)
+                    {
+                        using var ms = new MemoryStream();
+                        await mimePart.Content.DecodeToAsync(ms);
+
+                        attachments.Add(new Attachment
+                        {
+                            OwnerEmailID = email.MessageIdentifiers.EmailID,
+                            FileName = mimePart.FileName ?? "attachment",
+                            Content = ms.ToArray()
+                        });
+                    }
+                }
+            }
+
+            email.MessageParts.Attachments = attachments;
+
+            // PERSIST
             await _storageService.UpdateEmailBodyAsync(email);
+
+            //if (attachments.Count > 0)
+            //    await _storageService.SaveAttachmentsAsync(email, attachments);
         }
         public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
         {

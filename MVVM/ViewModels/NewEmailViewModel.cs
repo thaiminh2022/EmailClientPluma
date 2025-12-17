@@ -2,7 +2,10 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.IO;
+
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -33,6 +36,26 @@ namespace EmailClientPluma.MVVM.ViewModels
         }
         public RelayCommand SendCommand { get; set; }
         public RelayCommand CancelCommand { get; set; }
+
+
+        // Change this private field to a public ObservableCollection<Attachment> property
+        public ObservableCollection<Attachment> Attachments { get; set; } = new ObservableCollection<Attachment>();
+
+        private Attachment? _selectedAttachment;
+
+        public Attachment? SelectedAttachment
+        {
+            get => _selectedAttachment;
+            set
+            {
+                _selectedAttachment = value;
+                OnPropertyChanges();
+                // Trigger can execute change for RemoveAttachment
+ 
+            }
+        }
+        public RelayCommand AddAttachment { get; set; }
+        public RelayCommand RemoveAttachment { get; set; }
 
 
         public string? ToAddresses { get => _toAddresses; set { _toAddresses = value; OnPropertyChanges(); } }
@@ -76,7 +99,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                     From = SelectedAccount.Email,
                     To = ToAddresses,
                     Date = DateTime.Now,
-                    InReplyTo = _inReplyTo
+                    InReplyTo = _inReplyTo,
+                    Attachments = Attachments.ToList()
                 };
 
                 try
@@ -99,6 +123,46 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 RequestClose?.Invoke(this, null);
             });
+
+
+
+            AddAttachment = new RelayCommand(_ =>
+            {
+                OpenFileDialog ofd = new OpenFileDialog
+                {
+                    Filter = "All Files (*.*)|*.*",
+                    Multiselect = true
+                };
+
+                if (ofd.ShowDialog() != true)
+                    return;
+
+                foreach (string filePath in ofd.FileNames)
+                {
+                    try
+                    {
+                        byte[] fileBytes = File.ReadAllBytes(filePath);
+
+                        Attachments.Add(new Attachment
+                        {
+                            FileName = Path.GetFileName(filePath),
+                            Content = fileBytes
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBoxHelper.Error(
+                            $"Could not add attachment {Path.GetFileName(filePath)}: {ex.Message}");
+                    }
+                }
+            
+            }, _ => true);
+
+            RemoveAttachment = new RelayCommand(_ =>
+            {
+                if (SelectedAttachment != null)
+                    Attachments.Remove(SelectedAttachment);
+            }, _ => true);
         }
 
         // This should not be matter because this is for UI type hinting

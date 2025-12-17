@@ -10,6 +10,7 @@ namespace EmailClientPluma.MVVM.Views
         public NewEmailView()
         {
             InitializeComponent();
+            DataContext = new ViewModels.NewEmailViewModel();
         }
 
         private void OptionsButton_Click(object sender, RoutedEventArgs e)

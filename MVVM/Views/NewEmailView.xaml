@@ -132,6 +132,7 @@
             </TabControl>
             <Button
                 x:Name="AttachButton"
+                Command="{Binding AddAttachment}"
                 
                 Margin="216,-7,536,283"
                 Content="+" RenderTransformOrigin="0.734,-2.701"
@@ -139,6 +140,8 @@
                 />
             <Button
                  x:Name="UnattachButton"
+                 Command="{Binding RemoveAttachment}"
+                
                  Margin="267,-7,485,283"
                  Content="X" RenderTransformOrigin="0.734,-2.701"
                  Panel.ZIndex="10"
