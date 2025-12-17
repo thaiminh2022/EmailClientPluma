@@ -124,7 +124,22 @@
                                   behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}"
                                   />
                 </TabItem>
+                
             </TabControl>
+            <Button
+                x:Name="AttachButton"
+                
+                Margin="216,-7,536,283"
+                Content="+" RenderTransformOrigin="0.734,-2.701"
+                Panel.ZIndex="10"
+                />
+            <Button
+                 x:Name="UnattachButton"
+                 Margin="267,-7,485,283"
+                 Content="X" RenderTransformOrigin="0.734,-2.701"
+                 Panel.ZIndex="10"
+            />
+
         </Grid>
         <StackPanel
             Grid.Row="2"

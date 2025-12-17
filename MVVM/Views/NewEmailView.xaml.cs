@@ -21,6 +21,5 @@ namespace EmailClientPluma.MVVM.Views
         {
             LabelsPopup.IsOpen = !LabelsPopup.IsOpen;
         }
-
     }
 }

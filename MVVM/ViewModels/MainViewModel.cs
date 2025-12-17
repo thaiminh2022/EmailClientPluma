@@ -182,7 +182,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
             Accounts = _accountService.GetAccounts();
-            SelectedAccount = Accounts.First();
+            SelectedAccount = Accounts.FirstOrDefault();
 
             // COMMANDS
             AddAccountCommand = new RelayCommand(async _ =>
@@ -204,6 +204,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                     MessageBoxHelper.Info("Message was sent");
                 }
             }, _ => Accounts.Count > 0);
+
             ReplyCommand = new RelayCommand(_ =>
             {
                 if (SelectedAccount == null || SelectedEmail == null) return;
