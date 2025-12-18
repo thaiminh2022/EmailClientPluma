@@ -13,7 +13,6 @@ internal interface IAccountService
     Task<bool> ValidateAccountAsync(Account acc);
     ObservableCollection<Account> GetAccounts();
 
-    Task<List<EmailLabel>> GetLabels(Account acc);
 }
 
 /// <summary>
@@ -128,8 +127,13 @@ internal class AccountService : IAccountService
     public async Task RemoveAccountAsync(Account account)
     {
         _emailMonitoringService.StopMonitor(account);
-
         _accounts.Remove(account);
+
+        if (GetAuthServiceByProvider(account.Provider) is IMicrosoftClientApp iClient)
+        {
+            await iClient.SignOutAsync(account);
+        }
+        
         await _storageService.RemoveAccountAsync(account);
     }
 

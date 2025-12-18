@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Microsoft.Identity.Client;
 
 namespace EmailClientPluma.Core.Models;
 
