@@ -44,6 +44,10 @@ namespace EmailClientPluma
             // Might change this later, it's a singleton due to aplication design
             services.AddSingleton<MainViewModel>();
 
+            //Phising 
+            services.AddSingleton<IPhishingDetectionService, PhishingDetectionService>();
+
+
             Services = services.BuildServiceProvider();
         }
     }
