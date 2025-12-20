@@ -8,11 +8,10 @@ namespace EmailClientPluma.Core.Services.Accounting;
 
 internal interface IAccountService
 {
-    Task AddAccountAsync(Provider prodiver);
+    Task AddAccountAsync(Provider provider);
     Task RemoveAccountAsync(Account account);
     Task<bool> ValidateAccountAsync(Account acc);
     ObservableCollection<Account> GetAccounts();
-
 }
 
 /// <summary>
@@ -49,26 +48,23 @@ internal class AccountService : IAccountService
     /// <summary>
     ///     Add a new account
     /// </summary>
-    /// <param name="prodiver">the type of provider the new account use</param>
+    /// <param name="provider">the type of provider the new account use</param>
     /// <returns></returns>
-    public async Task AddAccountAsync(Provider prodiver)
+    public async Task AddAccountAsync(Provider provider)
     {
-        var res = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
+        var res = await GetAuthServiceByProvider(provider).AuthenticateAsync();
 
         if (res is null)
             return;
 
         // Check if account already exists
-        var haveAcc = false;
-        foreach (var v in _accounts)
+        var haveAcc = _accounts.Any(v => v.Email == res.Email);
+
+        if (haveAcc)
         {
-            if (v.Email != res.Email) continue;
-
-            haveAcc = true;
-            break;
+            MessageBoxHelper.Info("This email is already signin, ignoring");
+            return;
         }
-
-        if (haveAcc) return;
 
         // If not, add it to database
         var acc = new Account(res);
@@ -80,7 +76,6 @@ internal class AccountService : IAccountService
 
         // fetching them emails header
         await _emailService.FetchEmailHeaderAsync(acc);
-
 
         //start monitoring new email
         if (await ValidateAccountAsync(acc)) _emailMonitoringService.StartMonitor(acc);
@@ -142,7 +137,7 @@ internal class AccountService : IAccountService
     {
         try
         {
-            var accs = await _storageService.GetAccountsAsync().ConfigureAwait(false);
+            var accs = await _storageService.GetAccountsAsync();
             foreach (var acc in accs)
             {
                 var emails = await _storageService.GetEmailsAsync(acc);

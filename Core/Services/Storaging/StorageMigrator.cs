@@ -5,11 +5,10 @@ namespace EmailClientPluma.Core.Services.Storaging;
 
 internal sealed class StorageMigrator(string connectionString)
 {
-    private readonly string _connectionString = connectionString;
 
     private SqliteConnection CreateConnection()
     {
-        return new SqliteConnection(_connectionString);
+        return new SqliteConnection(connectionString);
     }
 
     public void Migrate()
@@ -217,7 +216,7 @@ internal sealed class StorageMigrator(string connectionString)
                            PROVIDER_HISTORY_ID        TEXT,
                            INTERNET_MESSAGE_ID        TEXT,
                            FOLDER_FULLNAME            TEXT,
-                           PROVIDER                   INTEGER,
+                           PROVIDER                   TEXT,
                            OWNER_ID                   TEXT    NOT NULL,
                            IN_REPLY_TO                TEXT,
                            FLAGS                      INTEGER,

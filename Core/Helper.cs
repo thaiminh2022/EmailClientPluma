@@ -7,6 +7,7 @@ namespace EmailClientPluma.Core;
 internal static class Helper
 {
     public static string DataFolder => GetDataFolder();
+    public static string MsalCachePath => Path.Combine(DataFolder, "msal-cache.bin");
     public static string DatabasePath => Path.Combine(DataFolder, "pluma.db");
 
     private static string GetDataFolder()

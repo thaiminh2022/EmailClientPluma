@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Reflection.Metadata;
 using System.Text;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Storaging;
@@ -27,20 +28,29 @@ internal class GmailApiEmailService : IEmailService
         var service = CreateGmailService(acc);
         var lastHistoryId = await EmailAPIHelper.GetLastSyncedHistoryIdAsync(acc, _storageService);
 
-        ListMessagesResponse response;
+        ListMessagesResponse? response = null;
 
         if (lastHistoryId is null)
         {
-            // New batch
-            var request = service.Users.Messages.List("me");
-            request.MaxResults = INITIAL_HEADER_WINDOW;
-            request.LabelIds = "INBOX";
+            try
+            {
+                // New batch
+                var request = service.Users.Messages.List("me");
+                request.MaxResults = INITIAL_HEADER_WINDOW;
+                request.LabelIds = "INBOX";
 
-            response = await request.ExecuteAsync();
+                response = await request.ExecuteAsync();
 
-            acc.PaginationToken = response.NextPageToken;
-            if (string.IsNullOrEmpty(response.NextPageToken)) acc.NoMoreOlderEmail = true;
-            await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+                acc.PaginationToken = response.NextPageToken;
+                if (string.IsNullOrEmpty(response.NextPageToken)) acc.NoMoreOlderEmail = true;
+                await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+            }
+            catch (Exception ex)
+            {
+                response = null;
+                MessageBoxHelper.Error(ex);
+            }
+            
         }
         else
         {
@@ -88,13 +98,15 @@ internal class GmailApiEmailService : IEmailService
         }
 
         // Process messages from list response
-        if (response.Messages != null)
+        if (response?.Messages != null)
+        {
             foreach (var msgRef in response.Messages)
             {
                 // Fetch full message details
                 var msg = await service.Users.Messages.Get("me", msgRef.Id).ExecuteAsync();
                 await ProcessAndStoreMessage(acc, msg);
             }
+        }
     }
 
     public async Task FetchEmailBodyAsync(Account acc, Email email)
@@ -188,6 +200,11 @@ internal class GmailApiEmailService : IEmailService
         return true;
     }
 
+    public Provider GetProvider()
+    {
+        return Provider.Google;
+    }
+
     public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
     {
         using var service = CreateGmailService(acc);
@@ -247,11 +264,10 @@ internal class GmailApiEmailService : IEmailService
     private GmailService CreateGmailService(Account acc)
     {
         var credentials = GoogleCredential.FromAccessToken(acc.Credentials.SessionToken);
-
         return new GmailService(new BaseClientService.Initializer
         {
             HttpClientInitializer = credentials,
-            ApplicationName = "EmailClientPluma"
+            ApplicationName = "GmailClient",
         });
     }
 

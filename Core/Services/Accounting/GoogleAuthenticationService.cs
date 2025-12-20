@@ -21,12 +21,12 @@ internal class GoogleAuthenticationService : IAuthenticationService
     // Ask user permissions (gmail, profile)
     public static readonly string[] scopes =
     [
-        @"https://mail.google.com/",
+        "https://mail.google.com/",
         Oauth2Service.Scope.UserinfoEmail,
         Oauth2Service.Scope.UserinfoProfile
     ];
 
-    private readonly SQLiteDataStore _dataStore = new(Helper.DatabasePath);
+    private readonly GoogleDataStore _dataStore = new(Helper.DatabasePath);
 
 
     /// <summary>

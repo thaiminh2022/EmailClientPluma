@@ -8,7 +8,7 @@ public sealed class EmailRow
     public string? PROVIDER_HISTORY_ID { get; init; }
     public string? INTERNET_MESSAGE_ID { get; init; }
     public string FOLDER_FULLNAME { get; init; }
-    public int PROVIDER { get; init; }
+    public string PROVIDER { get; init; }
     public string OWNER_ID { get; init; }
     public string? IN_REPLY_TO { get; init; }
     public int FLAGS { get; init; }

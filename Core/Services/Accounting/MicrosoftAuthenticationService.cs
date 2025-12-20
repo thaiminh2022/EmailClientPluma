@@ -1,9 +1,12 @@
-﻿using System.Net.Http;
+﻿using System.Diagnostics;
+using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Windows;
 using EmailClientPluma.Core.Models;
-using Google.Apis.Util;
+using System.Windows.Interop;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
+using Microsoft.Identity.Client.Extensions.Msal;
 using Newtonsoft.Json;
 
 namespace EmailClientPluma.Core.Services.Accounting;
@@ -58,16 +61,41 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
         }
     }
 
+    private IntPtr GetWindow()
+    {
+        return new WindowInteropHelper(Application.Current.MainWindow!).Handle;
+    }
+
     private IPublicClientApplication InitializePublicClient()
     {
         var brokerOptions = new BrokerOptions(BrokerOptions.OperatingSystems.Windows);
 
-        return PublicClientApplicationBuilder
+        var client = PublicClientApplicationBuilder
             .Create(ClientId)
             .WithRedirectUri("http://localhost")
             .WithAuthority($"https://login.microsoftonline.com/{Tenant}")
+            .WithParentActivityOrWindow(GetWindow)
             .WithBroker(brokerOptions)
             .Build();
+
+        var cacheHelper = CreateCacheHelperAsync().GetAwaiter().GetResult();
+        cacheHelper.RegisterCache(client.UserTokenCache);
+
+        return client;
+    }
+
+    private static async Task<MsalCacheHelper> CreateCacheHelperAsync()
+    {
+        // Since this is a WPF application, only Windows storage is configured
+        var storageProperties = new StorageCreationPropertiesBuilder(
+                Helper.MsalCachePath,
+                MsalCacheHelper.UserRootDirectory)
+            .Build();
+
+        MsalCacheHelper cacheHelper = await MsalCacheHelper.CreateAsync(
+            storageProperties,
+            new TraceSource("MSAL.CacheTrace")).ConfigureAwait(false);
+        return cacheHelper;
     }
 
     public Provider GetProvider()
@@ -77,20 +105,37 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
 
     public async Task<AuthResponce?> AuthenticateAsync()
     {
-        var result = await PublicClient.AcquireTokenInteractive(Scopes)
-            .WithPrompt(Prompt.SelectAccount)
-            .ExecuteAsync();
+        try
+        {
+            var result = await PublicClient.AcquireTokenInteractive(Scopes)
+                .WithPrompt(Prompt.SelectAccount)
+                .ExecuteAsync();
 
-        var key = result.Account.HomeAccountId.Identifier;
-        var userInfo = await AcquireUserInfo(result.AccessToken);
+            var key = result.Account.HomeAccountId.Identifier;
+            var userInfo = await AcquireUserInfo(result.AccessToken);
 
-        if (userInfo is null) return null;
-        
-        return new AuthResponce(key, 
-            userInfo.Value.Mail ?? result.Account.Username, 
-            userInfo.Value.DisplayName, 
-            Provider.Microsoft,
-            new Credentials(string.Empty, string.Empty));
+            if (userInfo is null) return null;
+
+            return new AuthResponce(key,
+                userInfo.Value.Mail ?? result.Account.Username,
+                userInfo.Value.DisplayName,
+                Provider.Microsoft,
+                new Credentials(string.Empty, string.Empty));
+        }
+        catch (MsalClientException)
+        {
+            MessageBoxHelper.Info("Microsoft authentication canceled");
+        }
+        catch (MsalServiceException)
+        {
+            MessageBoxHelper.Info("Cannot get Microsoft authentication info");
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex);
+        }
+
+        return null;
     }
     private struct UserProfile
     {
@@ -101,7 +146,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
         public string? Mail { get; set; }
 
         [JsonProperty("id")]
-        public Guid Id { get; set; }
+        public string Id { get; set; }
     }
 
     private readonly HttpClient _httpClient = new HttpClient();

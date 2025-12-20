@@ -575,7 +575,9 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0" Command="{Binding AddAccountCommand}">Add Account</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding AddGoogleCommand}">Add Google</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding AddMicrosoftCommand}">Add Microsoft</Button>
+
                     <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>

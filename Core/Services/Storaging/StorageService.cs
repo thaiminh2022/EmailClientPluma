@@ -31,7 +31,7 @@ internal class StorageService : IStorageService
     public StorageService()
     {
         var connectionString = $"Data Source={Helper.DatabasePath}";
-        var tokenStore = new SQLiteDataStore(Helper.DatabasePath);
+        var tokenStore = new GoogleDataStore(Helper.DatabasePath);
 
         _accountStorage = new AccountStorage(tokenStore, connectionString);
         _emailStorage = new EmailStorage(connectionString);

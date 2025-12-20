@@ -12,12 +12,12 @@ namespace EmailClientPluma.MVVM.ViewModels;
 
 internal class MainViewModel : ObserableObject
 {
-    public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEmailService emailService,
+    public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEnumerable<IEmailService> emailServices,
         IEmailFilterService emailFilterService)
     {
         _accountService = accountService;
         var windowFactory1 = windowFactory;
-        _emailService = emailService;
+        _emailServices = [..emailServices];
         _filterService = emailFilterService;
 
         // make list auto sort descending by date
@@ -29,10 +29,13 @@ internal class MainViewModel : ObserableObject
 
 
         // COMMANDS
-        AddAccountCommand = new RelayCommand(async _ =>
+        AddGoogleCommand = new RelayCommandAsync(async _ =>
         {
-            // TODO: Add more provider
             await _accountService.AddAccountAsync(Provider.Google);
+        });
+        AddMicrosoftCommand = new RelayCommandAsync(async _ =>
+        {
+            await _accountService.AddAccountAsync(Provider.Microsoft);
         });
 
         ComposeCommand = new RelayCommand(_ =>
@@ -84,7 +87,8 @@ internal class MainViewModel : ObserableObject
                 Mouse.OverrideCursor = Cursors.Wait;
                 try
                 {
-                    var gotMore = await _emailService.FetchOlderHeadersAsync(SelectedAccount, _pageSize);
+                    var emailService = GetServiceByProvider(SelectedAccount.Provider);
+                    var gotMore = await emailService.FetchOlderHeadersAsync(SelectedAccount, _pageSize);
 
                     // Rebuild pages after loading older headers
                     await UpdateFilteredEmailsAsync();
@@ -139,7 +143,7 @@ internal class MainViewModel : ObserableObject
     {
     }
 
-    public async Task UpdateFilteredEmailsAsync()
+    private async Task UpdateFilteredEmailsAsync()
     {
         if (SelectedAccount == null)
         {
@@ -199,9 +203,15 @@ internal class MainViewModel : ObserableObject
     #region Services
 
     private readonly IAccountService _accountService;
-    private readonly IEmailService _emailService;
+    private readonly List<IEmailService> _emailServices;
     private readonly IEmailFilterService _filterService;
 
+    private IEmailService GetServiceByProvider(Provider prod)
+    {
+        var service = _emailServices.Find(x => x.GetProvider() == prod);
+        return service ?? throw new NotImplementedException("Service not implemented");
+    }
+    
     #endregion
 
     #region Accounts
@@ -275,11 +285,13 @@ internal class MainViewModel : ObserableObject
             return;
         }
 
-        await _emailService.FetchEmailHeaderAsync(_selectedAccount);
+        var emailService = GetServiceByProvider(_selectedAccount.Provider);
+        await emailService .FetchEmailHeaderAsync(_selectedAccount);
+        
         _selectedAccount.FirstTimeHeaderFetched = true;
         Mouse.OverrideCursor = null;
 
-        await _emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+        await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
     }
 
     #endregion
@@ -324,7 +336,8 @@ internal class MainViewModel : ObserableObject
             return;
         }
 
-        await _emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail)
+        var emailService = GetServiceByProvider(_selectedAccount.Provider);
+        await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail)
             .ContinueWith(_ => { CheckPhishing(); });
 
         Mouse.OverrideCursor = null;
@@ -361,7 +374,8 @@ internal class MainViewModel : ObserableObject
 
     #region Commands
 
-    public RelayCommand AddAccountCommand { get; set; }
+    public RelayCommandAsync AddGoogleCommand { get; set; }
+    public RelayCommandAsync AddMicrosoftCommand { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }
     public RelayCommand RemoveAccountCommand { get; set; }

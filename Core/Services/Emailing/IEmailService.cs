@@ -9,4 +9,6 @@ internal interface IEmailService
     Task SendEmailAsync(Account acc, Email.OutgoingEmail email);
     Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30);
     Task<bool> FetchOlderHeadersAsync(Account acc, int window, CancellationToken token = default);
+
+    Provider GetProvider();
 }

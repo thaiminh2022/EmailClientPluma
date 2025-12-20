@@ -9,9 +9,9 @@ internal class AccountStorage
 {
     private readonly string _connectionString;
 
-    private readonly SQLiteDataStore _tokenStore;
+    private readonly GoogleDataStore _tokenStore;
 
-    public AccountStorage(SQLiteDataStore tokenStore, string connectionString)
+    public AccountStorage(GoogleDataStore tokenStore, string connectionString)
     {
         _tokenStore = tokenStore;
         _connectionString = connectionString;
@@ -26,15 +26,31 @@ internal class AccountStorage
     {
         await using var connection = CreateConnection();
         var rows = await connection.QueryAsync<AccountRow>(
-            @"SELECT PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME, PAGINATION_TOKEN, LAST_SYNC_TOKEN FROM ACCOUNTS"
+            """
+            SELECT PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME, PAGINATION_TOKEN, LAST_SYNC_TOKEN FROM ACCOUNTS
+            """
         );
         List<Account> accounts = [];
         foreach (var row in rows)
+        {
             try
             {
-                var token = await _tokenStore.GetAsync<TokenResponse>(row.PROVIDER_UID);
-                var cred = new Credentials(token.AccessToken, token.RefreshToken);
-                var provider = Enum.Parse<Provider>(row.PROVIDER);
+                Credentials cred;
+
+                if (!Enum.TryParse<Provider>(row.PROVIDER, out var provider))
+                {
+                    continue;
+                }
+
+                if (provider == Provider.Google)
+                {
+                    var token = await _tokenStore.GetAsync<TokenResponse>(row.PROVIDER_UID);
+                    cred = new Credentials(token.AccessToken, token.RefreshToken);
+                }
+                else
+                {
+                    cred = new Credentials(string.Empty, string.Empty);
+                }
 
                 var acc = new Account(row.PROVIDER_UID, row.EMAIL, row.DISPLAY_NAME, provider, cred)
                 {
@@ -47,6 +63,8 @@ internal class AccountStorage
             {
                 MessageBoxHelper.Error(ex.Message);
             }
+        }
+            
 
         return accounts;
     }
@@ -114,6 +132,8 @@ internal class AccountStorage
         {
             case Provider.Google:
                 await _tokenStore.DeleteAsync<TokenResponse>(account.ProviderUID);
+                break;
+            case Provider.Microsoft:
                 break;
             default:
                 throw new NotImplementedException("Deleting account for this provider isnt implemented yet");

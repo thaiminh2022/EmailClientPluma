@@ -17,16 +17,32 @@ public partial class App : Application
     public App()
     {
         var services = new ServiceCollection();
+        
+        // authentication
         services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
-        services.AddSingleton<IAuthenticationService, MicrosoftAuthenticationService>();
+        services.AddSingleton<MicrosoftAuthenticationService>(); // or AddScoped/AddTransient
 
+        services.AddSingleton<IAuthenticationService>(sp =>
+            sp.GetRequiredService<MicrosoftAuthenticationService>());
+        services.AddSingleton<IMicrosoftClientApp>(sp =>
+            sp.GetRequiredService<MicrosoftAuthenticationService>());
+        
+        // storage
         services.AddSingleton<IStorageService, StorageService>();
+        
+        // account
         services.AddSingleton<IAccountService, AccountService>();
+        
+        // email
         services.AddSingleton<IEmailService, GmailApiEmailService>();
-        services.AddSingleton<IWindowFactory, WindowFactory>();
-        services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
+        services.AddSingleton<IEmailService, OutlookApiEmailService>();
 
-        //Binhs property
+        services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
+        
+        // window
+        services.AddSingleton<IWindowFactory, WindowFactory>();
+
+        // Binh's property
         services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
         //window

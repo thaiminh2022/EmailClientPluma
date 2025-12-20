@@ -1,5 +1,7 @@
-﻿using EmailClientPluma.Core.Models;
+﻿using System.Windows;
+using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Storaging;
+using MailKit.Net.Imap;
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
@@ -12,13 +14,12 @@ internal interface IEmailMonitoringService
 internal class EmailMonitoringService : IEmailMonitoringService
 {
     private readonly object _lock = new();
-
     private readonly Dictionary<string, AccountMonitor> _monitors = [];
-    private readonly IStorageService _storageService;
+    private readonly List<IEmailService> _emailServices;
 
-    public EmailMonitoringService(IStorageService storageService)
+    public EmailMonitoringService(IEnumerable<IEmailService> emailServices)
     {
-        _storageService = storageService;
+        _emailServices = [..emailServices];
     }
 
     public void StopMonitor(Account acc)
@@ -36,226 +37,155 @@ internal class EmailMonitoringService : IEmailMonitoringService
 
     public void StartMonitor(Account acc)
     {
-        /*
         lock (_lock)
         {
             if (_monitors.ContainsKey(acc.ProviderUID))
                 return;
-
-            var knownEmailIds = acc.Emails.Select(e => e.MessageIdentifiers.ImapUid);
-            var monitor = new AccountMonitor(knownEmailIds);
+            
+            var monitor = new AccountMonitor(acc.Provider);
             _monitors.Add(acc.ProviderUID, monitor);
 
             // SPAWN A THREAD (tiểu trình) to monitor
             // Hệ Điều Hành bài tiến trình =))
-            _ = StartMonitorEmail(acc, monitor).ContinueWith(task =>
+            _ = StartMonitorAsync(acc, monitor).ContinueWith(task =>
             {
                 if (task.IsFaulted)
                 {
-                    // idk
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MessageBoxHelper.Error($"Monitoring failed for {acc.Email}: {task.Exception?.InnerException?.Message}");
+                    });
                 }
             });
         }
-        */
     }
 
-    private async Task StartMonitorEmail(Account acc, AccountMonitor monitor)
+    private async Task StartMonitorAsync(Account acc, AccountMonitor monitor)
     {
-        /*CancellationToken cancellationToken = monitor.Cancellation.Token;
+        var cancellationToken = monitor.Cancellation.Token;
 
         try
         {
-            // Reconnect loop
-            // if anything failed, we wil try to reconnect
+            // Different monitoring strategies based on provider
+            switch (acc.Provider)
+            {
+                case Provider.Google:
+                case Provider.Microsoft:
+                    await MonitorWithPollingAsync(acc, cancellationToken);
+                    break; 
+                default:
+                    throw new NotImplementedException("Monitor implementation for this provider is not available");
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error("Cannot start email realtime update: ", ex);
+        }
+        finally
+        {
+            lock (_lock)
+            {
+                if (_monitors.TryGetValue(acc.ProviderUID, out var existing) && existing == monitor)
+                    _monitors.Remove(acc.ProviderUID);
+            }
+        }
+
+    }
+
+    private async Task MonitorWithPollingAsync(Account acc, CancellationToken cancellationToken)
+    {
+            // Adaptive polling intervals
+            // THIS WILL GIVE ERROR WHEN OPEN WITH C# < 7
+            const int ACTIVE_INTERVAL_MS = 30_000;    // 30 seconds when active
+            const int IDLE_INTERVAL_MS = 120_000;     // 2 minutes when idle
+            const int ERROR_RETRY_INTERVAL_MS = 60_000; // 1 minute after error
+
+            var currentInterval = ACTIVE_INTERVAL_MS;
+            var consecutiveNoChanges = 0;
+
+            var emailService = _emailServices.FirstOrDefault(x => x.GetProvider() == acc.Provider);
+            if (emailService is null)
+            {
+                throw new NotImplementedException("Cannot find email service for this provider");
+            }
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    // Connect to the imap server
-                    using var imap = new ImapClient();
-                    await imap.ConnectAsync(
-                        Helper.GetImapHostByProvider(acc.Provider),
-                        993,
-                        SecureSocketOptions.SslOnConnect,
-                       cancellationToken
-                    );
+                    // Store current email count
+                    var knownMessageIds = acc.Emails
+                        .Select(e => e.MessageIdentifiers.ProviderMessageId)
+                        .ToHashSet();
 
-                    var supportsIdle = imap.Capabilities.HasFlag(ImapCapabilities.Idle);
+                    // Fetch new emails using incremental sync
+                    await emailService.FetchEmailHeaderAsync(acc);
 
-                    // authenticate user
-                    var oauth2 = new SaslMechanismOAuth2(acc.Email, acc.Credentials.SessionToken);
-                    await imap.AuthenticateAsync(oauth2, cancellationToken);
+                    // Find newly added emails
+                    var newEmails = acc.Emails
+                        .Where(e => !knownMessageIds.Contains(e.MessageIdentifiers.ProviderMessageId))
+                        .ToList();
 
-                    // Connect to user INBOX
-                    var inbox = imap.Inbox;
-                    await inbox.OpenAsync(FolderAccess.ReadOnly, cancellationToken);
-
-                    // Updating loop
-                    while (!cancellationToken.IsCancellationRequested)
+                    if (newEmails.Count > 0)
                     {
+                        // Reset to active polling
+                        consecutiveNoChanges = 0;
+                        currentInterval = ACTIVE_INTERVAL_MS;
 
-                        // THIS SECTION CONTAINS THE IDLING MECHANICS FOR CLIENT
-
-                        // max wait time before PINGING the server
-                        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(9));
-                        bool inboxUpdated = false;
-                        var inboxCount = inbox.Count;
-
-                        void CountChanged(object? sender, EventArgs args)
+                        // observable collection does not like it when we add email from different threads 
+                        await Application.Current.Dispatcher.InvokeAsync(async () =>
                         {
-                            inboxUpdated = true;
-                            timeout.Cancel();
-                        }
-
-                        inbox.CountChanged += CountChanged;
-
-                        try
-                        {
-                            using var linked = CancellationTokenSource.CreateLinkedTokenSource(timeout.Token, cancellationToken);
-
-                            if (supportsIdle)
+                            // Prefetch bodies for new emails
+                            foreach (var email in newEmails)
                             {
-                                // THIS BLOCK WILL WAIT UNTIL TIMEOUT OR A CHANGE IN INBOX (NEW MESSAGE ARRIVE, MESSAGE DELETED)
-                                await imap.IdleAsync(linked.Token).ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                // Incase the server does not have the idle feature
-                                // PING it manually every 9 minutes
-                                await Task.Delay(TimeSpan.FromMinutes(9), linked.Token).ConfigureAwait(false);
-                                await imap.NoOpAsync(linked.Token).ConfigureAwait(false);
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            // user may delete their account while monitoring, this will ensure we exit properly
-                        }
-                        finally
-                        {
-                            // either something changes or timeouted, so we dont need to track it any more
-                            inbox.CountChanged -= CountChanged;
-                        }
-
-                        if (cancellationToken.IsCancellationRequested)
-                            break;
-
-
-                        // nothing changes, it's the imap PINGING the server
-                        if (!inboxUpdated)
-                            continue;
-
-                        // SOMETHING CHANGES
-
-                        var newInboxCount = inbox.Count;
-                        if (newInboxCount < inboxCount)
-                        {
-                            // Message was delete, we are not handling this now, so ignore lol
-                            continue;
-                        }
-
-                        var take = newInboxCount - inboxCount;
-                        var fetchCount = Math.Min(take, newInboxCount);
-
-                        if (fetchCount <= 0)
-                            continue;
-
-                        // fetch the headers
-                        var start = Math.Max(0, newInboxCount - fetchCount);
-                        var summaries = await inbox.FetchAsync(start, newInboxCount - 1,
-                            MessageSummaryItems.Envelope |
-                            MessageSummaryItems.UniqueId,
-                            cancellationToken
-                        );
-
-                        // Rebuilding the email from summaries
-                        List<Email> emails = [];
-                        foreach (var item in summaries)
-                        {
-                            var uniqueId = item.UniqueId.Id;
-
-                            // If the message already existed then ignore
-                            if (!monitor.KnownUids.Add(uniqueId))
-                            {
-                                continue;
-                            }
-
-
-                            //fetch the full body
-                            var email = Helper.CreateEmailFromSummary(acc, inbox, item);
-                            if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
-                                continue;
-
-                            var message = await inbox.GetMessageAsync(item.UniqueId, cancellationToken);
-                            email.MessageParts.Body = message.HtmlBody;
-
-                            // Store the newly fetched email
-                            await _storageService.StoreEmailAsync(acc, email);
-
-                            // Does not support UI change from a different thread, so we calling the original thread
-
-                            emails.Add(email);
-
-                            // No point of doing this, since if we reconnect, we gonna recall ids anyway
-                            // just put this here so i dont forget why we should not do this
-
-                            //monitor.KnownUids.Add(email.MessageIdentifiers.ImapUID);
-                        }
-
-                        await Application.Current.Dispatcher.InvokeAsync(() =>
-                        {
-                            foreach (var email in emails)
-                            {
-                                if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
-                                    continue;
-
-                                acc.Emails.Add(email);
+                                await emailService.FetchEmailBodyAsync(acc, email);
                             }
                         });
-
+                       
+                    }
+                    else
+                    {
+                        // if we there are no changes for 150 seconds, increase idle time
+                        consecutiveNoChanges++;
+                        if (consecutiveNoChanges > 5)
+                        {
+                            currentInterval = IDLE_INTERVAL_MS;
+                        }
                     }
 
-                    // Disconnect and be ready for the next reconnect
-                    await imap.DisconnectAsync(true);
+                    // Wait before next poll
+                    await Task.Delay(currentInterval, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
-                    // Normal exit
-                    break;
+                    break; // Normal exit
                 }
                 catch (Exception ex)
                 {
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        MessageBoxHelper.Error($"Problem with monitoring email: {ex.Message}");
+                        MessageBoxHelper.Error($"Polling error for {acc.Email}: {ex.Message}");
                     });
 
-                    // Wait 10 sec to retry connect
-                    await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+                    // Wait before retry
+                    await Task.Delay(ERROR_RETRY_INTERVAL_MS, cancellationToken);
                 }
             }
-        }
-        finally
-        {
-            // Exit the tracking, meaning someone finally called stop
-            lock (_lock)
-            {
-                // Even tho we already remove the monitor at stopMonitor, but this ensure some bullshit thread race condition wont happen
-                if (_monitors.TryGetValue(acc.ProviderUID, out var existing) && existing == monitor)
-                    _monitors.Remove(acc.ProviderUID);
-            }
-        }*/
+            
     }
 
 
     private record AccountMonitor
     {
-        public AccountMonitor(IEnumerable<uint> knownUids)
+        public AccountMonitor(Provider provider)
         {
             Cancellation = new CancellationTokenSource();
-            KnownUids = [.. knownUids];
+            Provider = provider;
         }
 
         public CancellationTokenSource Cancellation { get; }
-        public HashSet<uint> KnownUids { get; }
+        public Provider Provider { get; }
     }
 }
