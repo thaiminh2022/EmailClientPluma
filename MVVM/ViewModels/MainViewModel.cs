@@ -12,7 +12,8 @@ namespace EmailClientPluma.MVVM.ViewModels;
 
 internal class MainViewModel : ObserableObject
 {
-    public MainViewModel(IAccountService accountService, IWindowFactory windowFactory, IEnumerable<IEmailService> emailServices,
+    public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
+        IEnumerable<IEmailService> emailServices,
         IEmailFilterService emailFilterService)
     {
         _accountService = accountService;
@@ -29,6 +30,13 @@ internal class MainViewModel : ObserableObject
 
 
         // COMMANDS
+        RefreshEmailCommand = new RelayCommandAsync(async _ =>
+        {
+            if (_selectedAccount is null)
+                return;
+            
+            await GetServiceByProvider(_selectedAccount.Provider).FetchEmailHeaderAsync(_selectedAccount);
+        }, _ => _selectedAccount is not null);
         AddGoogleCommand = new RelayCommandAsync(async _ =>
         {
             await _accountService.AddAccountAsync(Provider.Google);
@@ -211,7 +219,7 @@ internal class MainViewModel : ObserableObject
         var service = _emailServices.Find(x => x.GetProvider() == prod);
         return service ?? throw new NotImplementedException("Service not implemented");
     }
-    
+
     #endregion
 
     #region Accounts
@@ -286,8 +294,8 @@ internal class MainViewModel : ObserableObject
         }
 
         var emailService = GetServiceByProvider(_selectedAccount.Provider);
-        await emailService .FetchEmailHeaderAsync(_selectedAccount);
-        
+        await emailService.FetchEmailHeaderAsync(_selectedAccount);
+
         _selectedAccount.FirstTimeHeaderFetched = true;
         Mouse.OverrideCursor = null;
 
@@ -374,7 +382,9 @@ internal class MainViewModel : ObserableObject
 
     #region Commands
 
-    public RelayCommandAsync AddGoogleCommand { get; set; }
+    public RelayCommandAsync RefreshEmailCommand { get; set; }
+
+public RelayCommandAsync AddGoogleCommand { get; set; }
     public RelayCommandAsync AddMicrosoftCommand { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }

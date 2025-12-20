@@ -123,10 +123,15 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Button
-                    Margin="0,0,0,2"
-                    Command="{Binding NewLabelCommand}"
-                    Content="Edit labels" />
+                <StackPanel>
+                    <Button
+                        Margin="0,0,0,2"
+                        Command="{Binding NewLabelCommand}"
+                        Content="Edit labels" />
+                    <Button  Margin="0,0,0,2"
+                             Command="{Binding RefreshEmailCommand}">Refresh</Button>
+                </StackPanel>
+               
                 <TextBlock
                     Grid.Row="1"
                     Margin="0,5"
