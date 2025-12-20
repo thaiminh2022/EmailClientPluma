@@ -1,5 +1,4 @@
-﻿using Azure.Identity;
-using EmailClientPluma.Core.Models;
+﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Microsoft.Graph;
