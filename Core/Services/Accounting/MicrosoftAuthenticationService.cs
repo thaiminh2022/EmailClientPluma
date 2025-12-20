@@ -1,13 +1,15 @@
-﻿using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Windows;
-using EmailClientPluma.Core.Models;
-using System.Windows.Interop;
+﻿using EmailClientPluma.Core.Models;
+using Microsoft.Graph.Models.ExternalConnectors;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
+using Microsoft.Kiota.Abstractions.Authentication;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Windows;
+using System.Windows.Interop;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -60,6 +62,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
             MessageBoxHelper.Info("Account already sign out, delete info only");
         }
     }
+
 
     private IntPtr GetWindow()
     {

@@ -4,6 +4,7 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
+using Microsoft.Kiota.Abstractions.Authentication;
 using DeltaGetResponse = Microsoft.Graph.Me.MailFolders.Item.Messages.Delta.DeltaGetResponse;
 
 namespace EmailClientPluma.Core.Services.Emailing;
@@ -19,22 +20,16 @@ internal class OutlookApiEmailService : IEmailService
         _clientApp = clientApp;
         _storageService = storageService;
     }
-    private GraphServiceClient GetGraphService()
+    private GraphServiceClient GetGraphService(Account acc)
     {
-        var options = new InteractiveBrowserCredentialOptions
-        {
-            TenantId = _clientApp.Tenant,
-            ClientId = _clientApp.ClientId,
-            RedirectUri = new Uri("http://localhost")
-        };
-        
-        var cred = new InteractiveBrowserCredential(options);
-        return new GraphServiceClient(cred, _clientApp.Scopes);
+        var provider = new MsalAccessTokenProvider(_clientApp.PublicClient, _clientApp.Scopes, acc.ProviderUID);
+        var tokenProvider = new BaseBearerTokenAuthenticationProvider(provider);
+        return new GraphServiceClient(tokenProvider);
     }
     
     public async Task FetchEmailHeaderAsync(Account acc)
     {
-        var graphClient = GetGraphService();
+        var graphClient = GetGraphService(acc);
 
         try
         {
@@ -183,7 +178,7 @@ internal class OutlookApiEmailService : IEmailService
 
     public async Task FetchEmailBodyAsync(Account acc, Email email)
     {
-        var client = GetGraphService();
+        var client = GetGraphService(acc);
 
         // Get specific message with body
         var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
@@ -211,7 +206,7 @@ internal class OutlookApiEmailService : IEmailService
         if (candidates.Count == 0)
             return;
 
-        var client = GetGraphService();
+        var client = GetGraphService(acc);
 
         foreach (var candidate in candidates)
         {
@@ -242,7 +237,7 @@ internal class OutlookApiEmailService : IEmailService
         if (string.IsNullOrEmpty(acc.PaginationToken))
             return false;
 
-        var client = GetGraphService();
+        var client = GetGraphService(acc);
 
         var page = await client.Me.MailFolders["Inbox"].Messages
             .WithUrl(acc.PaginationToken)
