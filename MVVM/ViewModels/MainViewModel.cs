@@ -17,7 +17,6 @@ internal class MainViewModel : ObserableObject
         IEmailFilterService emailFilterService)
     {
         _accountService = accountService;
-        var windowFactory1 = windowFactory;
         _emailServices = [.. emailServices];
         _filterService = emailFilterService;
 
@@ -32,7 +31,7 @@ internal class MainViewModel : ObserableObject
 
         ComposeCommand = new RelayCommand(_ =>
         {
-            var newEmailWindow = windowFactory1.CreateWindow<NewEmailView, NewEmailViewModel>();
+            var newEmailWindow = windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
             var success = newEmailWindow.ShowDialog();
 
             if (success is null)
@@ -44,7 +43,7 @@ internal class MainViewModel : ObserableObject
         ReplyCommand = new RelayCommand(_ =>
         {
             if (SelectedAccount == null || SelectedEmail == null) return;
-            var newEmailWindow = windowFactory1.CreateWindow<NewEmailView, NewEmailViewModel>();
+            var newEmailWindow = windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
 
             if (newEmailWindow.DataContext is not NewEmailViewModel vm) return;
             vm.SetupReply(SelectedAccount, SelectedEmail);
@@ -59,13 +58,13 @@ internal class MainViewModel : ObserableObject
 
             SettingCommand = new RelayCommand(_ =>
             {
-                var newEmailWindow = _windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+                var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
                 newEmailWindow.Show();
             });
 
-            WhichProvCMD = new RelayCommand(_ =>
+            WhichProvCmd = new RelayCommand(_ =>
             {
-                var whichProvWindow = _windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
+                var whichProvWindow = windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
                 whichProvWindow.ShowDialog();
             });
 
@@ -122,7 +121,7 @@ internal class MainViewModel : ObserableObject
         {
             // OPEN NEW LABEL DIALOG
 
-            var labelEditorWindow = windowFactory1.CreateWindow<LabelEditorView, LabelEditorViewModel>();
+            var labelEditorWindow = windowFactory.CreateWindow<LabelEditorView, LabelEditorViewModel>();
             if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
             vm.SelectedAccount = SelectedAccount;
             labelEditorWindow.ShowDialog();
@@ -132,7 +131,7 @@ internal class MainViewModel : ObserableObject
         {
             if (SelectedAccount is null || SelectedEmail is null) return;
 
-            var emailLabelEditorWindow = windowFactory1.CreateWindow<EmailLabelEditView, EmailLabelEditViewModel>();
+            var emailLabelEditorWindow = windowFactory.CreateWindow<EmailLabelEditView, EmailLabelEditViewModel>();
 
             if (emailLabelEditorWindow.DataContext is EmailLabelEditViewModel vm)
                 vm.Setup(SelectedAccount, SelectedEmail);
@@ -372,8 +371,8 @@ internal class MainViewModel : ObserableObject
 
     public RelayCommandAsync RefreshEmailCommand { get; set; }
 
-    public RelayCommandAsync AddGoogleCommand { get; set; }
-    public RelayCommandAsync AddMicrosoftCommand { get; set; }
+    public RelayCommand SettingCommand { get; set; }
+    public RelayCommand WhichProvCmd { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }
     public RelayCommand RemoveAccountCommand { get; set; }

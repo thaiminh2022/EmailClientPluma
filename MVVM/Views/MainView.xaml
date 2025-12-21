@@ -443,15 +443,7 @@
                                 Width="100"
                                 VerticalAlignment="Center"
                                 Text="Search" />
-                            <ComboBox
-                                Width="200"
-                                ItemContainerStyle="{StaticResource CustomComboItem}"
-                                SelectedIndex="{Binding Filters.MailboxIndex, Mode=TwoWay}"
-                                Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="All Mail" />
-                                <ComboBoxItem Content="Inbox" />
-                                <ComboBoxItem Content="Sent" />
-                            </ComboBox>
+
                         </StackPanel>
 
                         <!--  Footer  -->
@@ -542,7 +534,7 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCMD}">Add Account</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCmd}">Add Account</Button>
                     <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>

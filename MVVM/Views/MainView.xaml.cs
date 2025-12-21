@@ -11,6 +11,7 @@ namespace EmailClientPluma
     {
         private bool IsDarkMode = SettingsView.IsDarkMode;
         public bool IsImg { get; set; } = false;
+
         public MainView()
         {
             InitializeComponent();
@@ -53,17 +54,20 @@ namespace EmailClientPluma
             }
         }
 
-        private void SettingsView_DarkModeChanged(object sender, EventArgs e) { 
-            if (SettingsView.IsDarkMode) {
+        private void SettingsView_DarkModeChanged(object sender, EventArgs e)
+        {
+            if (SettingsView.IsDarkMode)
+            {
                 IsDarkMode = true;
                 ApplyDarkMode();
                 ChangeImgTheme();
-            } 
-            else { 
+            }
+            else
+            {
                 IsDarkMode = false;
                 ApplyLightMode();
                 ChangeImgTheme();
-            } 
+            }
         }
 
 
@@ -89,7 +93,8 @@ namespace EmailClientPluma
         {
             SetBrushColor("BackgroundBrush", Dark_Background);
             SetBrushColor("PanelBackgroundBrush", Dark_Panel);
-            SetBrushColor("PrimaryBrush", Dark_ButtonBack);     // in dark mode PrimaryBrush used as button background -> gold
+            SetBrushColor("PrimaryBrush",
+                Dark_ButtonBack); // in dark mode PrimaryBrush used as button background -> gold
             SetBrushColor("AccentBrush", Dark_Accent);
             SetBrushColor("TextBrush", Dark_Text);
             SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
@@ -110,18 +115,18 @@ namespace EmailClientPluma
 
         private void ChangeContentBtn()
         {
-           
+
         }
 
         private void ChangeImgTheme()
         {
-          
+
         }
 
-    private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        // Show the right panel
-        RightPanel.Visibility = Visibility.Visible;
+        private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Show the right panel
+            RightPanel.Visibility = Visibility.Visible;
 
             // Resize the first column (list)
             LeftColumn.Width = new GridLength(0.5, GridUnitType.Star);
@@ -130,11 +135,11 @@ namespace EmailClientPluma
             ChangeContentBtn();
         }
 
-    private void CloseBtn_Click(object sender, RoutedEventArgs e)
-    {
-        // Hide the right panel again
-        RightPanel.Visibility = Visibility.Collapsed;
-        EmailList.SelectedItem = null;
+        private void CloseBtn_Click(object sender, RoutedEventArgs e)
+        {
+            // Hide the right panel again
+            RightPanel.Visibility = Visibility.Collapsed;
+            EmailList.SelectedItem = null;
 
             // Expand the list to fill all space
             LeftColumn.Width = GridLength.Auto;
@@ -145,8 +150,9 @@ namespace EmailClientPluma
             ChangeContentBtn();
         }
 
-    private void MoreSearch_Click(object sender, RoutedEventArgs e)
-    {
-        MoreSearchPopup.IsOpen = !MoreSearchPopup.IsOpen;
+        private void MoreSearch_Click(object sender, RoutedEventArgs e)
+        {
+            MoreSearchPopup.IsOpen = !MoreSearchPopup.IsOpen;
+        }
     }
 }

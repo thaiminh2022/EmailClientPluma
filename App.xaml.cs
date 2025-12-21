@@ -53,12 +53,11 @@ public partial class App : Application
         // Might change this later, it's a singleton due to application design
         services.AddSingleton<MainViewModel>();
 
-            services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SettingsViewModel>();
 
-            services.AddTransient<WhichProvViewModel>();
+        services.AddTransient<WhichProvViewModel>();
 
-            Services = services.BuildServiceProvider();
-        }
+        Services = services.BuildServiceProvider();
     }
 
     public IServiceProvider Services { get; }
