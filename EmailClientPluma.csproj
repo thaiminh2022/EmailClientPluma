@@ -97,6 +97,9 @@
     </ItemGroup>
 
 	<ItemGroup>
+	  <Resource Include="MVVM\Views\Images\Black\arrow_back_black.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Resource>
 	  <Resource Include="MVVM\Views\Images\Black\arrow_forward_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>

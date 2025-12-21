@@ -30,7 +30,6 @@ namespace EmailClientPluma
         // Dark mode values (black + gold buttons)
         private readonly Color Dark_Background = (Color)ColorConverter.ConvertFromString("#000000");
         private readonly Color Dark_Panel = (Color)ColorConverter.ConvertFromString("#3E4042");
-        private readonly Color Dark_Primary = (Color)ColorConverter.ConvertFromString("#2A003D");
         private readonly Color Dark_Accent = (Color)ColorConverter.ConvertFromString("#4B0A66");
         private readonly Color Dark_Text = Colors.White;
         private readonly Color Dark_ButtonBack = (Color)ColorConverter.ConvertFromString("#FFD700"); // gold
