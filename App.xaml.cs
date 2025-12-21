@@ -44,6 +44,10 @@ namespace EmailClientPluma
             // Might change this later, it's a singleton due to aplication design
             services.AddSingleton<MainViewModel>();
 
+            services.AddTransient<SettingsViewModel>();
+
+            services.AddTransient<WhichProvViewModel>();
+
             Services = services.BuildServiceProvider();
         }
     }

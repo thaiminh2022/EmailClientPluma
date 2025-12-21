@@ -160,10 +160,11 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
         #region Commands
-        public RelayCommand AddAccountCommand { get; set; }
+        public RelayCommand WhichProvCMD { get; set; }
         public RelayCommand ComposeCommand { get; set; }
         public RelayCommand ReplyCommand { get; set; }
         public RelayCommand RemoveAccountCommand { get; set; }
+        public RelayCommand SettingCommand { get; set; }
         public RelayCommand NextCommand { get; set; }
         public RelayCommand PreviousCommand { get; set; }
         #endregion
@@ -181,14 +182,9 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
             Accounts = _accountService.GetAccounts();
-            SelectedAccount = Accounts.First();
+            SelectedAccount = Accounts.FirstOrDefault();
 
             // COMMANDS
-            AddAccountCommand = new RelayCommand(async _ =>
-            {
-                // TODO: ADd more provider
-                await _accountService.AddAccountAsync(Provider.Google);
-            });
 
             ComposeCommand = new RelayCommand(_ =>
             {
@@ -202,7 +198,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     MessageBoxHelper.Info("Message was sent");
                 }
-            }, _ => Accounts.Count > 0);
+            }, _ => Accounts.Count >= 0);
             ReplyCommand = new RelayCommand(_ =>
             {
                 if (SelectedAccount == null || SelectedEmail == null) return;
@@ -222,6 +218,18 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                     SelectedEmail.MessageParts.From != SelectedAccount.Email);
+
+            SettingCommand = new RelayCommand(_ =>
+            {
+                var newEmailWindow = _windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+                newEmailWindow.Show();
+            });
+
+            WhichProvCMD = new RelayCommand(_ =>
+            {
+                var whichProvWindow = _windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
+                whichProvWindow.ShowDialog();
+            });
 
             RemoveAccountCommand = new RelayCommand(_ =>
             {
