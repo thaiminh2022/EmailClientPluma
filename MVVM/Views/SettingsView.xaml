@@ -18,10 +18,19 @@
     <DockPanel>
 
         <!-- HEADER -->
-        <Border Background="#fafafa" Height="52" DockPanel.Dock="Top"
-                Padding="15" BorderBrush="#ddd" BorderThickness="0 0 0 1">
-            <TextBlock Text="Settings" FontSize="20" FontWeight="Bold"/>
+        <Border Height="52"
+        DockPanel.Dock="Top"
+        Padding="10"
+        Background="{DynamicResource BackgroundBrush}"
+        BorderBrush="{DynamicResource AccentBrush}"
+        BorderThickness="0,0,0,1">
+            <TextBlock Text="Settings"
+               FontSize="20"
+               FontWeight="Bold"
+               Foreground="{DynamicResource TextBrush}"
+               />
         </Border>
+
 
         <!-- MAIN TABS -->
         <TabControl BorderThickness="0" Padding="0">

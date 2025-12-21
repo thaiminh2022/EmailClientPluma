@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace EmailClientPluma
 {
@@ -9,6 +10,8 @@ namespace EmailClientPluma
     /// </summary>
     public partial class MainView : Window
     {
+        public bool IsDarkMode { get; set; } = false;
+        public bool IsImg { get; set; } = false;
         public MainView()
         {
             InitializeComponent();
@@ -53,11 +56,13 @@ namespace EmailClientPluma
 
         private void LightModeBtn_Click(object sender, RoutedEventArgs e)
         {
+            IsDarkMode = false;
             ApplyLightMode();
         }
 
         private void DarkModeBtn_Click(object sender, RoutedEventArgs e)
         {
+            IsDarkMode = true;
             ApplyDarkMode();
         }
 
@@ -70,6 +75,13 @@ namespace EmailClientPluma
             SetBrushColor("TextBrush", Light_Text);
             SetBrushColor("ButtonForegroundBrush", Light_ButtonFore);
             SetBrushColor("GoldBrush", (Color)ColorConverter.ConvertFromString("#FFD700"));
+
+            ComposeIcon.Source = new BitmapImage(new Uri("Images/White/compose.png", UriKind.Relative));
+            SettingsIcon.Source = new BitmapImage(new Uri("Images/White/settings.png", UriKind.Relative));
+            ForwardIcon.Source = new BitmapImage(new Uri("Images/White/arrow_forward.png", UriKind.Relative));
+            PreviousIcon.Source = new BitmapImage(new Uri("Images/White/arrow_back.png", UriKind.Relative));
+
+            ChangeImgTheme();
         }
 
         private void ApplyDarkMode()
@@ -81,16 +93,151 @@ namespace EmailClientPluma
             SetBrushColor("TextBrush", Dark_Text);
             SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
             SetBrushColor("GoldBrush", Dark_ButtonBack);
-        }
 
-        private void ThemeToggle_Click(object sender, RoutedEventArgs e)
-        {
-            ThemePopup.IsOpen = !ThemePopup.IsOpen;
+            ComposeIcon.Source = new BitmapImage(new Uri("Images/Black/compose_black.png", UriKind.Relative));
+            SettingsIcon.Source = new BitmapImage(new Uri("Images/Black/settings_black.png", UriKind.Relative));
+            ForwardIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_forward_black.png", UriKind.Relative));
+            PreviousIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_back_black.png", UriKind.Relative));
+
+            ChangeImgTheme();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             AccountSettingsPopup.IsOpen = !AccountSettingsPopup.IsOpen;
+        }
+
+        private void ChangeContentBtn()
+        {
+            if (!IsImg && InboxBtn.Content is string)
+            {
+                InboxBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/inbox_black.png" : "Images/White/inbox.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                FlagBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/flag_black.png" : "Images/White/flag.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                SentBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/sent_black.png" : "Images/White/sent.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                DraftsBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/drafts_black.png" : "Images/White/drafts.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                ImportantBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/important_black.png" : "Images/White/important.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                SchelduledBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/scheduled_black.png" : "Images/White/scheduled.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                SpamBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/spam_black.png" : "Images/White/spam.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                TrashBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/trash_black.png" : "Images/White/trash.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                AdBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/ad_black.png" : "Images/White/ad.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                SocialBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/social_black.png" : "Images/White/social.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                ForumBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/forum_black.png" : "Images/White/forum.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+                PromotionBtn.Content = new Image
+                {
+                    Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/promotion_black.png" : "Images/White/promotion.png", UriKind.Relative)),
+                    Width = 24,
+                    Height = 24
+                };
+
+
+                CategoryTB.Visibility = Visibility.Collapsed;
+                LabelSt.Visibility = Visibility.Collapsed;
+
+                IsImg = true;
+            }
+            else if (!IsImg && InboxBtn.Content is Image)
+            {
+                InboxBtn.Content = "Inbox";
+                FlagBtn.Content = "Flagged";
+                SentBtn.Content = "Sent";
+                DraftsBtn.Content = "Drafts";
+                ImportantBtn.Content = "Important";
+                SchelduledBtn.Content = "Scheduled";
+                SpamBtn.Content = "Spam";
+                TrashBtn.Content = "Trash";
+                AdBtn.Content = "Ad";
+                SocialBtn.Content = "Social";
+                ForumBtn.Content = "Forum";
+                PromotionBtn.Content = "Promotion";
+
+                CategoryTB.Visibility = Visibility.Visible;
+                LabelSt.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ChangeImgTheme()
+        {
+            if (InboxBtn.Content is Image img)
+            {
+                    img.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/inbox_black.png" : "Images/White/inbox.png", UriKind.Relative));
+            }
+            if (FlagBtn.Content is Image flagImg) { flagImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/flag_black.png" : "Images/White/flag.png", UriKind.Relative)); }
+            if (SentBtn.Content is Image sentImg) { sentImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/sent_black.png" : "Images/White/sent.png", UriKind.Relative)); }
+            if (DraftsBtn.Content is Image draftsImg) { draftsImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/drafts_black.png" : "Images/White/drafts.png", UriKind.Relative)); }
+            if (ImportantBtn.Content is Image importantImg) { importantImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/important_black.png" : "Images/White/important.png", UriKind.Relative)); }
+            if (SchelduledBtn.Content is Image scheduledImg) { scheduledImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/scheduled_black.png" : "Images/White/scheduled.png", UriKind.Relative)); }
+            if (SpamBtn.Content is Image spamImg) { spamImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/spam_black.png" : "Images/White/spam.png", UriKind.Relative)); }
+            if (TrashBtn.Content is Image trashImg) { trashImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/trash_black.png" : "Images/White/trash.png", UriKind.Relative)); }
+            if (AdBtn.Content is Image adImg) { adImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/ad_black.png" : "Images/White/ad.png", UriKind.Relative)); }
+            if (SocialBtn.Content is Image socialImg) { socialImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/social_black.png" : "Images/White/social.png", UriKind.Relative)); }
+            if (ForumBtn.Content is Image forumImg) { forumImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/forum_black.png" : "Images/White/forum.png", UriKind.Relative)); }
+            if (PromotionBtn.Content is Image promotionImg) { promotionImg.Source = new BitmapImage(new Uri(IsDarkMode ? "Images/Black/promotion_black.png" : "Images/White/promotion.png", UriKind.Relative)); }
         }
 
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -99,8 +246,10 @@ namespace EmailClientPluma
             RightPanel.Visibility = Visibility.Visible;
 
             // Resize the first column (list)
-            CenterColumn.Width = new GridLength(1.2, GridUnitType.Star);
-            RightColumn.Width = new GridLength(3.8, GridUnitType.Star);
+            LeftColumn.Width = new GridLength(0.5, GridUnitType.Star);
+            CenterColumn.Width = GridLength.Auto;
+            RightColumn.Width = new GridLength(4.2, GridUnitType.Star);
+            ChangeContentBtn();
         }
 
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
@@ -110,13 +259,22 @@ namespace EmailClientPluma
             EmailList.SelectedItem = null;
 
             // Expand the list to fill all space
+            LeftColumn.Width = GridLength.Auto;
             CenterColumn.Width = new GridLength(3, GridUnitType.Star);
             RightColumn.Width = new GridLength(0); // collapse the right side
+
+            IsImg = false;
+            ChangeContentBtn();
         }
 
         private void MoreSearch_Click(object sender, RoutedEventArgs e)
         {
             MoreSearchPopup.IsOpen = !MoreSearchPopup.IsOpen;
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Settings_popup.IsOpen = !Settings_popup.IsOpen;
         }
     }
 }

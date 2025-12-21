@@ -56,6 +56,11 @@
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
+        <Style TargetType="ListViewItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
+        </Style>
+
         <!--  TextBlock style  -->
         <Style x:Key="GBTB" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
@@ -91,10 +96,6 @@
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
         
-        <!-- ScrollView -->
-        <Style TargetType="ScrollViewer">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
         
         <!--GroupBox-->
         <Style TargetType="GroupBox">
@@ -112,8 +113,90 @@
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource DarkPurple}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
+
+        <!-- CheckBox style -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Margin" Value="5,2,5,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Box -->
+                            <Border x:Name="Box"
+                            Width="16" Height="16"
+                            CornerRadius="3"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource AccentBrush}"
+                            Background="{TemplateBinding Background}"
+                            Margin="0,0,6,0"
+                            SnapsToDevicePixels="True">
+                                <Path x:Name="CheckMark"
+                              Data="M0,4 L3,7 L8,0"
+                              Stroke="{DynamicResource PrimaryBrush}"
+                              StrokeThickness="2"
+                              Visibility="Collapsed"
+                              Stretch="Uniform"/>
+                            </Border>
+                            <!-- Label -->
+                            <ContentPresenter VerticalAlignment="Center"
+                                      RecognizesAccessKey="True"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <!-- Checked -->
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource LightPurple}"/>
+                            </Trigger>
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DarkPurple}"/>
+                            </Trigger>
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="Gray"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="Gray"/>
+                                <Setter TargetName="Box" Property="Background" Value="#EEE"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
 
     </Application.Resources>

@@ -116,7 +116,7 @@
                 Opacity="1"
                 Stretch="UniformToFill" />
             <!--  Main TextBox  -->
-            <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True" behaviors:WebView2Editor.HtmlContent="{Binding Body}" />
+            <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True" behaviors:WebView2Editor.HtmlContent="{Binding Body}"/>
         </Grid>
         <StackPanel
             Grid.Row="2"
@@ -124,16 +124,12 @@
             HorizontalAlignment="Left"
             Orientation="Horizontal">
             <Button
-                Background="#0b57d0"
-                Command="{Binding SendCommand}"
-                Foreground="White">
+                Command="{Binding SendCommand}">
                 Send
             </Button>
             <Button
                 Margin="5,0,0,0"
-                Background="#0b57d0"
-                Command="{Binding CancelCommand}"
-                Foreground="White">
+                Command="{Binding CancelCommand}">
                 Cancel
             </Button>
 
