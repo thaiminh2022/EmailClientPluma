@@ -1,7 +1,7 @@
-﻿using System.Globalization;
-using Dapper;
+﻿using Dapper;
 using EmailClientPluma.Core.Models;
 using Microsoft.Data.Sqlite;
+using System.Globalization;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 

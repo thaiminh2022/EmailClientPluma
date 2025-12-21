@@ -1,10 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using EmailClientPluma.Core;
+using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Storaging;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
-using EmailClientPluma.Core;
-using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services.Storaging;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 

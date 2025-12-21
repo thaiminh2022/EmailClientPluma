@@ -1,6 +1,6 @@
-﻿using System.Net;
+﻿using HtmlAgilityPack;
+using System.Net;
 using System.Text.RegularExpressions;
-using HtmlAgilityPack;
 
 namespace EmailClientPluma.Core.Services;
 
@@ -104,14 +104,14 @@ public static class PhishDetector
         for (var j = 0; j <= m; j++) d[0, j] = j;
 
         for (var i = 1; i <= n; i++)
-        for (var j = 1; j <= m; j++)
-        {
-            var cost = a[i - 1] == b[j - 1] ? 0 : 1;
-            d[i, j] = Math.Min(
-                Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                d[i - 1, j - 1] + cost
-            );
-        }
+            for (var j = 1; j <= m; j++)
+            {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                d[i, j] = Math.Min(
+                    Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                    d[i - 1, j - 1] + cost
+                );
+            }
 
         return d[n, m];
     }

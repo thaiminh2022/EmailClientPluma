@@ -1,8 +1,8 @@
-﻿using System.IO;
+﻿using EmailClientPluma.Core.Models;
+using Microsoft.Web.WebView2.Wpf;
+using System.IO;
 using System.Text.Json;
 using System.Windows;
-using EmailClientPluma.Core.Models;
-using Microsoft.Web.WebView2.Wpf;
 
 namespace EmailClientPluma.Behaviors;
 

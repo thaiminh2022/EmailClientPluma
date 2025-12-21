@@ -1,10 +1,10 @@
-﻿using System.Windows;
-using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
 using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
 namespace EmailClientPluma;
@@ -17,7 +17,7 @@ public partial class App : Application
     public App()
     {
         var services = new ServiceCollection();
-        
+
         // authentication
         services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
         services.AddSingleton<MicrosoftAuthenticationService>(); // or AddScoped/AddTransient
@@ -26,19 +26,19 @@ public partial class App : Application
             sp.GetRequiredService<MicrosoftAuthenticationService>());
         services.AddSingleton<IMicrosoftClientApp>(sp =>
             sp.GetRequiredService<MicrosoftAuthenticationService>());
-        
+
         // storage
         services.AddSingleton<IStorageService, StorageService>();
-        
+
         // account
         services.AddSingleton<IAccountService, AccountService>();
-        
+
         // email
         services.AddSingleton<IEmailService, GmailApiEmailService>();
         services.AddSingleton<IEmailService, OutlookApiEmailService>();
 
         services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
-        
+
         // window
         services.AddSingleton<IWindowFactory, WindowFactory>();
 

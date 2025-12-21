@@ -97,7 +97,7 @@ internal class EmailFilterService : IEmailFilterService
                     break;
             }
         }
-        
+
         if (!emailObj.Labels.Any(x => x.Name.Equals(opt.SelectedLabel?.Name))) { return false; }
 
         if (!string.IsNullOrWhiteSpace(opt.SearchText))

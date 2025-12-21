@@ -1,6 +1,6 @@
-﻿using System.Windows;
-using EmailClientPluma.Core.Models;
+﻿using EmailClientPluma.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Windows;
 
 namespace EmailClientPluma.Core.Services;
 

@@ -1,13 +1,12 @@
-﻿using System.IO;
-using System.Reflection.Metadata;
-using System.Text;
-using EmailClientPluma.Core.Models;
+﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
 using MimeKit;
+using System.IO;
+using System.Text;
 using MessagePart = Google.Apis.Gmail.v1.Data.MessagePart;
 
 
@@ -50,7 +49,7 @@ internal class GmailApiEmailService : IEmailService
                 response = null;
                 MessageBoxHelper.Error(ex);
             }
-            
+
         }
         else
         {

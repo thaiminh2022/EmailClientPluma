@@ -1,8 +1,8 @@
-﻿using System.Collections.ObjectModel;
-using EmailClientPluma.Core;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
@@ -33,7 +33,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     public NewEmailViewModel(IAccountService accountService, IEnumerable<IEmailService> emailServices)
     {
         _accountService = accountService;
-        _emailServices = [..emailServices];
+        _emailServices = [.. emailServices];
         Accounts = _accountService.GetAccounts();
 
         SendCommand = new RelayCommand(async _ =>

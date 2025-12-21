@@ -65,7 +65,7 @@ internal class OutlookApiEmailService : IEmailService
                 await FetchInitial(acc, graphClient);
             }
 
- 
+
             acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
             await _storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
@@ -280,11 +280,10 @@ internal class OutlookApiEmailService : IEmailService
             InternetMessageId = msg.InternetMessageId,
             InReplyTo = GetHeader(msg, "In-Reply-To"),
             ProviderHistoryId = null, // Graph doesn't expose Gmail-like HistoryId
-            FolderFullName = fromSent? "Sent Items" : "Inbox",
+            FolderFullName = fromSent ? "Sent Items" : "Inbox",
             Provider = Provider.Microsoft,
             Flags = flags,
         };
-
         var fromAddr = msg.From?.EmailAddress?.Address ?? string.Empty;
 
         var toAddr = (msg.ToRecipients ?? new List<Recipient>())
@@ -451,7 +450,7 @@ internal class OutlookApiEmailService : IEmailService
 
             pagTok.InboxNextLink = pageInbox.OdataNextLink;
         }
-       
+
 
         if (pag.Value.SentNextLink is not null)
         {

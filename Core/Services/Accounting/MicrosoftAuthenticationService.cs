@@ -1,9 +1,7 @@
-﻿  using EmailClientPluma.Core.Models;
-using Microsoft.Graph.Models.ExternalConnectors;
+﻿using EmailClientPluma.Core.Models;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
-using Microsoft.Kiota.Abstractions.Authentication;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
@@ -218,7 +216,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
                 .WithAccount(microsoftAccount)
                 .ExecuteAsync();
         }
-       
+
         return res is not null;
     }
 }

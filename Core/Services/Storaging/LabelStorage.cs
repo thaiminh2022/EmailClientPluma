@@ -134,7 +134,8 @@ internal class LabelStorage
 
             await connection.ExecuteAsync(sql, new
             {
-                LabelId = id, mail.MessageIdentifiers.EmailId
+                LabelId = id,
+                mail.MessageIdentifiers.EmailId
             });
         }
     }
@@ -151,7 +152,8 @@ internal class LabelStorage
 
         await connection.ExecuteAsync(sql, new
         {
-            LabelId = label.Id, mail.MessageIdentifiers.EmailId
+            LabelId = label.Id,
+            mail.MessageIdentifiers.EmailId
         });
     }
 
@@ -196,7 +198,8 @@ internal class LabelStorage
 
         var labels = await connection.QueryAsync<EmailLabelRow>(sql, new
         {
-            OwnerId = email.MessageIdentifiers.OwnerAccountId, email.MessageIdentifiers.EmailId
+            OwnerId = email.MessageIdentifiers.OwnerAccountId,
+            email.MessageIdentifiers.EmailId
         });
 
         return labels.Select(x =>

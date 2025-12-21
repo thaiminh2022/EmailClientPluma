@@ -1,5 +1,5 @@
-using System.Collections.ObjectModel;
 using EmailClientPluma.Core.Models;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 

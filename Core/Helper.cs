@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using EmailClientPluma.Core.Models;
+using System.IO;
 using System.Windows.Media;
-using EmailClientPluma.Core.Models;
 
 namespace EmailClientPluma.Core;
 

@@ -1,8 +1,8 @@
-﻿using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using EmailClientPluma.Core.Models;
+﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -36,7 +36,7 @@ internal class AccountService : IAccountService
     )
     {
         _authServices = [.. authServices];
-        _emailServices = [..emailServices];
+        _emailServices = [.. emailServices];
         _storageService = storageService;
         _emailMonitoringService = emailMonitoringService;
         _accounts = [];
@@ -128,7 +128,7 @@ internal class AccountService : IAccountService
         {
             await iClient.SignOutAsync(account);
         }
-        
+
         await _storageService.RemoveAccountAsync(account);
     }
 
@@ -157,7 +157,7 @@ internal class AccountService : IAccountService
         }
     }
 
-  
+
     private IAuthenticationService GetAuthServiceByProvider(Provider provider)
     {
         var service = _authServices.Find(p => p.GetProvider().Equals(provider));

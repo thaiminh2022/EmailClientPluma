@@ -1,12 +1,12 @@
-﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Windows.Input;
-using EmailClientPluma.Core;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
@@ -18,13 +18,13 @@ internal class MainViewModel : ObserableObject
     {
         _accountService = accountService;
         var windowFactory1 = windowFactory;
-        _emailServices = [..emailServices];
+        _emailServices = [.. emailServices];
         _filterService = emailFilterService;
 
         // make list auto sort descending by date
         FilteredEmails = [];
         Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
-        
+
         Accounts = _accountService.GetAccounts();
         SelectedAccount = Accounts.FirstOrDefault();
 
@@ -34,7 +34,7 @@ internal class MainViewModel : ObserableObject
         {
             if (_selectedAccount is null)
                 return;
-            
+
             await GetServiceByProvider(_selectedAccount.Provider).FetchEmailHeaderAsync(_selectedAccount);
         }, _ => _selectedAccount is not null);
         AddGoogleCommand = new RelayCommandAsync(async _ =>
