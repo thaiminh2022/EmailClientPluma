@@ -5,6 +5,7 @@ using Microsoft.Graph;
 using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
+using Newtonsoft.Json;
 using DeltaGetResponse = Microsoft.Graph.Me.MailFolders.Item.Messages.Delta.DeltaGetResponse;
 
 namespace EmailClientPluma.Core.Services.Emailing;
@@ -28,89 +29,44 @@ internal class OutlookApiEmailService : IEmailService
         return new GraphServiceClient(tokenProvider);
     }
 
+    private (PaginationTok?, LastSyncTok?) ParseAccountTokens(string? pagTok, string? lastTok)
+    {
+        PaginationTok? pag = null;
+        LastSyncTok? last = null;
+
+        if (pagTok is not null)
+        {
+            pag = JsonConvert.DeserializeObject<PaginationTok>(pagTok);
+        }
+
+        if (lastTok is not null)
+        {
+            last = JsonConvert.DeserializeObject<LastSyncTok>(lastTok);
+        }
+
+        return (pag, last);
+    }
+
     public async Task FetchEmailHeaderAsync(Account acc)
     {
         var graphClient = GetGraphService(acc);
+        var (_, lastSync) = ParseAccountTokens(acc.PaginationToken, acc.LastSyncToken);
+
 
         try
         {
-            DeltaGetResponse? deltaResponse;
-            if (!string.IsNullOrEmpty(acc.LastSyncToken))
+            if (lastSync is not null)
             {
-                deltaResponse = await graphClient.Me.MailFolders["Inbox"].Messages.Delta
-                    .WithUrl(acc.LastSyncToken)
-                    .GetAsDeltaGetResponseAsync();
-
-                if (deltaResponse?.Value is not null)
-                {
-                    foreach (var msg in deltaResponse.Value)
-                    {
-
-                        // New or updated message
-                        var existingEmail = acc.Emails.FirstOrDefault(e =>
-                            e.MessageIdentifiers.ProviderMessageId == msg.Id);
-
-                        // only handle new messages
-                        if (existingEmail is not null) continue;
-
-                        // New email
-                        var newEmail = CreateEmailFromGraph(acc, msg);
-                        acc.Emails.Add(newEmail);
-                        await _storageService.StoreEmailAsync(acc, newEmail);
-                    }
-
-                }
+                // incremental
+                await FetchIncremental(acc, graphClient, lastSync.Value);
             }
             else
             {
                 // initial
-                var inboxFolder = await graphClient.Me.MailFolders["Inbox"].GetAsync();
-
-                if (inboxFolder?.Id == null)
-                {
-                    throw new Exception("Cannot access Inbox folder");
-                }
-
-                var deltaRequest = graphClient.Me.MailFolders[inboxFolder.Id].Messages.Delta;
-
-                deltaResponse = await deltaRequest.GetAsDeltaGetResponseAsync(config =>
-                {
-                    config.QueryParameters.Select =
-                    [
-                        "id", "subject", "from", "toRecipients",
-                        "isRead", "receivedDateTime", "conversationId",
-                        "internetMessageId", "internetMessageHeaders", "isDraft"
-                    ];
-                    config.QueryParameters.Top = INITIAL_HEADER_WINDOW;
-                    config.QueryParameters.Orderby = ["receivedDateTime DESC"];
-                });
-                if (deltaResponse?.Value != null)
-                {
-                    foreach (var msg in deltaResponse.Value)
-                    {
-                        var email = CreateEmailFromGraph(acc, msg);
-
-                        if (acc.Emails.Any(x =>
-                                x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
-                            continue;
-
-                        acc.Emails.Add(email);
-                        await _storageService.StoreEmailAsync(acc, email);
-                    }
-                }
+                await FetchInitial(acc, graphClient);
             }
 
-            // Store the delta link for incremental sync
-            if (!string.IsNullOrEmpty(deltaResponse?.OdataDeltaLink))
-            {
-                acc.LastSyncToken = deltaResponse.OdataDeltaLink;
-            }
-
-            if (!string.IsNullOrEmpty(deltaResponse?.OdataNextLink))
-            {
-                acc.PaginationToken = deltaResponse.OdataNextLink;
-            }
-
+ 
             acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
             await _storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
@@ -120,6 +76,171 @@ internal class OutlookApiEmailService : IEmailService
         }
     }
 
+    private async Task FetchInitial(Account acc, GraphServiceClient graphClient)
+    {
+        var inboxFolder = await graphClient.Me.MailFolders["inbox"].GetAsync();
+        var sentFolder = await graphClient.Me.MailFolders["sentitems"].GetAsync();
+
+        if (inboxFolder?.Id == null || sentFolder?.Id == null)
+        {
+            throw new Exception("Cannot access Inbox or Sent folder");
+        }
+
+        var deltaInbox = graphClient.Me.MailFolders[inboxFolder.Id].Messages.Delta;
+        var deltaSent = graphClient.Me.MailFolders[sentFolder.Id].Messages.Delta;
+
+
+        var deltaResponseInbox = await deltaInbox.GetAsDeltaGetResponseAsync(config =>
+        {
+            config.QueryParameters.Select =
+            [
+                "id", "subject", "from", "toRecipients",
+                "isRead", "receivedDateTime", "conversationId",
+                "internetMessageId", "internetMessageHeaders", "isDraft"
+            ];
+            config.QueryParameters.Top = INITIAL_HEADER_WINDOW;
+            config.QueryParameters.Orderby = ["receivedDateTime DESC"];
+        });
+
+
+        var deltaResponseSent = await deltaSent.GetAsDeltaGetResponseAsync(config =>
+        {
+            config.QueryParameters.Select =
+            [
+                "id", "subject", "from", "toRecipients",
+                "isRead", "receivedDateTime", "conversationId",
+                "internetMessageId", "internetMessageHeaders", "isDraft"
+            ];
+            config.QueryParameters.Top = INITIAL_HEADER_WINDOW;
+            config.QueryParameters.Orderby = ["receivedDateTime DESC"];
+        });
+
+
+
+        if (deltaResponseInbox?.Value is not null)
+        {
+            foreach (var msg in deltaResponseInbox.Value)
+            {
+                var email = CreateEmailFromGraph(acc, msg);
+
+                if (acc.Emails.Any(x =>
+                        x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+                    continue;
+
+                acc.Emails.Add(email);
+                await _storageService.StoreEmailAsync(acc, email);
+            }
+        }
+
+        if (deltaResponseSent?.Value is not null)
+        {
+            foreach (var msg in deltaResponseSent.Value)
+            {
+                var email = CreateEmailFromGraph(acc, msg, true);
+
+                if (acc.Emails.Any(x =>
+                        x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+                    continue;
+
+                acc.Emails.Add(email);
+                await _storageService.StoreEmailAsync(acc, email);
+            }
+        }
+
+        var lastSyncTok = JsonConvert.SerializeObject(new LastSyncTok
+        {
+            InboxDeltaLink = deltaResponseInbox?.OdataDeltaLink,
+            SentDeltaLink = deltaResponseSent?.OdataDeltaLink
+        });
+
+        var paginationTok = JsonConvert.SerializeObject(new PaginationTok
+        {
+            InboxNextLink = deltaResponseInbox?.OdataNextLink,
+            SentNextLink = deltaResponseSent?.OdataNextLink
+        });
+
+        acc.LastSyncToken = lastSyncTok;
+        acc.PaginationToken = paginationTok;
+    }
+
+    struct PaginationTok
+    {
+        public string? InboxNextLink;
+        public string? SentNextLink;
+    }
+
+    struct LastSyncTok
+    {
+        public string? InboxDeltaLink;
+        public string? SentDeltaLink;
+    }
+
+    private async Task FetchIncremental(Account acc, GraphServiceClient graphClient, LastSyncTok lastTok)
+    {
+        var deltaResponseInbox = await graphClient.Me.MailFolders["inbox"].Messages.Delta
+            .WithUrl(lastTok.InboxDeltaLink)
+            .GetAsDeltaGetResponseAsync();
+
+        var deltaResponseSent = await graphClient.Me.MailFolders["sentitems"].Messages.Delta
+            .WithUrl(lastTok.SentDeltaLink)
+            .GetAsDeltaGetResponseAsync();
+
+        if (deltaResponseInbox?.Value is not null)
+        {
+            foreach (var msg in deltaResponseInbox.Value)
+            {
+
+                // New or updated message
+                var existingEmail = acc.Emails.FirstOrDefault(e =>
+                    e.MessageIdentifiers.ProviderMessageId == msg.Id);
+
+                // only handle new messages
+                if (existingEmail is not null) continue;
+
+                // New email
+                var newEmail = CreateEmailFromGraph(acc, msg);
+                acc.Emails.Add(newEmail);
+                await _storageService.StoreEmailAsync(acc, newEmail);
+            }
+
+        }
+
+        if (deltaResponseSent?.Value is not null)
+        {
+            foreach (var msg in deltaResponseSent.Value)
+            {
+
+                // New or updated message
+                var existingEmail = acc.Emails.FirstOrDefault(e =>
+                    e.MessageIdentifiers.ProviderMessageId == msg.Id);
+
+                // only handle new messages
+                if (existingEmail is not null) continue;
+
+                // New email
+                var newEmail = CreateEmailFromGraph(acc, msg, true);
+                acc.Emails.Add(newEmail);
+                await _storageService.StoreEmailAsync(acc, newEmail);
+            }
+
+        }
+
+        var lastSyncTok = JsonConvert.SerializeObject(new LastSyncTok
+        {
+            InboxDeltaLink = deltaResponseInbox?.OdataDeltaLink,
+            SentDeltaLink = deltaResponseSent?.OdataDeltaLink
+        });
+
+        var paginationTok = JsonConvert.SerializeObject(new PaginationTok
+        {
+            InboxNextLink = deltaResponseInbox?.OdataNextLink,
+            SentNextLink = deltaResponseSent?.OdataNextLink
+        });
+
+        acc.LastSyncToken = lastSyncTok;
+        acc.PaginationToken = paginationTok;
+    }
+
     private static string? GetHeader(Message msg, string headerName)
     {
         return msg.InternetMessageHeaders?
@@ -127,10 +248,15 @@ internal class OutlookApiEmailService : IEmailService
             ?.Value;
     }
 
-    private Email CreateEmailFromGraph(Account acc, Message msg)
+    private Email CreateEmailFromGraph(Account acc, Message msg, bool fromSent = false)
     {
         // Flags (best-effort mapping; Graph doesn't have Gmail-like labels)
         var flags = EmailFlags.None;
+
+        if (fromSent)
+        {
+            flags |= EmailFlags.Sent;
+        }
 
         if (msg.IsRead == true)
             flags |= EmailFlags.Seen;
@@ -150,7 +276,7 @@ internal class OutlookApiEmailService : IEmailService
             InternetMessageId = msg.InternetMessageId,
             InReplyTo = GetHeader(msg, "In-Reply-To"),
             ProviderHistoryId = null, // Graph doesn't expose Gmail-like HistoryId
-            FolderFullName = "Inbox",
+            FolderFullName = fromSent? "Sent Items" : "Inbox",
             Provider = Provider.Microsoft,
             Flags = flags,
         };
@@ -176,7 +302,7 @@ internal class OutlookApiEmailService : IEmailService
 
         // Labels: you can tune these to match your UI semantics
         e.Labels.Add(EmailLabel.All);
-        e.Labels.Add(EmailLabel.Inbox);
+        e.Labels.Add(fromSent ? EmailLabel.Sent : EmailLabel.Inbox);
 
         return e;
     }
