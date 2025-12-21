@@ -183,7 +183,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
             Accounts = _accountService.GetAccounts();
-            SelectedAccount = Accounts.First();
+            SelectedAccount = Accounts.FirstOrDefault();
 
             // COMMANDS
             AddAccountCommand = new RelayCommand(async _ =>
