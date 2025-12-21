@@ -16,7 +16,8 @@
     mc:Ignorable="d">
 
     <Window.Resources>
-        <Style TargetType="TextBlock" BasedOn="{StaticResource GBTB}" />
+        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
+        <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
     </Window.Resources>
 
 
@@ -33,11 +34,9 @@
         <!--  Filter  -->
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition x:Name="CenterColumn"
-                                  Width="*"/>
-                <ColumnDefinition x:Name="RightColumn"
-                                  Width="auto"/>
+                <ColumnDefinition x:Name="LeftColumn" Width="auto" />
+                <ColumnDefinition x:Name="CenterColumn" Width="*" />
+                <ColumnDefinition x:Name="RightColumn" Width="auto" />
             </Grid.ColumnDefinitions>
 
             <Grid Grid.Column="0">
@@ -277,13 +276,15 @@
         <!--  Search  -->
         <StackPanel
             Grid.Row="0"
+            Margin="0,10,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            Margin="0,10,0,0"
             Orientation="Horizontal">
-            <TextBlock  FontWeight="Bold" VerticalAlignment="Center"
-                        FontSize="16"
-                       Text="Search Mail"/>
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="16"
+                FontWeight="Bold"
+                Text="Search Mail" />
             <TextBox
                 Width="200"
                 Height="25"
@@ -295,12 +296,12 @@
                 Content="..." />
             <Popup
                 x:Name="MoreSearchPopup"
-                Placement="Bottom"
                 HorizontalOffset="-200"
+                Placement="Bottom"
                 PlacementTarget="{Binding ElementName=MoreSearch}"
                 PopupAnimation="Scroll"
                 StaysOpen="False">
-                <Border BorderThickness="3" BorderBrush="{DynamicResource TextBrush}">
+                <Border BorderBrush="{DynamicResource TextBrush}" BorderThickness="3">
                     <StackPanel Margin="0,0,0,0">
                         <!--  From  -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
@@ -437,16 +438,16 @@
 
 
         <!--  Accounts  -->
-        <Button x:Name="AccountSettingsButton"
-                Grid.Row="0"
-                Grid.Column="1"
-                Width="auto"
-                Height="35"
-                Margin="0,10,20,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Click="Button_Click"
-        >
+        <Button
+            x:Name="AccountSettingsButton"
+            Grid.Row="0"
+            Grid.Column="1"
+            Width="auto"
+            Height="35"
+            Margin="0,10,20,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Click="Button_Click">
             <TextBlock>
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -469,8 +470,8 @@
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
-            Placement="Bottom"
             HorizontalOffset="-100"
+            Placement="Bottom"
             PlacementTarget="{Binding ElementName=AccountSettingsButton}"
             PopupAnimation="Slide"
             StaysOpen="False">
@@ -501,60 +502,54 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0"
-                            Command="{Binding WhichProvCMD}">Add Account</Button>
-                    <Button Margin="0,4,0,0"
-                            Command="{Binding RemoveAccountCommand}">Remove Account</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCMD}">Add Account</Button>
+                    <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>
         </Popup>
         <StackPanel
-            Margin="10,10,0,0"
             Width="Auto"
+            Margin="10,10,0,0"
             HorizontalAlignment="Left"
             Orientation="Horizontal">
             <Button
-                Style="{DynamicResource {x:Type Button}}"
                 HorizontalAlignment="Left"
-                Command="{Binding ComposeCommand}">
-                <Image x:Name="ComposeIcon"
-                        Source="Images/White/pen.png"
-                       Width="24"
-                       Height="24"/>
+                Command="{Binding ComposeCommand}"
+                Style="{DynamicResource {x:Type Button}}">
+                <Image
+                    x:Name="ComposeIcon"
+                    Width="24"
+                    Height="24"
+                    Source="Images/White/pen.png" />
             </Button>
 
             <Button
                 x:Name="SettingsButton"
+                Width="auto"
+                Height="35"
                 Background="{DynamicResource PrimaryBrush}"
-                Foreground="{DynamicResource ButtonForegroundBrush}"
                 Command="{Binding SettingCommand}"
-                Width="auto" Height="35">
-                <Image x:Name="SettingsIcon"
-                        Source="Images/White/settings.png"
-                       Width="24"
-                       Height="24"/>
+                Foreground="{DynamicResource ButtonForegroundBrush}">
+                <Image
+                    x:Name="SettingsIcon"
+                    Width="24"
+                    Height="24"
+                    Source="Images/White/settings.png" />
             </Button>
-          
-            <Button Command="{Binding PreviousCommand}"
-                    Width="auto"
-                    >
-                <Image x:Name="PreviousIcon" Source="Images/White/arrow_back.png"/>
+
+            <Button Width="auto" Command="{Binding PreviousCommand}">
+                <Image x:Name="PreviousIcon" Source="Images/White/arrow_back.png" />
             </Button>
-            <Button Command="{Binding NextCommand}"
-                    >
-                <Image x:Name="ForwardIcon" Source="Images/White/arrow_forward.png"/>
+            <Button Command="{Binding NextCommand}">
+                <Image x:Name="ForwardIcon" Source="Images/White/arrow_forward.png" />
             </Button>
-            <StackPanel Orientation="Horizontal"
-                        VerticalAlignment="Center">
-            </Popup>
-            <StackPanel Orientation="Horizontal"
-                        VerticalAlignment="Center">
-                <TextBlock Text="{Binding CurrentPage}" />
-                <TextBlock Text="/" />
-                <TextBlock Text="{Binding TotalPages}" />
+            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Text="{Binding CurrentPage}" />
+                    <TextBlock Text="/" />
+                    <TextBlock Text="{Binding TotalPages}" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
-
-
     </Grid>
 </Window>
