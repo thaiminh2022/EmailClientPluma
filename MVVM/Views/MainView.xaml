@@ -15,93 +15,15 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
+    <Window.Resources>
+        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
+        <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
+    </Window.Resources>
+
+
     <Window.DataContext>
         <viewmodels:MainViewModel />
     </Window.DataContext>
-
-    <Window.Resources>
-        <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
-        <!--  Color palette  -->
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#F7F4FB" />
-        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FAF8FF" />
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#7E57C2" />
-        <SolidColorBrush x:Key="TextBrush" Color="Black" />
-        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="White" />
-        <SolidColorBrush x:Key="DarkPurple" Color="#5E35B1" />
-        <SolidColorBrush x:Key="LightPurple" Color="#D1C4E9" />
-
-        <!--  Button style  -->
-        <Style TargetType="Button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="Margin" Value="5,0,5,0" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="6"
-                            SnapsToDevicePixels="True">
-                            <ContentPresenter
-                                Margin="{TemplateBinding Padding}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource DarkPurple}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!--  ListView style  -->
-        <Style TargetType="ListView">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LightPurple}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-
-        <!--  TextBlock style  -->
-        <Style TargetType="TextBlock">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-        <!--  Text box style  -->
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-        <!--  Grid style  -->
-        <Style TargetType="Grid">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-        <!--  Stack panel style  -->
-        <Style TargetType="StackPanel">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-        <!--  Border style  -->
-        <Style x:Key="WebViewContainerStyle" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style x:Key="CustomCombo" TargetType="ComboBox">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-
-        <Style x:Key="CustomComboItem" TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-        </Style>
-    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -112,9 +34,9 @@
         <!--  Filter  -->
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition x:Name="CenterColumn" Width="5*" />
-                <ColumnDefinition x:Name="RightColumn" Width="Auto" />
+                <ColumnDefinition x:Name="LeftColumn" Width="auto" />
+                <ColumnDefinition x:Name="CenterColumn" Width="*" />
+                <ColumnDefinition x:Name="RightColumn" Width="auto" />
             </Grid.ColumnDefinitions>
 
             <Grid Grid.Column="0">
@@ -212,7 +134,6 @@
                                 <Border
                                     Margin="2"
                                     Padding="6"
-                                    Background="White"
                                     BorderThickness="0.5"
                                     CornerRadius="5">
                                     <TextBlock
@@ -395,12 +316,18 @@
         <!--  Search  -->
         <StackPanel
             Grid.Row="0"
+            Margin="0,10,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Orientation="Horizontal">
-            <TextBlock FontWeight="Bold" Text="Search Mail" />
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="16"
+                FontWeight="Bold"
+                Text="Search Mail" />
             <TextBox
                 Width="200"
+                Height="25"
                 Margin="10,0,0,0"
                 Text="{Binding Filters.SearchText, UpdateSourceTrigger=PropertyChanged}" />
             <Button
@@ -409,11 +336,12 @@
                 Content="..." />
             <Popup
                 x:Name="MoreSearchPopup"
+                HorizontalOffset="-200"
                 Placement="Bottom"
                 PlacementTarget="{Binding ElementName=MoreSearch}"
                 PopupAnimation="Scroll"
                 StaysOpen="False">
-                <Border>
+                <Border BorderBrush="{DynamicResource TextBrush}" BorderThickness="3">
                     <StackPanel Margin="0,0,0,0">
                         <!--  From  -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
@@ -555,8 +483,8 @@
             Grid.Row="0"
             Grid.Column="1"
             Width="auto"
-            Height="auto"
-            Margin="0,0,20,0"
+            Height="35"
+            Margin="0,10,20,0"
             HorizontalAlignment="Right"
             VerticalAlignment="Center"
             Click="Button_Click">
@@ -582,10 +510,11 @@
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
+            HorizontalOffset="-100"
             Placement="Bottom"
             PlacementTarget="{Binding ElementName=AccountSettingsButton}"
             PopupAnimation="Slide"
-            StaysOpen="True">
+            StaysOpen="False">
             <Border
                 Padding="8"
                 Background="{DynamicResource PanelBackgroundBrush}"
@@ -606,7 +535,6 @@
                                 <Border
                                     Margin="2"
                                     Padding="6"
-                                    Background="White"
                                     CornerRadius="5">
                                     <TextBlock FontWeight="Medium" Text="{Binding DisplayName}" />
                                 </Border>
@@ -614,67 +542,54 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0" Command="{Binding AddGoogleCommand}">Add Google</Button>
-                    <Button Margin="0,8,0,0" Command="{Binding AddMicrosoftCommand}">Add Microsoft</Button>
-
+                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCMD}">Add Account</Button>
                     <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>
         </Popup>
         <StackPanel
             Width="Auto"
+            Margin="10,10,0,0"
             HorizontalAlignment="Left"
             Orientation="Horizontal">
             <Button
                 HorizontalAlignment="Left"
                 Command="{Binding ComposeCommand}"
-                Content="New Mail" />
-            <Button Command="{Binding PreviousCommand}" Content="Prev" />
-            <Button Command="{Binding NextCommand}" Content="Next" />
-
+                Style="{DynamicResource {x:Type Button}}">
+                <Image
+                    x:Name="ComposeIcon"
+                    Width="24"
+                    Height="24"
+                    Source="Images/White/pen.png" />
+            </Button>
 
             <Button
-                x:Name="ThemeToggle"
-                HorizontalAlignment="Left"
-                Click="ThemeToggle_Click"
-                Content="Theme" />
-            <Popup
-                x:Name="ThemePopup"
-                AllowsTransparency="True"
-                Placement="Bottom"
-                PlacementTarget="{Binding ElementName=ThemeToggle}"
-                PopupAnimation="Fade"
-                StaysOpen="False">
-                <Border
-                    Padding="8"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    <StackPanel>
-                        <TextBlock
-                            Margin="0,0,0,6"
-                            FontWeight="Bold"
-                            Text="Choose theme" />
-                        <Button
-                            x:Name="LightModeBtn"
-                            Width="160"
-                            Click="LightModeBtn_Click"
-                            Content="Light Mode" />
-                        <Button
-                            x:Name="DarkModeBtn"
-                            Width="160"
-                            Margin="0,6,0,0"
-                            Click="DarkModeBtn_Click"
-                            Content="Dark Mode" />
-                    </StackPanel>
-                </Border>
-            </Popup>
+                x:Name="SettingsButton"
+                Width="auto"
+                Height="35"
+                Background="{DynamicResource PrimaryBrush}"
+                Command="{Binding SettingCommand}"
+                Foreground="{DynamicResource ButtonForegroundBrush}">
+                <Image
+                    x:Name="SettingsIcon"
+                    Width="24"
+                    Height="24"
+                    Source="Images/White/settings.png" />
+            </Button>
+
+            <Button Width="auto" Command="{Binding PreviousCommand}">
+                <Image x:Name="PreviousIcon" Source="Images/White/arrow_back.png" />
+            </Button>
+            <Button Command="{Binding NextCommand}">
+                <Image x:Name="ForwardIcon" Source="Images/White/arrow_forward.png" />
+            </Button>
             <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                <TextBlock Text="{Binding CurrentPage}" />
-                <TextBlock Text="/" />
-                <TextBlock Text="{Binding TotalPages}" />
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <TextBlock Text="{Binding CurrentPage}" />
+                    <TextBlock Text="/" />
+                    <TextBlock Text="{Binding TotalPages}" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
-
-
     </Grid>
 </Window>

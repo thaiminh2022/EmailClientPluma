@@ -28,23 +28,7 @@ internal class MainViewModel : ObserableObject
         Accounts = _accountService.GetAccounts();
         SelectedAccount = Accounts.FirstOrDefault();
 
-
-        // COMMANDS
-        RefreshEmailCommand = new RelayCommandAsync(async _ =>
-        {
-            if (_selectedAccount is null)
-                return;
-
-            await GetServiceByProvider(_selectedAccount.Provider).FetchEmailHeaderAsync(_selectedAccount);
-        }, _ => _selectedAccount is not null);
-        AddGoogleCommand = new RelayCommandAsync(async _ =>
-        {
-            await _accountService.AddAccountAsync(Provider.Google);
-        });
-        AddMicrosoftCommand = new RelayCommandAsync(async _ =>
-        {
-            await _accountService.AddAccountAsync(Provider.Microsoft);
-        });
+            // COMMANDS
 
         ComposeCommand = new RelayCommand(_ =>
         {
@@ -56,6 +40,7 @@ internal class MainViewModel : ObserableObject
 
             if (success == true) MessageBoxHelper.Info("Message was sent");
         }, _ => Accounts.Count > 0);
+
         ReplyCommand = new RelayCommand(_ =>
         {
             if (SelectedAccount == null || SelectedEmail == null) return;
@@ -72,9 +57,21 @@ internal class MainViewModel : ObserableObject
         }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                 SelectedEmail.MessageParts.From != SelectedAccount.Email);
 
-        RemoveAccountCommand = new RelayCommand(_ =>
-        {
-            if (SelectedAccount == null) return;
+            SettingCommand = new RelayCommand(_ =>
+            {
+                var newEmailWindow = _windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+                newEmailWindow.Show();
+            });
+
+            WhichProvCMD = new RelayCommand(_ =>
+            {
+                var whichProvWindow = _windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
+                whichProvWindow.ShowDialog();
+            });
+
+            RemoveAccountCommand = new RelayCommand(_ =>
+            {
+                if (SelectedAccount == null) return;
 
             var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
             if (result is null || result is false) return;
