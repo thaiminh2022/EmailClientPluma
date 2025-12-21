@@ -15,6 +15,11 @@
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
 
+    <Window.Resources>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource GBTB}" />
+    </Window.Resources>
+
+
     <Window.DataContext>
         <viewmodels:MainViewModel/>
     </Window.DataContext>
@@ -216,7 +221,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Orientation="Horizontal">
-            <TextBlock FontWeight="Bold"
+            <TextBlock  FontWeight="Bold"
                        Text="Search Mail"/>
             <TextBox
                 Width="200"
@@ -281,7 +286,7 @@
                         <!--  Doesn’t have  -->
                         <StackPanel Margin="0,5"
                                     Orientation="Horizontal">
-                            <TextBlock
+                            <TextBlock 
                                 Width="100"
                                 VerticalAlignment="Center"
                                 Text="Doesn’t have"/>
@@ -454,7 +459,7 @@
                     </ListView>
 
                     <Button Margin="0,8,0,0"
-                            Command="{Binding AddAccountCommand}">Add Account</Button>
+                            Command="{Binding WhichProvCMD}">Add Account</Button>
                     <Button Margin="0,4,0,0"
                             Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
