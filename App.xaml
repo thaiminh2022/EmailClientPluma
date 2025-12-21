@@ -68,18 +68,13 @@
         </Style>
 
         <!--  Text box style  -->
-        <Style TargetType="TextBox">
+        <Style TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         </Style>
         <!--  Grid style  -->
-        <Style TargetType="Grid">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
-        <!--  Stack panel style  -->
-        <Style TargetType="StackPanel">
-            <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
-        </Style>
+
+
         <!--  Border style  -->
         <Style x:Key="WebViewContainerStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
@@ -99,9 +94,6 @@
         <!--  GroupBox  -->
         <Style TargetType="GroupBox">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PanelBackgroundBrush}" />
         </Style>
 
         <!--  Tabs  -->
@@ -114,7 +106,6 @@
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
             <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="2,0" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -124,8 +115,8 @@
                             Padding="{TemplateBinding Padding}"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="6">
+                            BorderThickness="0.5,1,0.5,1"
+                            CornerRadius="6 6 0 0 ">
                             <ContentPresenter
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
@@ -190,12 +181,7 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource DarkPurple}" />
                             </Trigger>
-                            <!--  Disabled  -->
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="Gray" />
-                                <Setter TargetName="Box" Property="BorderBrush" Value="Gray" />
-                                <Setter TargetName="Box" Property="Background" Value="#EEE" />
-                            </Trigger>
+
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>

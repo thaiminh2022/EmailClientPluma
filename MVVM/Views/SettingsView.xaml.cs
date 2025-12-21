@@ -1,16 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
+
 
 namespace EmailClientPluma.MVVM.Views
 {
@@ -19,20 +8,17 @@ namespace EmailClientPluma.MVVM.Views
     /// </summary>
     public partial class SettingsView : Window
     {
-        private static bool _isDarMode;
+        private static bool _isDarkMode;
         public static bool IsDarkMode
         {
-            get { return _isDarMode; }
+            get => _isDarkMode;
             set
             {
-                if (_isDarMode != value)
-                {
-                    _isDarMode = value;
-                    DarkModeChanged?.Invoke(null, EventArgs.Empty);
-                }
+                _isDarkMode = value;
+                DarkModeChanged?.Invoke(null, EventArgs.Empty);
             }
         }
-        public static event EventHandler DarkModeChanged;
+        public static event EventHandler? DarkModeChanged;
         public SettingsView()
         {
             InitializeComponent();

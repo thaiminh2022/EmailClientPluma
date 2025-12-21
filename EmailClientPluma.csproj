@@ -41,6 +41,7 @@
     <None Remove="MVVM\Views\Images\White\social.png" />
     <None Remove="MVVM\Views\Images\White\spam.png" />
     <None Remove="MVVM\Views\Images\White\trash.png" />
+    <None Remove="QuillEditor\darktheme.css" />
     <None Remove="QuillEditor\quilljs.js" />
     <None Remove="QuillEditor\script.js" />
     <None Remove="QuillEditor\selectReplyEditor.html" />
@@ -87,6 +88,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="Properties\Settings.settings">
+          <Generator>PublicSettingsSingleFileGenerator</Generator>
+          <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
         <None Update="secrets\secret.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
@@ -112,15 +117,26 @@
 	  <Resource Include="MVVM\Views\Images\White\pen.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
-	  <SplashScreen Include="MVVM\Views\Images\White\arrow_back.png">
+	  <Content Include="QuillEditor\darktheme.css">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </SplashScreen>
+	  </Content>
+	  <Resource Include="MVVM\Views\Images\White\arrow_back.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Resource>
 	  <Resource Include="MVVM\Views\Images\White\arrow_forward.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
 	  <Resource Include="MVVM\Views\Images\White\settings.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Properties\Settings.Designer.cs">
+	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Settings.settings</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 </Project>

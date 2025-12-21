@@ -3,19 +3,28 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using EmailClientPluma.Core;
 
 namespace EmailClientPluma
 {
 
     public partial class MainView : Window
     {
-        private bool IsDarkMode = SettingsView.IsDarkMode;
+        public bool IsDarkMode = SettingsView.IsDarkMode;
         public bool IsImg { get; set; } = false;
 
         public MainView()
         {
             InitializeComponent();
-            ApplyLightMode();
+            if (AppSettings.CurrentTheme == AppTheme.Dark)
+            {
+                ApplyDarkMode();
+            }
+            else
+            {
+                ApplyLightMode();
+            }
+
             SettingsView.DarkModeChanged += SettingsView_DarkModeChanged;
         }
 
@@ -50,22 +59,23 @@ namespace EmailClientPluma
                 {
                     brush.Color = color;
                 }
+                InvalidateVisual();
             }
         }
 
-        private void SettingsView_DarkModeChanged(object sender, EventArgs e)
+        private void SettingsView_DarkModeChanged(object? sender, EventArgs e)
         {
             if (SettingsView.IsDarkMode)
             {
                 IsDarkMode = true;
                 ApplyDarkMode();
-                ChangeImgTheme();
+                AppSettings.CurrentTheme = AppTheme.Dark;
             }
             else
             {
                 IsDarkMode = false;
                 ApplyLightMode();
-                ChangeImgTheme();
+                AppSettings.CurrentTheme = AppTheme.Light;
             }
         }
 
@@ -85,15 +95,13 @@ namespace EmailClientPluma
             ForwardIcon.Source = new BitmapImage(new Uri("Images/White/arrow_forward.png", UriKind.Relative));
             PreviousIcon.Source = new BitmapImage(new Uri("Images/White/arrow_back.png", UriKind.Relative));
 
-            ChangeImgTheme();
         }
 
         private void ApplyDarkMode()
         {
             SetBrushColor("BackgroundBrush", Dark_Background);
             SetBrushColor("PanelBackgroundBrush", Dark_Panel);
-            SetBrushColor("PrimaryBrush",
-                Dark_ButtonBack); // in dark mode PrimaryBrush used as button background -> gold
+            SetBrushColor("PrimaryBrush", Dark_ButtonBack); // in dark mode PrimaryBrush used as button background -> gold
             SetBrushColor("AccentBrush", Dark_Accent);
             SetBrushColor("TextBrush", Dark_Text);
             SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
@@ -103,24 +111,13 @@ namespace EmailClientPluma
             SettingsIcon.Source = new BitmapImage(new Uri("Images/Black/settings_black.png", UriKind.Relative));
             ForwardIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_forward_black.png", UriKind.Relative));
             PreviousIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_back_black.png", UriKind.Relative));
-
-            ChangeImgTheme();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             AccountSettingsPopup.IsOpen = !AccountSettingsPopup.IsOpen;
         }
-
-        private void ChangeContentBtn()
-        {
-
-        }
-
-        private void ChangeImgTheme()
-        {
-
-        }
+   
 
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -131,7 +128,6 @@ namespace EmailClientPluma
             LeftColumn.Width = new GridLength(0.5, GridUnitType.Star);
             CenterColumn.Width = new GridLength(2.8, GridUnitType.Star);
             RightColumn.Width = new GridLength(4.2, GridUnitType.Star);
-            ChangeContentBtn();
         }
 
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
@@ -146,7 +142,6 @@ namespace EmailClientPluma
             RightColumn.Width = new GridLength(0); // collapse the right side
 
             IsImg = false;
-            ChangeContentBtn();
         }
 
         private void MoreSearch_Click(object sender, RoutedEventArgs e)
