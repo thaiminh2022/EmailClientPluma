@@ -2,6 +2,7 @@
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Microsoft.Graph;
+using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
 using DeltaGetResponse = Microsoft.Graph.Me.MailFolders.Item.Messages.Delta.DeltaGetResponse;
@@ -13,19 +14,20 @@ internal class OutlookApiEmailService : IEmailService
     private const int INITIAL_HEADER_WINDOW = 20;
     private readonly IStorageService _storageService;
     private readonly IMicrosoftClientApp _clientApp;
-    
+
     public OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageService storageService)
     {
         _clientApp = clientApp;
         _storageService = storageService;
     }
+
     private GraphServiceClient GetGraphService(Account acc)
     {
         var provider = new MsalAccessTokenProvider(_clientApp.PublicClient, _clientApp.Scopes, acc.ProviderUID);
         var tokenProvider = new BaseBearerTokenAuthenticationProvider(provider);
         return new GraphServiceClient(tokenProvider);
     }
-    
+
     public async Task FetchEmailHeaderAsync(Account acc)
     {
         var graphClient = GetGraphService(acc);
@@ -43,14 +45,14 @@ internal class OutlookApiEmailService : IEmailService
                 {
                     foreach (var msg in deltaResponse.Value)
                     {
-                        
+
                         // New or updated message
-                        var existingEmail = acc.Emails.FirstOrDefault(e => 
+                        var existingEmail = acc.Emails.FirstOrDefault(e =>
                             e.MessageIdentifiers.ProviderMessageId == msg.Id);
 
                         // only handle new messages
                         if (existingEmail is not null) continue;
-                        
+
                         // New email
                         var newEmail = CreateEmailFromGraph(acc, msg);
                         acc.Emails.Add(newEmail);
@@ -63,19 +65,20 @@ internal class OutlookApiEmailService : IEmailService
             {
                 // initial
                 var inboxFolder = await graphClient.Me.MailFolders["Inbox"].GetAsync();
-            
+
                 if (inboxFolder?.Id == null)
                 {
                     throw new Exception("Cannot access Inbox folder");
                 }
+
                 var deltaRequest = graphClient.Me.MailFolders[inboxFolder.Id].Messages.Delta;
-            
+
                 deltaResponse = await deltaRequest.GetAsDeltaGetResponseAsync(config =>
                 {
                     config.QueryParameters.Select =
                     [
                         "id", "subject", "from", "toRecipients",
-                        "isRead", "receivedDateTime", "conversationId", 
+                        "isRead", "receivedDateTime", "conversationId",
                         "internetMessageId", "internetMessageHeaders", "isDraft"
                     ];
                     config.QueryParameters.Top = INITIAL_HEADER_WINDOW;
@@ -86,26 +89,28 @@ internal class OutlookApiEmailService : IEmailService
                     foreach (var msg in deltaResponse.Value)
                     {
                         var email = CreateEmailFromGraph(acc, msg);
-                    
-                        if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+
+                        if (acc.Emails.Any(x =>
+                                x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
                             continue;
-                    
+
                         acc.Emails.Add(email);
                         await _storageService.StoreEmailAsync(acc, email);
                     }
                 }
             }
-            
+
             // Store the delta link for incremental sync
             if (!string.IsNullOrEmpty(deltaResponse?.OdataDeltaLink))
             {
                 acc.LastSyncToken = deltaResponse.OdataDeltaLink;
             }
+
             if (!string.IsNullOrEmpty(deltaResponse?.OdataNextLink))
             {
                 acc.PaginationToken = deltaResponse.OdataNextLink;
             }
-            
+
             acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
             await _storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
@@ -121,6 +126,7 @@ internal class OutlookApiEmailService : IEmailService
             .FirstOrDefault(h => string.Equals(h.Name, headerName, StringComparison.OrdinalIgnoreCase))
             ?.Value;
     }
+
     private Email CreateEmailFromGraph(Account acc, Message msg)
     {
         // Flags (best-effort mapping; Graph doesn't have Gmail-like labels)
@@ -181,17 +187,65 @@ internal class OutlookApiEmailService : IEmailService
 
         // Get specific message with body
         var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
-            .GetAsync(config =>
-            {
-                config.QueryParameters.Select = ["body"];
-            });
+            .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
 
         email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
     }
 
-    public Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
+    public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
     {
-        return Task.CompletedTask;
+        var fromRecipient = new Recipient()
+        {
+            EmailAddress = new EmailAddress()
+            {
+                Address = email.From,
+                Name = acc.DisplayName
+            }
+
+        };
+
+        var toRecipients = email.To.Split(",").Select(mail => new Recipient()
+        {
+            EmailAddress = new EmailAddress()
+            {
+                Address = mail
+            }
+        }).ToList();
+
+
+        List<Recipient> replyToRecipients = [];
+
+        if (email.ReplyTo is not null)
+        {
+            replyToRecipients.Add(new Recipient()
+            {
+                EmailAddress = new EmailAddress()
+                {
+                    Address = email.ReplyTo
+                }
+            });
+        }
+
+        var message = new Message
+        {
+            Subject = email.Subject,
+            Body = new ItemBody()
+            {
+                ContentType = BodyType.Html,
+                Content = email.Body,
+            },
+            From = fromRecipient,
+            ToRecipients = toRecipients,
+            ReplyTo = replyToRecipients,
+            SentDateTime = email.Date
+        };
+
+        var client = GetGraphService(acc);
+        await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+        {
+            Message = message,
+            SaveToSentItems = true,
+        });
     }
 
     public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)

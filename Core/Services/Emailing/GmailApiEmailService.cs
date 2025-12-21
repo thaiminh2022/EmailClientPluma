@@ -234,7 +234,6 @@ internal class GmailApiEmailService : IEmailService
         var address = MailboxAddress.Parse(acc.Email);
         address.Name = acc.DisplayName;
         message.From.Add(address);
-
         message.Subject = email.Subject;
 
         if (!string.IsNullOrEmpty(email.InReplyTo))

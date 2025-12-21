@@ -25,18 +25,18 @@ internal class AccountService : IAccountService
     private readonly List<IAuthenticationService> _authServices;
 
     private readonly IEmailMonitoringService _emailMonitoringService;
-    private readonly IEmailService _emailService;
+    private readonly List<IEmailService> _emailServices;
     private readonly IStorageService _storageService;
 
     public AccountService(
         IEnumerable<IAuthenticationService> authServices,
         IStorageService storageService,
-        IEmailService emailService,
+        IEnumerable<IEmailService> emailServices,
         IEmailMonitoringService emailMonitoringService
     )
     {
         _authServices = [.. authServices];
-        _emailService = emailService;
+        _emailServices = [..emailServices];
         _storageService = storageService;
         _emailMonitoringService = emailMonitoringService;
         _accounts = [];
@@ -75,7 +75,7 @@ internal class AccountService : IAccountService
         _accounts.Add(acc);
 
         // fetching them emails header
-        await _emailService.FetchEmailHeaderAsync(acc);
+        await GetEmailServiceByProvider(acc.Provider).FetchEmailHeaderAsync(acc);
 
         //start monitoring new email
         if (await ValidateAccountAsync(acc)) _emailMonitoringService.StartMonitor(acc);
@@ -137,8 +137,8 @@ internal class AccountService : IAccountService
     {
         try
         {
-            var accs = await _storageService.GetAccountsAsync();
-            foreach (var acc in accs)
+            var accounts = await _storageService.GetAccountsAsync();
+            foreach (var acc in accounts)
             {
                 var emails = await _storageService.GetEmailsAsync(acc);
                 acc.Emails = new ObservableCollection<Email>(emails);
@@ -157,16 +157,15 @@ internal class AccountService : IAccountService
         }
     }
 
-    /// <summary>
-    ///     Helper function, get the first authentication service base on the provider
-    /// </summary>
-    /// <param name="provider">the provider</param>
-    /// <returns>a service for that provider</returns>
-    /// <exception cref="NotImplementedException">Cannot find the provider</exception>
+  
     private IAuthenticationService GetAuthServiceByProvider(Provider provider)
     {
-        var iAuth = _authServices.Find(p => p.GetProvider().Equals(provider));
-        if (iAuth is null) throw new NotImplementedException("Provider not exists");
-        return iAuth;
+        var service = _authServices.Find(p => p.GetProvider().Equals(provider));
+        return service ?? throw new NotImplementedException("Provider not exists");
+    }
+    private IEmailService GetEmailServiceByProvider(Provider provider)
+    {
+        var service = _emailServices.Find(p => p.GetProvider().Equals(provider));
+        return service ?? throw new NotImplementedException("Provider not exists");
     }
 }

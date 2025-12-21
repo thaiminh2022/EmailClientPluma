@@ -9,7 +9,7 @@ namespace EmailClientPluma.MVVM.ViewModels;
 internal class NewEmailViewModel : ObserableObject, IRequestClose
 {
     private readonly IAccountService _accountService;
-    private readonly IEmailService _emailService;
+    private readonly List<IEmailService> _emailServices;
     private string? _inReplyTo;
     private bool _isEnable = true;
     private string? _replyTo;
@@ -18,10 +18,22 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     private string? _subject;
     private string? _toAddresses;
 
-    public NewEmailViewModel(IAccountService accountService, IEmailService emailService)
+
+    private IEmailService GetEmailServiceByProvider(Provider prod)
+    {
+        var service = _emailServices.FirstOrDefault(x => x.GetProvider().Equals(prod));
+        if (service is null)
+        {
+            throw new NotImplementedException("This service is not implemented for this provider");
+        }
+
+        return service;
+    }
+
+    public NewEmailViewModel(IAccountService accountService, IEnumerable<IEmailService> emailServices)
     {
         _accountService = accountService;
-        _emailService = emailService;
+        _emailServices = [..emailServices];
         Accounts = _accountService.GetAccounts();
 
         SendCommand = new RelayCommand(async _ =>
@@ -48,7 +60,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
                 var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
                 if (validated)
                 {
-                    await _emailService.SendEmailAsync(SelectedAccount, email);
+                    await GetEmailServiceByProvider(SelectedAccount.Provider).SendEmailAsync(SelectedAccount, email);
                     RequestClose?.Invoke(this, true);
                 }
             }
