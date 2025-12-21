@@ -3,14 +3,9 @@ using Microsoft.Data.Sqlite;
 
 namespace EmailClientPluma.Core.Services.Storaging
 {
-    internal sealed class StorageMigratior
+    internal sealed class StorageMigrator(string connectionString)
     {
-        private readonly string _connectionString;
-
-        public StorageMigratior(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
+        private readonly string _connectionString = connectionString;
 
         private SqliteConnection CreateConnection() => new SqliteConnection(_connectionString);
 
@@ -19,6 +14,7 @@ namespace EmailClientPluma.Core.Services.Storaging
             using var connection = CreateConnection();
             connection.Open();
 
+            connection.Execute("PRAGMA foreign_keys = ON;");
             EnsureSchemaVersionTable(connection);
 
             var currentVersion = GetCurrentVersion(connection);
@@ -37,9 +33,17 @@ namespace EmailClientPluma.Core.Services.Storaging
                 SetVersion(connection, 2);
                 currentVersion = 2;
             }
+
+            if (currentVersion < 3)
+            {
+                ApplyV3_Label(connection);
+                SetVersion(connection, 3);
+                currentVersion = 3;
+            }
         }
 
-        // ---------------- SchemaVersion helpers ----------------
+
+        #region // ---------------- SchemaVersion helpers ----------------
 
         private void EnsureSchemaVersionTable(SqliteConnection connection)
         {
@@ -55,7 +59,7 @@ namespace EmailClientPluma.Core.Services.Storaging
 
         private long GetCurrentVersion(SqliteConnection connection)
         {
-            var version = connection.ExecuteScalar<int?>(
+            var version = connection.ExecuteScalar<long?>(
                 "SELECT Version FROM SchemaVersion WHERE Id = 1;");
 
             return version ?? 0L;
@@ -72,7 +76,9 @@ namespace EmailClientPluma.Core.Services.Storaging
             connection.Execute(sql, new { Version = version });
         }
 
-        // ---------------- v1: base schema ----------------
+        #endregion
+
+        #region // ---------------- v1: base schema ----------------
 
         private void ApplyV1_CreateBaseSchema(SqliteConnection connection)
         {
@@ -109,12 +115,15 @@ namespace EmailClientPluma.Core.Services.Storaging
             connection.Execute(createEmailsSql);
         }
 
-        // ---------------- v2: add flags / cache columns ----------------
+        #endregion
+
+        #region // ---------------- v2: add unique infos ----------------
 
         private void ApplyV2_BetterUnique(SqliteConnection connection)
         {
-            // We assume we're on v2 schema: EMAILS already has the flag columns.
             // 1) Create new table with correct schema
+
+            using var tx = connection.BeginTransaction();
             var createNewTableSql = @"
                         CREATE TABLE IF NOT EXISTS EMAILS_NEW (
                             EMAIL_ID           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,17 +148,85 @@ namespace EmailClientPluma.Core.Services.Storaging
                         );
                         ";
 
-            connection.Execute(createNewTableSql);
+            var copyDataSql = @" INSERT INTO EMAILS_NEW (
+                                    EMAIL_ID,
+                                    IMAP_UID,
+                                    IMAP_UID_VALIDITY,
+                                    FOLDER_FULLNAME,
+                                    MESSAGE_ID,
+                                    OWNER_ID,
+                                    IN_REPLY_TO,
+                                    SUBJECT,
+                                    BODY,
+                                    FROM_ADDRESS,
+                                    TO_ADDRESS,
+                                    DATE
+                                )
+                                SELECT
+                                    EMAIL_ID,
+                                    IMAP_UID,
+                                    IMAP_UID_VALIDITY,
+                                    FOLDER_FULLNAME,
+                                    MESSAGE_ID,
+                                    OWNER_ID,
+                                    IN_REPLY_TO,
+                                    SUBJECT,
+                                    BODY,
+                                    FROM_ADDRESS,
+                                    TO_ADDRESS,
+                                    DATE
+                                FROM EMAILS;
+                                    ";
 
-            var copyDataSql = @"INSERT INTO EMAILS_NEW SELECT * FROM EMAILS;";
-
-            connection.Execute(copyDataSql);
+            connection.Execute(createNewTableSql, transaction: tx);
+            connection.Execute(copyDataSql, transaction: tx);
 
             // 3) Drop old table and rename new one
-            connection.Execute("DROP TABLE EMAILS;");
-            connection.Execute("ALTER TABLE EMAILS_NEW RENAME TO EMAILS;");
+            connection.Execute("DROP TABLE EMAILS;", transaction: tx);
+            connection.Execute("ALTER TABLE EMAILS_NEW RENAME TO EMAILS;", transaction: tx);
+
+            tx.Commit();
         }
+
+        #endregion
+
+
+        #region // ---------------- v3: add label ----------------
+
+        private void ApplyV3_Label(SqliteConnection connection)
+        {
+            using var tx = connection.BeginTransaction();
+
+            // add read to emails
+            connection.Execute(@"ALTER TABLE EMAILS ADD COLUMN FLAGS INTEGER NOT NULL DEFAULT 0;", transaction: tx);
+
+
+            // label table
+            connection.Execute(@"
+                CREATE TABLE IF NOT EXISTS LABELS (
+                    ID              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    LABEL_NAME      TEXT,
+                    OWNER_ID        TEXT,                   -- if this is null, it's a global label
+                    COLOR           INT,
+                    IS_EDITABLE    BOOLEAN NOT NULL DEFAULT 1,
+                    FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
+                );", transaction: tx);
+
+            // emails label table
+            connection.Execute(@"
+                CREATE TABLE IF NOT EXISTS EMAIL_LABELS (
+                    LABEL_ID        INTEGER NOT NULL,
+                    EMAIL_ID        INTEGER NOT NULL,
+                    PRIMARY KEY (EMAIL_ID, LABEL_ID),
+                    FOREIGN KEY (EMAIL_ID) REFERENCES EMAILS(EMAIL_ID) ON DELETE CASCADE,
+                    FOREIGN KEY (LABEL_ID) REFERENCES LABELS(ID) ON DELETE CASCADE
+                );", transaction: tx);
+
+
+
+            tx.Commit();
+        }
+
+        #endregion
     }
 }
-
-

@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Emailing;
+using EmailClientPluma.Core.Services.Storaging;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 
@@ -16,6 +17,9 @@ namespace EmailClientPluma.Core.Services.Accounting
         Task RemoveAccountAsync(Account account);
         Task<bool> ValidateAccountAsync(Account acc);
         ObservableCollection<Account> GetAccounts();
+
+        Task<List<EmailLabel>> GetLabels(Account acc);
+
     }
 
     /// <summary>
@@ -58,7 +62,10 @@ namespace EmailClientPluma.Core.Services.Accounting
                 foreach (var acc in accs)
                 {
                     var emails = await _storageService.GetEmailsAsync(acc);
-                    acc.Emails = new(emails);
+                    acc.Emails = new ObservableCollection<Email>(emails);
+
+                    var labels = await _storageService.GetLabelsAsync(acc);
+                    acc.OwnedLabels = new ObservableCollection<EmailLabel>(labels);
 
                     _accounts.Add(acc);
 
@@ -70,7 +77,7 @@ namespace EmailClientPluma.Core.Services.Accounting
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.Error("Account intialize exception: ", ex.Message);
+                MessageBoxHelper.Error("Account initialize exception: ", ex);
             }
 
         }
@@ -98,20 +105,19 @@ namespace EmailClientPluma.Core.Services.Accounting
         /// <returns></returns>
         public async Task AddAccountAsync(Provider prodiver)
         {
-            AuthResponce? res = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
+            var res = await GetAuthServiceByProvider(prodiver).AuthenticateAsync();
 
             if (res is null)
                 return;
 
             // Check if account already exists
-            bool haveAcc = false;
+            var haveAcc = false;
             foreach (var v in _accounts)
             {
-                if (v.Email == res.Email)
-                {
-                    haveAcc = true;
-                    break;
-                }
+                if (v.Email != res.Email) continue;
+
+                haveAcc = true;
+                break;
             }
             if (haveAcc) return;
 
@@ -119,12 +125,16 @@ namespace EmailClientPluma.Core.Services.Accounting
             var acc = new Account(res);
             await _storageService.StoreAccountAsync(acc);
 
+
             // mail not fetched yet
             _accounts.Add(acc);
 
             // fetching them emails header
             await _emailService.FetchEmailHeaderAsync(acc);
 
+
+
+            //start monitoring new email
             if (await ValidateAccountAsync(acc))
             {
                 _emailMonitoringService.StartMonitor(acc);
@@ -134,10 +144,15 @@ namespace EmailClientPluma.Core.Services.Accounting
         /// <summary>
         /// Get all the added accounts
         /// </summary>
-        /// <returns>An obserable collection contains all accounts</returns>
+        /// <returns>An observable collection contains all accounts</returns>
         public ObservableCollection<Account> GetAccounts()
         {
             return _accounts;
+        }
+
+        public async Task<List<EmailLabel>> GetLabels(Account acc)
+        {
+            return (await _storageService.GetLabelsAsync(acc)).ToList();
         }
 
         /// <summary>

@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using MailKit;
+using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -6,22 +8,24 @@ namespace EmailClientPluma.Core.Models
     {
         public record Identifiers
         {
-            public int EmailID { get; set; } // set by database
-            required public uint ImapUID { get; set; }
-            required public uint ImapUIDValidity { get; set; }
-            required public string FolderFullName { get; set; }
-            required public string? MessageID { get; set; }
-            required public string OwnerAccountID { get; set; }
-            required public string? InReplyTo { get; set; }
+            public int EmailId { get; set; } // set by database
+            public required uint ImapUid { get; set; }
+            public required uint ImapUidValidity { get; set; }
+            public required string FolderFullName { get; set; }
+            public required string? MessageId { get; set; }
+            public required string OwnerAccountId { get; set; }
+            public required string? InReplyTo { get; set; }
+
+            public required MessageFlags Flags { get; set; }
         }
         public class DataParts : ObserableObject
         {
-            required public string Subject { get; set; }
+            public required string Subject { get; set; }
 
             private string? _body;
             public string? Body
             {
-                get { return _body; }
+                get => _body;
                 set
                 {
                     _body = value;
@@ -29,9 +33,9 @@ namespace EmailClientPluma.Core.Models
                 }
             }
 
-            required public string From { get; set; }
-            required public string To { get; set; }
-            required public DateTimeOffset? Date { get; set; }
+            public required string From { get; set; }
+            public required string To { get; set; }
+            public required DateTimeOffset? Date { get; set; }
             public string DateDisplay => Date?.ToLocalTime().DateTime.ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
 
             public double EmailSizeInKb { get; set; } = 0;
@@ -49,12 +53,20 @@ namespace EmailClientPluma.Core.Models
         public Identifiers MessageIdentifiers { get; set; }
         public DataParts MessageParts { get; set; }
 
+        public ObservableCollection<EmailLabel> Labels { get; set; }
+
         public bool BodyFetched => !string.IsNullOrEmpty(MessageParts.Body);
+        public bool Seen => MessageIdentifiers.Flags.HasFlag(MessageFlags.Seen);
+
+        public string LabelsDisplay => string.Join("; ", Labels.Select(x => x.Name));
 
         public Email(Identifiers messageIdentifiers, DataParts messagesParts)
         {
             MessageIdentifiers = messageIdentifiers;
             MessageParts = messagesParts;
+
+            // add default labels when init
+            Labels = [];
         }
     }
 
@@ -63,9 +75,9 @@ namespace EmailClientPluma.Core.Models
     internal record Attachment
     {
         public int AttachmentID { get; set; } // set by database    
-        required public int OwnerEmailID { get; set; }
-        required public string FileName { get; set; }
-        required public byte[] Content { get; set; }
+        public required int OwnerEmailID { get; set; }
+        public required string FileName { get; set; }
+        public required byte[] Content { get; set; }
 
     }
 
