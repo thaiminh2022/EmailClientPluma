@@ -6,7 +6,6 @@ using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Accounting
 {
@@ -37,7 +36,6 @@ namespace EmailClientPluma.Core.Services.Accounting
             string tempID = Guid.NewGuid().ToString();
             try
             {
-                // Credentials will autosave to %AppData%\EmailClientPluma\tokens
                 // prompt user to login
                 UserCredential credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                     GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
@@ -105,11 +103,20 @@ namespace EmailClientPluma.Core.Services.Accounting
                 });
                 var usercred = new UserCredential(flow, acc.ProviderUID, tokenRes);
 
-                if (await usercred.RefreshTokenAsync(default))
+                try
                 {
-                    acc.Credentials.SessionToken = usercred.Token.AccessToken;
-                    acc.Credentials.RefreshToken = usercred.Token.RefreshToken;
-                    return true;
+                    if (await usercred.RefreshTokenAsync(default))
+                    {
+                        acc.Credentials.SessionToken = usercred.Token.AccessToken;
+                        acc.Credentials.RefreshToken = usercred.Token.RefreshToken;
+                        await _dataStore.StoreAsync(acc.ProviderUID, usercred.Token);
+
+                        return true;
+                    }
+                }
+                catch (TokenResponseException)
+                {
+                    MessageBoxHelper.Error($"Hay dang nhap lai tai khoan: {acc.Email}");
                 }
             }
             else
@@ -119,19 +126,16 @@ namespace EmailClientPluma.Core.Services.Accounting
 
             try
             {
-                var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
-                    scopes,
-                    acc.ProviderUID,
-                    CancellationToken.None,
-                    _dataStore);
+                UserCredential credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                     GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
+                     scopes,
+                     acc.ProviderUID,
+                     CancellationToken.None,
+                     _dataStore
+                );
+                await _dataStore.StoreAsync(acc.ProviderUID, credentials.Token);
 
-                if (credentials != null)
-                {
-                    acc.Credentials.SessionToken = credentials.Token.AccessToken;
-                    acc.Credentials.RefreshToken = credentials.Token.RefreshToken;
-                    return true;
-                }
+                return true;
             }
             catch (TaskCanceledException ex)
             {

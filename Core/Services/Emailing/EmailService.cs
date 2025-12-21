@@ -86,7 +86,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             message.From.Add(address);
 
             message.Subject = email.Subject;
-            
+
             if (!string.IsNullOrEmpty(email.InReplyTo))
                 message.InReplyTo = email.InReplyTo;
 

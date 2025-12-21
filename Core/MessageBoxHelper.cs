@@ -24,7 +24,8 @@ namespace EmailClientPluma.Core
         public static bool? Confirmation(params object[] message)
         {
             var res = Show(message, MessageBoxButton.YesNo, MessageBoxImage.Question);
-            return res switch {
+            return res switch
+            {
                 MessageBoxResult.Yes => true,
                 MessageBoxResult.No => false,
                 MessageBoxResult.None or _ => null

@@ -6,7 +6,6 @@ using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Windows;
 using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels
@@ -204,7 +203,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 if (SelectedAccount == null || SelectedEmail == null) return;
                 var newEmailWindow = _windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
-                
+
                 if (newEmailWindow.DataContext is not NewEmailViewModel vm) return;
                 vm.SetupReply(SelectedAccount, SelectedEmail);
 

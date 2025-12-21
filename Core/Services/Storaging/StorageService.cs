@@ -4,7 +4,6 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services
 {
@@ -171,7 +170,7 @@ namespace EmailClientPluma.Core.Services
             }
             catch (Exception ex)
             {
-             MessageBoxHelper.Error(ex.Message);
+                MessageBoxHelper.Error(ex.Message);
             }
         }
 

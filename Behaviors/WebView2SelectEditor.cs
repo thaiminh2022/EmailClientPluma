@@ -1,18 +1,19 @@
-﻿using Microsoft.Web.WebView2.Wpf;
+﻿using EmailClientPluma.Core.Models;
+using Microsoft.Web.WebView2.Wpf;
 using System.Text.Json;
 using System.Windows;
 
 namespace EmailClientPluma.Behaviors
 {
-    public static class WebView2Editor
+    internal class WebView2SelectEditor
     {
         public static readonly DependencyProperty HtmlContentProperty =
-            DependencyProperty.RegisterAttached(
-                "HtmlContent",
-                typeof(string),
-                typeof(WebView2Editor),
-                new FrameworkPropertyMetadata(string.Empty,
-                    FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+           DependencyProperty.RegisterAttached(
+               "HtmlContent",
+               typeof(string),
+               typeof(WebView2SelectEditor),
+               new FrameworkPropertyMetadata(string.Empty,
+                   FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public static void SetHtmlContent(DependencyObject obj, string value)
             => obj.SetValue(HtmlContentProperty, value);
@@ -21,12 +22,43 @@ namespace EmailClientPluma.Behaviors
             => (string)obj.GetValue(HtmlContentProperty);
 
 
+        public static readonly DependencyProperty EmailContentProperty =
+            DependencyProperty.RegisterAttached(
+                "EmailContent",
+                typeof(Email),
+                typeof(WebView2SelectEditor));
+
+
+        public static async Task PushEmailToWebViewAsync(WebView2 wv, Email mail)
+        {
+            await wv.EnsureCoreWebView2Async();
+
+            var msp = mail.MessageParts;
+            var subject = JsonSerializer.Serialize(mail.MessageParts.Subject);
+            var body = JsonSerializer.Serialize(mail.BodyFetched ? mail.MessageParts.Body : string.Empty);
+            var meta = JsonSerializer.Serialize(new
+            {
+                from = msp.From,
+                to = msp.To,
+                date = msp.Date
+            });
+
+            await wv.CoreWebView2.ExecuteScriptAsync($"window.setEmailContent({subject}, {meta}, {body})");
+        }
+
+        public static void SetEmailContent(DependencyObject obj, Email value)
+            => obj.SetValue(EmailContentProperty, value);
+
+        public static Email? GetEmailContent(DependencyObject obj)
+            => (Email?)obj.GetValue(EmailContentProperty);
+
+
         // Call once to hook everything up
         public static readonly DependencyProperty EnableBindingProperty =
             DependencyProperty.RegisterAttached(
                 "EnableBinding",
                 typeof(bool),
-                typeof(WebView2Editor),
+                typeof(WebView2SelectEditor),
                 new PropertyMetadata(false, OnEnableBindingChanged));
 
         public static void SetEnableBinding(DependencyObject obj, bool value)
@@ -57,7 +89,7 @@ namespace EmailClientPluma.Behaviors
                 }
                 catch
                 {
-                    // ignore malformed messages
+                    // ignore broken messages
                 }
             };
 
@@ -65,15 +97,22 @@ namespace EmailClientPluma.Behaviors
             string editorPath = System.IO.Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 "QuillEditor",
-                "quillEditor.html");
+                "selectReplyEditor.html");
             wv.Source = new Uri(editorPath);
 
-            // Push initial VM value into editor once loaded
             string current = GetHtmlContent(wv) ?? string.Empty;
             wv.CoreWebView2.NavigationCompleted += async (_, __) =>
             {
+                // Push initial value into editor once loaded
                 string jsArg = JsonSerializer.Serialize(current);
                 await wv.CoreWebView2.ExecuteScriptAsync($"window.setEditorContent({jsArg});");
+
+                // Push current email if any
+                var currentEmail = GetEmailContent(wv);
+                if (currentEmail is not null)
+                {
+                    await PushEmailToWebViewAsync(wv, currentEmail);
+                }
             };
         }
     }

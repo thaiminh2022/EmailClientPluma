@@ -18,6 +18,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         private bool _isEnable = true;
         private string? _subject;
         private string? _toAddresses;
+        private Email? _replyToEmail;
 
         public event EventHandler<bool?>? RequestClose;
 
@@ -35,10 +36,11 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
         public string? ToAddresses { get => _toAddresses; set { _toAddresses = value; OnPropertyChanges(); } }
-        public string? Subject { get => _subject; set {_subject = value; OnPropertyChanges(); } }
+        public string? Subject { get => _subject; set { _subject = value; OnPropertyChanges(); } }
         public string? Body { get; set; }
-        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); } }
-
+        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); OnPropertyChanges("IsNotEnable"); } }
+        public bool IsNotEnable { get => !_isEnable; set { _isEnable = !value; OnPropertyChanges(); OnPropertyChanges("IsEnable"); } }
+        public Email? ReplyToEmail { get => _replyToEmail; set { _replyToEmail = value; OnPropertyChanges(); } }
 
         public void SetupReply(Account acc, Email email)
         {
@@ -48,7 +50,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             _inReplyTo = email.MessageIdentifiers.MessageID;
             _replyTo = email.MessageParts.From;
             IsEnable = false;
-
+            ReplyToEmail = email;
         }
 
         public NewEmailViewModel(IAccountService accountService, IEmailService emailService)

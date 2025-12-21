@@ -180,7 +180,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                                 {
                                     continue;
                                 }
-                            
+
 
                                 //fetch the full body
                                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);

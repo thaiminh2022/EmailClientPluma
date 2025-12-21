@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Quill editor</title>
+    <link href="style.css" rel="stylesheet" />
+
+    <style>
+      .container {
+        position: relative;
+        width: 100vw;
+        display: grid;
+        grid-template-columns: 50% 50%;
+      }
+
+      /* Floating reply button */
+      #reply-bubble {
+        position: absolute;
+        display: none; /* hidden by default */
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 999px;
+        background: #0d6efd;
+        color: #fff;
+        cursor: pointer;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+      }
+
+      #reply-bubble:hover::after {
+        opacity: 1;
+      }
+      .html-email-container {
+        position: relative;
+        overflow: auto;
+      }
+      .email-subject {
+        font-weight: bold;
+        font-size: x-large;
+      }
+      .email-meta {
+        font-weight: lighter;
+        font-style: italic;
+        font-size: medium;
+      }
+      .email-meta p {
+        margin: 5px 0 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="reply-bubble">Reply</div>
+    <div class="container">
+      <div class="html-email-container">
+        <div class="email-subject">This is subject</div>
+        <div class="email-meta">
+          <p id="from">From</p>
+          <p id="to">To</p>
+          <p id="date">Date</p>
+        </div>
+        <div class="email-body">Dangerously set html here</div>
+      </div>
+      <div class="editor-container">
+        <div id="editor"></div>
+      </div>
+    </div>
+
+    <script src="quilljs.js"></script>
+    <script src="selectReplyEditor.js"></script>
+  </body>
+</html>
