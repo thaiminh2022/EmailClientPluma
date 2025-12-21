@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
+using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
@@ -52,6 +53,7 @@ public partial class App : Application
 
         // Might change this later, it's a singleton due to application design
         services.AddSingleton<MainViewModel>();
+        services.AddSingleton<StartViewModel>();
 
         services.AddTransient<SettingsViewModel>();
 
@@ -66,10 +68,16 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        var mainWindow = new MainView
+        var startWindow = new StartView
+        {
+            DataContext = Services.GetRequiredService<StartViewModel>()
+        };
+        startWindow.Show();
+
+        /*var mainWindow = new MainView
         {
             DataContext = Services.GetRequiredService<MainViewModel>()
         };
-        mainWindow.Show();
+        mainWindow.Show();*/
     }
 }
