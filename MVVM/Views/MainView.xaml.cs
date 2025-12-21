@@ -142,8 +142,8 @@ namespace EmailClientPluma
             EmailList.SelectedItem = null;
 
             // Expand the list to fill all space
-            LeftColumn.Width = GridLength.Auto;
-            CenterColumn.Width = new GridLength(3, GridUnitType.Star);
+            LeftColumn.Width = new GridLength(1, GridUnitType.Star);
+            CenterColumn.Width = new GridLength(5, GridUnitType.Star);
             RightColumn.Width = new GridLength(0); // collapse the right side
 
             IsImg = false;

@@ -34,8 +34,8 @@
         <!--  Filter  -->
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LeftColumn" Width="auto" />
-                <ColumnDefinition x:Name="CenterColumn" Width="*" />
+                <ColumnDefinition x:Name="LeftColumn" Width="*" />
+                <ColumnDefinition x:Name="CenterColumn" Width="5*" />
                 <ColumnDefinition x:Name="RightColumn" Width="auto" />
             </Grid.ColumnDefinitions>
 

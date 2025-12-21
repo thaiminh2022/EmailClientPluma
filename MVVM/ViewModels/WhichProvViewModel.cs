@@ -1,33 +1,37 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
-using EmailClientPluma.MVVM.Views;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Input;
+
 using EmailClientPluma.Core.Services.Accounting;
-using EmailClientPluma.Core.Services.Emailing;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
-    internal class WhichProvViewModel
+    internal class WhichProvViewModel : IRequestClose
     {
-        readonly IAccountService _accountService;
-        public RelayCommand AddAccountCommand_GG { get; set; }
+        public RelayCommandAsync AddAccountGoogleCommand { get; set; }
+        public RelayCommandAsync AddAccountMicrosoftCommand { get; set; }
 
         public WhichProvViewModel(IAccountService accountService)
         {
-            _accountService = accountService;
+            var accountService1 = accountService;
 
-            AddAccountCommand_GG = new RelayCommand(async _ =>
+            AddAccountGoogleCommand = new RelayCommandAsync(async _ =>
             {
-                // TODO: ADd more provider
-                await _accountService.AddAccountAsync(Provider.Google);
+                await accountService1.AddAccountAsync(Provider.Google);
+                RequestClose?.Invoke(this, true);
+            });
+
+            AddAccountMicrosoftCommand = new RelayCommandAsync(async _ =>
+            {
+                await accountService1.AddAccountAsync(Provider.Microsoft);
+                RequestClose?.Invoke(this, true);
             });
         }
+
+        public event EventHandler<bool?>? RequestClose;
+
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+        public WhichProvViewModel() {}
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     }
 }
