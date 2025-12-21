@@ -24,7 +24,7 @@ internal class MainViewModel : ObserableObject
         // make list auto sort descending by date
         FilteredEmails = [];
         Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
-
+        
         Accounts = _accountService.GetAccounts();
         SelectedAccount = Accounts.FirstOrDefault();
 
@@ -249,21 +249,12 @@ internal class MainViewModel : ObserableObject
             if (_selectedAccount is null) return;
             _selectedAccount.Emails.CollectionChanged += Emails_CollectionChanged;
 
+            Filters.SelectedLabel = EmailLabel.Inbox;
+
+
             // Initial fill
             _ = UpdateFilteredEmailsAsync();
             _ = FetchNewHeadersAndPrefetchBody();
-        }
-    }
-
-    private EmailLabel? _selectedLabel;
-
-    public EmailLabel? SelectedLabel
-    {
-        get => _selectedLabel;
-        set
-        {
-            _selectedLabel = value;
-            OnPropertyChanges();
         }
     }
 
@@ -384,7 +375,7 @@ internal class MainViewModel : ObserableObject
 
     public RelayCommandAsync RefreshEmailCommand { get; set; }
 
-public RelayCommandAsync AddGoogleCommand { get; set; }
+    public RelayCommandAsync AddGoogleCommand { get; set; }
     public RelayCommandAsync AddMicrosoftCommand { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }

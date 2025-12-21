@@ -10,10 +10,10 @@ internal interface IEmailFilterService
 
 internal class EmailFilterService : IEmailFilterService
 {
-    public async Task<bool> MatchFiltersAsync(Email emailObj, EmailFilterOptions opt,
+    public async Task<bool> MatchFiltersAsync(Email? emailObj, EmailFilterOptions opt,
         CancellationToken cancellationToken = default)
     {
-        if (emailObj == null) return false;
+        if (emailObj is null) return false;
 
         // simulate async for large collections
         await Task.Yield(); // ensures this is async and doesn't block UI
@@ -97,18 +97,8 @@ internal class EmailFilterService : IEmailFilterService
                     break;
             }
         }
-
-        // --- Mailbox filter ---
-        switch (opt.MailboxIndex)
-        {
-            case 1: // Inbox
-
-                break;
-            case 2: // Sent
-
-                break;
-        }
-
+        
+        if (!emailObj.Labels.Any(x => x.Name.Equals(opt.SelectedLabel?.Name))) { return false; }
 
         if (!string.IsNullOrWhiteSpace(opt.SearchText))
         {

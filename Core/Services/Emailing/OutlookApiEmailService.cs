@@ -6,7 +6,6 @@ using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Newtonsoft.Json;
-using DeltaGetResponse = Microsoft.Graph.Me.MailFolders.Item.Messages.Delta.DeltaGetResponse;
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
@@ -161,6 +160,11 @@ internal class OutlookApiEmailService : IEmailService
 
         acc.LastSyncToken = lastSyncTok;
         acc.PaginationToken = paginationTok;
+
+        if (deltaResponseInbox?.OdataNextLink is null && deltaResponseSent?.OdataNextLink is null)
+        {
+            acc.NoMoreOlderEmail = true;
+        }
     }
 
     struct PaginationTok
@@ -413,38 +417,71 @@ internal class OutlookApiEmailService : IEmailService
         if (acc.NoMoreOlderEmail)
             return false;
 
-        if (string.IsNullOrEmpty(acc.PaginationToken))
+        var (pag, _) = ParseAccountTokens(acc.PaginationToken, acc.LastSyncToken);
+        if (pag is null)
             return false;
 
         var client = GetGraphService(acc);
 
-        var page = await client.Me.MailFolders["Inbox"].Messages
-            .WithUrl(acc.PaginationToken)
-            .GetAsync(cancellationToken: token);
+        var pagTok = new PaginationTok();
 
-        if (page?.Value is null || page.Value.Count == 0)
+        if (pag.Value.InboxNextLink is not null)
         {
-            acc.NoMoreOlderEmail = true;
-            await _storageService.UpdatePaginationAndNextTokenAsync(acc);
-            return false;
+            // inbox
+            var pageInbox = await client.Me.MailFolders["inbox"].Messages
+                .WithUrl(pag.Value.InboxNextLink)
+                .GetAsync(cancellationToken: token);
+
+            if (pageInbox?.Value is null || pageInbox.Value.Count == 0)
+            {
+                acc.NoMoreOlderEmail = true;
+                return false;
+            }
+
+            foreach (var msg in pageInbox.Value)
+            {
+                var email = CreateEmailFromGraph(acc, msg);
+
+                if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+                    continue;
+
+                acc.Emails.Add(email);
+                await _storageService.StoreEmailAsync(acc, email);
+            }
+
+            pagTok.InboxNextLink = pageInbox.OdataNextLink;
+        }
+       
+
+        if (pag.Value.SentNextLink is not null)
+        {
+            // sent
+            var pageSent = await client.Me.MailFolders["sentitems"].Messages
+                .WithUrl(pag.Value.SentNextLink)
+                .GetAsync(cancellationToken: token);
+
+            if (pageSent?.Value is not null && pageSent.Value.Count != 0)
+            {
+                foreach (var msg in pageSent.Value)
+                {
+                    var email = CreateEmailFromGraph(acc, msg, true);
+
+                    if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+                        continue;
+
+                    acc.Emails.Add(email);
+                    await _storageService.StoreEmailAsync(acc, email);
+                }
+            }
+
+            pagTok.SentNextLink = pageSent?.OdataNextLink;
         }
 
-        foreach (var msg in page.Value)
-        {
-            var email = CreateEmailFromGraph(acc, msg);
 
-            if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
-                continue;
-
-            acc.Emails.Add(email);
-            await _storageService.StoreEmailAsync(acc, email);
-        }
-
-        acc.PaginationToken = page.OdataNextLink;
-        acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
+        acc.PaginationToken = JsonConvert.SerializeObject(pagTok);
+        acc.NoMoreOlderEmail = string.IsNullOrEmpty(pagTok.InboxNextLink) && string.IsNullOrEmpty(pagTok.SentNextLink);
 
         await _storageService.UpdatePaginationAndNextTokenAsync(acc);
-
         return true;
     }
 

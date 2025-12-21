@@ -1,8 +1,6 @@
-﻿using System.ComponentModel;
+﻿namespace EmailClientPluma.Core.Models;
 
-namespace EmailClientPluma.Core.Models;
-
-public class EmailFilterOptions : INotifyPropertyChanged
+internal class EmailFilterOptions : ObserableObject
 {
     private short _dateRangeIndex = -1;
 
@@ -13,7 +11,6 @@ public class EmailFilterOptions : INotifyPropertyChanged
 
     private string _hasWords = "";
 
-    private int _mailboxIndex;
 
     private string _searchText = "";
 
@@ -29,6 +26,9 @@ public class EmailFilterOptions : INotifyPropertyChanged
 
     private string _to = "";
 
+    private EmailLabel? _selectedLabel;
+
+
     public string From
     {
         get => _from;
@@ -37,7 +37,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_from != value)
             {
                 _from = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -50,7 +50,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_to != value)
             {
                 _to = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -63,7 +63,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_subject != value)
             {
                 _subject = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -76,7 +76,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_hasWords != value)
             {
                 _hasWords = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -89,7 +89,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_doesNotHave != value)
             {
                 _doesNotHave = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -102,7 +102,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_selectedDate != value)
             {
                 _selectedDate = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -115,7 +115,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_dateRangeIndex != value)
             {
                 _dateRangeIndex = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -128,7 +128,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_sizeOperatorIndex != value)
             {
                 _sizeOperatorIndex = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -141,7 +141,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_sizeValue != value)
             {
                 _sizeValue = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -154,7 +154,7 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_sizeUnitIndex != value)
             {
                 _sizeUnitIndex = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
@@ -167,23 +167,11 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_searchText != value)
             {
                 _searchText = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
 
-    public int MailboxIndex
-    {
-        get => _mailboxIndex;
-        set
-        {
-            if (_mailboxIndex != value)
-            {
-                _mailboxIndex = value;
-                OnPropertyChanged();
-            }
-        }
-    }
 
     public bool HasAttachment
     {
@@ -193,15 +181,21 @@ public class EmailFilterOptions : INotifyPropertyChanged
             if (_hasAttachment != value)
             {
                 _hasAttachment = value;
-                OnPropertyChanged();
+                OnPropertyChanges();
             }
         }
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected void OnPropertyChanged(string? propertyName = null)
+    public EmailLabel? SelectedLabel
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        get => _selectedLabel;
+        set
+        {
+            _selectedLabel = value;
+            if (_selectedLabel is not null)
+            {
+                OnPropertyChanges();
+            }
+        }
     }
 }
