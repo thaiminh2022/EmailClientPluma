@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using EmailClientPluma.MVVM.Views;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -10,12 +11,13 @@ namespace EmailClientPluma
     /// </summary>
     public partial class MainView : Window
     {
-        public bool IsDarkMode { get; set; } = false;
+        private bool IsDarkMode = SettingsView.IsDarkMode;
         public bool IsImg { get; set; } = false;
         public MainView()
         {
             InitializeComponent();
             ApplyLightMode();
+            SettingsView.DarkModeChanged += SettingsView_DarkModeChanged;
         }
 
         // Light mode values
@@ -53,18 +55,19 @@ namespace EmailClientPluma
             }
         }
 
-
-        private void LightModeBtn_Click(object sender, RoutedEventArgs e)
-        {
-            IsDarkMode = false;
-            ApplyLightMode();
+        private void SettingsView_DarkModeChanged(object sender, EventArgs e) { 
+            if (SettingsView.IsDarkMode) {
+                IsDarkMode = true;
+                ApplyDarkMode();
+                ChangeImgTheme();
+            } 
+            else { 
+                IsDarkMode = false;
+                ApplyLightMode();
+                ChangeImgTheme();
+            } 
         }
 
-        private void DarkModeBtn_Click(object sender, RoutedEventArgs e)
-        {
-            IsDarkMode = true;
-            ApplyDarkMode();
-        }
 
         private void ApplyLightMode()
         {
@@ -76,7 +79,7 @@ namespace EmailClientPluma
             SetBrushColor("ButtonForegroundBrush", Light_ButtonFore);
             SetBrushColor("GoldBrush", (Color)ColorConverter.ConvertFromString("#FFD700"));
 
-            ComposeIcon.Source = new BitmapImage(new Uri("Images/White/compose.png", UriKind.Relative));
+            ComposeIcon.Source = new BitmapImage(new Uri("Images/White/pen.png", UriKind.Relative));
             SettingsIcon.Source = new BitmapImage(new Uri("Images/White/settings.png", UriKind.Relative));
             ForwardIcon.Source = new BitmapImage(new Uri("Images/White/arrow_forward.png", UriKind.Relative));
             PreviousIcon.Source = new BitmapImage(new Uri("Images/White/arrow_back.png", UriKind.Relative));
@@ -94,7 +97,7 @@ namespace EmailClientPluma
             SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
             SetBrushColor("GoldBrush", Dark_ButtonBack);
 
-            ComposeIcon.Source = new BitmapImage(new Uri("Images/Black/compose_black.png", UriKind.Relative));
+            ComposeIcon.Source = new BitmapImage(new Uri("Images/Black/pen_black.png", UriKind.Relative));
             SettingsIcon.Source = new BitmapImage(new Uri("Images/Black/settings_black.png", UriKind.Relative));
             ForwardIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_forward_black.png", UriKind.Relative));
             PreviousIcon.Source = new BitmapImage(new Uri("Images/Black/arrow_back_black.png", UriKind.Relative));
@@ -247,7 +250,7 @@ namespace EmailClientPluma
 
             // Resize the first column (list)
             LeftColumn.Width = new GridLength(0.5, GridUnitType.Star);
-            CenterColumn.Width = GridLength.Auto;
+            CenterColumn.Width = new GridLength(2.8, GridUnitType.Star);
             RightColumn.Width = new GridLength(4.2, GridUnitType.Star);
             ChangeContentBtn();
         }
@@ -270,11 +273,6 @@ namespace EmailClientPluma
         private void MoreSearch_Click(object sender, RoutedEventArgs e)
         {
             MoreSearchPopup.IsOpen = !MoreSearchPopup.IsOpen;
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            Settings_popup.IsOpen = !Settings_popup.IsOpen;
         }
     }
 }

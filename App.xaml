@@ -83,7 +83,6 @@
         <!--  Border style  -->
         <Style x:Key="WebViewContainerStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
 
@@ -101,7 +100,8 @@
         <Style TargetType="GroupBox">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
             <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBackgroundBrush}" />
         </Style>
 
         <!--Tabs-->

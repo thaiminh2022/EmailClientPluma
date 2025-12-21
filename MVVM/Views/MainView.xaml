@@ -243,10 +243,11 @@
             <Popup
                 x:Name="MoreSearchPopup"
                 Placement="Bottom"
+                HorizontalOffset="-200"
                 PlacementTarget="{Binding ElementName=MoreSearch}"
                 PopupAnimation="Scroll"
                 StaysOpen="False">
-                <Border>
+                <Border BorderThickness="3" BorderBrush="{DynamicResource TextBrush}">
                     <StackPanel Margin="0,0,0,0">
                         <!--  From  -->
                         <StackPanel Margin="0,5"
@@ -435,6 +436,7 @@
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
             Placement="Bottom"
+            HorizontalOffset="-100"
             PlacementTarget="{Binding ElementName=AccountSettingsButton}"
             PopupAnimation="Slide"
             StaysOpen="False">
@@ -458,7 +460,6 @@
                                 <Border
                                     Margin="2"
                                     Padding="6"
-                                    Background="White"
                                     CornerRadius="5">
                                     <TextBlock FontWeight="Medium"
                                                Text="{Binding DisplayName}"/>
@@ -491,42 +492,16 @@
 
             <Button
                 x:Name="SettingsButton"
-                Click="SettingsButton_Click"
                 Background="{DynamicResource PrimaryBrush}"
                 Foreground="{DynamicResource ButtonForegroundBrush}"
+                Command="{Binding SettingCommand}"
                 Width="auto" Height="35">
                 <Image x:Name="SettingsIcon"
                         Source="Images/White/settings.png"
                        Width="24"
                        Height="24"/>
             </Button>
-            <Popup x:Name="Settings_popup" StaysOpen="False">
-                <Border>
-                    <StackPanel>
-                        <TextBlock
-                        Margin="0,0,0,6"
-                        FontWeight="Bold"
-                        Text="Theme"/>
-                        <Button
-                        x:Name="LightModeBtn"
-                        Width="160"
-                        Click="LightModeBtn_Click"
-                        Content="Light Mode"/>
-                        <Button
-                        x:Name="DarkModeBtn"
-                        Width="160"
-                        Margin="0,6,0,0"
-                        Click="DarkModeBtn_Click"
-                        Content="Dark Mode"/>
-                        <Separator Height="5"
-                        Margin="0,2"
-                        Background="{DynamicResource TextBrush}"
-                        Opacity="1"/>
-                        <Button Content="More Settings" Width="160"
-                                Command="{Binding SettingCommand}"/>
-                    </StackPanel>
-                </Border>
-            </Popup>
+          
             <Button Command="{Binding PreviousCommand}"
                     Width="auto"
                     >
