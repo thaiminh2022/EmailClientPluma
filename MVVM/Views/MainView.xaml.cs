@@ -32,8 +32,8 @@ namespace EmailClientPluma
         private readonly Color Dark_Panel = (Color)ColorConverter.ConvertFromString("#3E4042");
         private readonly Color Dark_Accent = (Color)ColorConverter.ConvertFromString("#4B0A66");
         private readonly Color Dark_Text = Colors.White;
-        private readonly Color Dark_ButtonBack = (Color)ColorConverter.ConvertFromString("#FFD700"); // gold
-        private readonly Color Dark_ButtonFore = Colors.Black; //black text on gold
+        private readonly Color Dark_ButtonBack = (Color)ColorConverter.ConvertFromString("#FFD700");
+        private readonly Color Dark_ButtonFore = Colors.Black;
 
         // Helper to fetch brush resource and set its Color
         private void SetBrushColor(string key, Color color)
