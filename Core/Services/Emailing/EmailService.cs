@@ -32,7 +32,10 @@ namespace EmailClientPluma.Core.Services.Emailing
 
         private async Task<ImapClient> ConnectImapAsync(Account acc, CancellationToken cancellationToken = default)
         {
-            var imap = new ImapClient();
+            var imap = new ImapClient()
+            {
+                CheckCertificateRevocation = false
+            };
 
             await imap.ConnectAsync(
                 Helper.GetImapHostByProvider(acc.Provider),
