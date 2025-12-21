@@ -1,7 +1,6 @@
-﻿namespace EmailClientPluma.Core.Models
+﻿namespace EmailClientPluma.Core.Models;
+
+internal interface IRequestClose
 {
-    internal interface IRequestClose
-    {
-        event EventHandler<bool?>? RequestClose;
-    }
+    event EventHandler<bool?>? RequestClose;
 }

@@ -1,106 +1,201 @@
-﻿using System.ComponentModel;
+﻿namespace EmailClientPluma.Core.Models;
 
-namespace EmailClientPluma.Core.Models
+internal class EmailFilterOptions : ObserableObject
 {
-    public class EmailFilterOptions : INotifyPropertyChanged
+    private short _dateRangeIndex = -1;
+
+    private string _doesNotHave = "";
+    private string _from = "";
+
+    private bool _hasAttachment;
+
+    private string _hasWords = "";
+
+
+    private string _searchText = "";
+
+    private DateTime? _selectedDate;
+
+    private short _sizeOperatorIndex;
+
+    private short _sizeUnitIndex;
+
+    private double _sizeValue;
+
+    private string _subject = "";
+
+    private string _to = "";
+
+    private EmailLabel? _selectedLabel;
+
+
+    public string From
     {
-        private string _from = "";
-        public string From
+        get => _from;
+        set
         {
-            get => _from;
-            set { if (_from != value) { _from = value; OnPropertyChanged(); } }
+            if (_from != value)
+            {
+                _from = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private string _to = "";
-        public string To
+    public string To
+    {
+        get => _to;
+        set
         {
-            get => _to;
-            set { if (_to != value) { _to = value; OnPropertyChanged(); } }
+            if (_to != value)
+            {
+                _to = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private string _subject = "";
-        public string Subject
+    public string Subject
+    {
+        get => _subject;
+        set
         {
-            get => _subject;
-            set { if (_subject != value) { _subject = value; OnPropertyChanged(); } }
+            if (_subject != value)
+            {
+                _subject = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private string _hasWords = "";
-        public string HasWords
+    public string HasWords
+    {
+        get => _hasWords;
+        set
         {
-            get => _hasWords;
-            set { if (_hasWords != value) { _hasWords = value; OnPropertyChanged(); } }
+            if (_hasWords != value)
+            {
+                _hasWords = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private string _doesNotHave = "";
-        public string DoesNotHave
+    public string DoesNotHave
+    {
+        get => _doesNotHave;
+        set
         {
-            get => _doesNotHave;
-            set { if (_doesNotHave != value) { _doesNotHave = value; OnPropertyChanged(); } }
+            if (_doesNotHave != value)
+            {
+                _doesNotHave = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private DateTime? _selectedDate = null;
-        public DateTime? SelectedDate
+    public DateTime? SelectedDate
+    {
+        get => _selectedDate;
+        set
         {
-            get => _selectedDate;
-            set { if (_selectedDate != value) { _selectedDate = value; OnPropertyChanged(); } }
+            if (_selectedDate != value)
+            {
+                _selectedDate = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private short _dateRangeIndex = -1;
-        public short DateRangeIndex
+    public short DateRangeIndex
+    {
+        get => _dateRangeIndex;
+        set
         {
-            get => _dateRangeIndex;
-            set { if (_dateRangeIndex != value) { _dateRangeIndex = value; OnPropertyChanged(); } }
+            if (_dateRangeIndex != value)
+            {
+                _dateRangeIndex = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private short _sizeOperatorIndex = 0;
-        public short SizeOperatorIndex
+    public short SizeOperatorIndex
+    {
+        get => _sizeOperatorIndex;
+        set
         {
-            get => _sizeOperatorIndex;
-            set { if (_sizeOperatorIndex != value) { _sizeOperatorIndex = value; OnPropertyChanged(); } }
+            if (_sizeOperatorIndex != value)
+            {
+                _sizeOperatorIndex = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private double _sizeValue = 0;
-        public double SizeValue
+    public double SizeValue
+    {
+        get => _sizeValue;
+        set
         {
-            get => _sizeValue;
-            set { if (_sizeValue != value) { _sizeValue = value; OnPropertyChanged(); } }
+            if (_sizeValue != value)
+            {
+                _sizeValue = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private short _sizeUnitIndex = 0;
-        public short SizeUnitIndex
+    public short SizeUnitIndex
+    {
+        get => _sizeUnitIndex;
+        set
         {
-            get => _sizeUnitIndex;
-            set { if (_sizeUnitIndex != value) { _sizeUnitIndex = value; OnPropertyChanged(); } }
+            if (_sizeUnitIndex != value)
+            {
+                _sizeUnitIndex = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private string _searchText = "";
-        public string SearchText
+    public string SearchText
+    {
+        get => _searchText;
+        set
         {
-            get => _searchText;
-            set { if (_searchText != value) { _searchText = value; OnPropertyChanged(); } }
+            if (_searchText != value)
+            {
+                _searchText = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private int _mailboxIndex = 0;
-        public int MailboxIndex
+
+    public bool HasAttachment
+    {
+        get => _hasAttachment;
+        set
         {
-            get => _mailboxIndex;
-            set { if (_mailboxIndex != value) { _mailboxIndex = value; OnPropertyChanged(); } }
+            if (_hasAttachment != value)
+            {
+                _hasAttachment = value;
+                OnPropertyChanges();
+            }
         }
+    }
 
-        private bool _hasAttachment = false;
-        public bool HasAttachment
+    public EmailLabel? SelectedLabel
+    {
+        get => _selectedLabel;
+        set
         {
-            get => _hasAttachment;
-            set { if (_hasAttachment != value) { _hasAttachment = value; OnPropertyChanged(); } }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected void OnPropertyChanged(string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            _selectedLabel = value;
+            if (_selectedLabel is not null)
+            {
+                OnPropertyChanges();
+            }
         }
     }
 }
-

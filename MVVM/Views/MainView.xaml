@@ -34,8 +34,8 @@
         <!--  Filter  -->
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="LeftColumn" Width="auto" />
-                <ColumnDefinition x:Name="CenterColumn" Width="*" />
+                <ColumnDefinition x:Name="LeftColumn" Width="*" />
+                <ColumnDefinition x:Name="CenterColumn" Width="5*" />
                 <ColumnDefinition x:Name="RightColumn" Width="auto" />
             </Grid.ColumnDefinitions>
 
@@ -45,10 +45,14 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Button
-                    Margin="0,0,0,2"
-                    Command="{Binding NewLabelCommand}"
-                    Content="Edit labels" />
+                <StackPanel>
+                    <Button
+                        Margin="0,0,0,2"
+                        Command="{Binding NewLabelCommand}"
+                        Content="Edit labels" />
+                    <Button Margin="0,0,0,2" Command="{Binding RefreshEmailCommand}">Refresh</Button>
+                </StackPanel>
+
                 <TextBlock
                     Grid.Row="1"
                     Margin="0,5"
@@ -56,20 +60,56 @@
                     Text="Labels" />
                 <ListView
                     Grid.Row="2"
-                    VerticalAlignment="Stretch"
-                    ItemsSource="{Binding SelectedAccount.OwnedLabels, FallbackValue=[]}"
-                    SelectedItem="{Binding SelectedLabel}">
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ItemsSource="{Binding SelectedAccount.OwnedLabels}"
+                    ScrollViewer.CanContentScroll="True"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectedItem="{Binding Filters.SelectedLabel}"
+                    VirtualizingPanel.IsVirtualizing="True"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingPanel.VirtualizationMode="Recycling">
+                    <!--  Make each row stretch full width  -->
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Name}">
-                                <TextBlock.Foreground>
-                                    <SolidColorBrush Color="{Binding Color}" />
-                                </TextBlock.Foreground>
-                            </TextBlock>
+                            <!--  "Chip"  -->
+                            <Border
+                                Padding="10,6"
+                                Background="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Background}"
+                                CornerRadius="10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <!--  Color dot  -->
+                                    <Ellipse
+                                        Width="10"
+                                        Height="10"
+                                        VerticalAlignment="Center"
+                                        Fill="{Binding Color, Converter={StaticResource ColorToBrushConverter}}"
+                                        Opacity="0.95" />
+                                    <!--  Label name  -->
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="10,0,0,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="13"
+                                        Text="{Binding Name}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Border>
+
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
-
             </Grid>
 
             <!--  Center panel  -->
@@ -403,15 +443,7 @@
                                 Width="100"
                                 VerticalAlignment="Center"
                                 Text="Search" />
-                            <ComboBox
-                                Width="200"
-                                ItemContainerStyle="{StaticResource CustomComboItem}"
-                                SelectedIndex="{Binding Filters.MailboxIndex, Mode=TwoWay}"
-                                Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="All Mail" />
-                                <ComboBoxItem Content="Inbox" />
-                                <ComboBoxItem Content="Sent" />
-                            </ComboBox>
+
                         </StackPanel>
 
                         <!--  Footer  -->
@@ -502,7 +534,7 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCMD}">Add Account</Button>
+                    <Button Margin="0,8,0,0" Command="{Binding WhichProvCmd}">Add Account</Button>
                     <Button Margin="0,4,0,0" Command="{Binding RemoveAccountCommand}">Remove Account</Button>
                 </StackPanel>
             </Border>

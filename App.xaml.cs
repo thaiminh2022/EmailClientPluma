@@ -1,5 +1,4 @@
-﻿using EmailClientPluma.Core.Models;
-using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
@@ -8,52 +7,69 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
-namespace EmailClientPluma
+namespace EmailClientPluma;
+
+/// <summary>
+///     Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+    public App()
     {
-        public IServiceProvider Services { get; private set; }
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+        var services = new ServiceCollection();
 
-            var mainWindow = new MainView()
-            {
-                DataContext = Services.GetRequiredService<MainViewModel>()
-            };
-            mainWindow.Show();
-        }
+        // authentication
+        services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
+        services.AddSingleton<MicrosoftAuthenticationService>(); // or AddScoped/AddTransient
 
-        public App()
-        {
-            var services = new ServiceCollection();
-            services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
-            services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<IAccountService, AccountService>();
-            services.AddSingleton<IEmailService, EmailService>();
-            services.AddSingleton<IWindowFactory, WindowFactory>();
-            services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
+        services.AddSingleton<IAuthenticationService>(sp =>
+            sp.GetRequiredService<MicrosoftAuthenticationService>());
+        services.AddSingleton<IMicrosoftClientApp>(sp =>
+            sp.GetRequiredService<MicrosoftAuthenticationService>());
 
-            //Binhs property
-            services.AddSingleton<IEmailFilterService, EmailFilterService>();
+        // storage
+        services.AddSingleton<IStorageService, StorageService>();
 
-            //window
-            services.AddTransient<NewEmailViewModel>();
-            services.AddTransient<LabelEditorViewModel>();
-            services.AddTransient<EmailLabelEditViewModel>();
+        // account
+        services.AddSingleton<IAccountService, AccountService>();
 
-            // Might change this later, it's a singleton due to application design
-            services.AddSingleton<MainViewModel>();
+        // email
+        services.AddSingleton<IEmailService, GmailApiEmailService>();
+        services.AddSingleton<IEmailService, OutlookApiEmailService>();
 
-            services.AddTransient<SettingsViewModel>();
+        services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 
-            services.AddTransient<WhichProvViewModel>();
+        // window
+        services.AddSingleton<IWindowFactory, WindowFactory>();
 
-            Services = services.BuildServiceProvider();
-        }
+        // Binh's property
+        services.AddSingleton<IEmailFilterService, EmailFilterService>();
+
+        //window
+        services.AddTransient<NewEmailViewModel>();
+        services.AddTransient<LabelEditorViewModel>();
+        services.AddTransient<EmailLabelEditViewModel>();
+
+        // Might change this later, it's a singleton due to application design
+        services.AddSingleton<MainViewModel>();
+
+        services.AddTransient<SettingsViewModel>();
+
+        services.AddTransient<WhichProvViewModel>();
+
+        Services = services.BuildServiceProvider();
     }
 
+    public IServiceProvider Services { get; }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        var mainWindow = new MainView
+        {
+            DataContext = Services.GetRequiredService<MainViewModel>()
+        };
+        mainWindow.Show();
+    }
 }

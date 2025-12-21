@@ -1,20 +1,24 @@
-﻿namespace EmailClientPluma.Core.Models
-{
-    public sealed class EmailRow
-    {
-        public int EMAIL_ID { get; set; }
-        public uint IMAP_UID { get; set; }
-        public uint IMAP_UID_VALIDITY { get; set; }
-        public string FOLDER_FULLNAME { get; set; } = "";
-        public string? MESSAGE_ID { get; set; }
-        public string OWNER_ID { get; set; } = "";
-        public string? IN_REPLY_TO { get; set; }
+﻿namespace EmailClientPluma.Core.Models;
 
-        public string SUBJECT { get; set; } = "";
-        public string? BODY { get; set; }
-        public string FROM_ADDRESS { get; set; } = "";
-        public string TO_ADDRESS { get; set; } = "";
-        public string? DATE { get; set; }
-        public int FLAGS { get; set; } = 0;
-    }
+public sealed class EmailRow
+{
+    public int EMAIL_ID { get; set; }
+    public string PROVIDER_MESSAGE_ID { get; init; }
+    public string? PROVIDER_THREAD_ID { get; init; }
+    public string? PROVIDER_HISTORY_ID { get; init; }
+    public string? INTERNET_MESSAGE_ID { get; init; }
+    public string FOLDER_FULLNAME { get; init; }
+    public string PROVIDER { get; init; }
+    public string OWNER_ID { get; init; }
+    public string? IN_REPLY_TO { get; init; }
+    public int FLAGS { get; init; }
+    public uint IMAP_UID { get; init; }
+    public uint IMAP_UID_VALIDITY { get; init; }
+
+
+    public string SUBJECT { get; init; }
+    public string? BODY { get; init; }
+    public string FROM_ADDRESS { get; init; }
+    public string TO_ADDRESS { get; init; }
+    public string? DATE { get; init; }
 }

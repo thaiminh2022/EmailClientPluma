@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
 
   <ItemGroup>
     <None Remove="MVVM\Views\Images\arrow_back.png" />
@@ -48,111 +48,68 @@
     <None Remove="QuillEditor\style.css" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="QuillEditor\quillEditor.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="QuillEditor\quillEditor.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="QuillEditor\quilljs.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="QuillEditor\selectReplyEditor.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="QuillEditor\selectReplyEditor.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="QuillEditor\style.css">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="QuillEditor\quillEditor.html">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="QuillEditor\quillEditor.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="QuillEditor\quilljs.js">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="QuillEditor\selectReplyEditor.html">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="QuillEditor\selectReplyEditor.js">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="QuillEditor\style.css">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="Google.Apis" Version="1.71.0" />
-    <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
-    <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="MailKit" Version="4.13.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3485.44" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Identity" Version="1.17.1" />
+        <PackageReference Include="Dapper" Version="2.1.66" />
+        <PackageReference Include="Google.Apis" Version="1.73.0" />
+        <PackageReference Include="Google.Apis.Auth" Version="1.73.0" />
+        <PackageReference Include="Google.Apis.Gmail.v1" Version="1.73.0.3987" />
+        <PackageReference Include="Google.Apis.Oauth2.v2" Version="1.68.0.1869" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+        <PackageReference Include="MailKit" Version="4.13.0" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+        <PackageReference Include="Microsoft.Graph" Version="5.98.0" />
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.79.2" />
+        <PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.79.2" />
+        <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3485.44" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="secrets\secret.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="MVVM\Models\" />
+    </ItemGroup>
 
 	<ItemGroup>
-		<None Update="secrets\secret.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="MVVM\Models\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Resource Include="MVVM\Views\Images\Black\ad_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="MVVM\Views\Images\Black\arrow_back_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
 	  <Resource Include="MVVM\Views\Images\Black\arrow_forward_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\drafts_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\flag_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\forum_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\important_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\inbox_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="MVVM\Views\Images\Black\pen_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\promotion_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\scheduled_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\sent_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
 	  <Resource Include="MVVM\Views\Images\Black\settings_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\social_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\spam_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\Black\trash_black.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\ad.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\forum.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="MVVM\Views\Images\White\pen.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\promotion.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\social.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
 	  <SplashScreen Include="MVVM\Views\Images\White\arrow_back.png">
@@ -161,31 +118,7 @@
 	  <Resource Include="MVVM\Views\Images\White\arrow_forward.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\drafts.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\flag.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\important.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\inbox.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\scheduled.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\sent.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
 	  <Resource Include="MVVM\Views\Images\White\settings.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\spam.png">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Resource>
-	  <Resource Include="MVVM\Views\Images\White\trash.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
 	</ItemGroup>

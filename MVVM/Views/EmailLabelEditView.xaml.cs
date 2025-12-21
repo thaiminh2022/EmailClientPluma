@@ -1,15 +1,14 @@
 ﻿using System.Windows;
 
-namespace EmailClientPluma.MVVM.Views
+namespace EmailClientPluma.MVVM.Views;
+
+/// <summary>
+///     Interaction logic for EmailLabelEditView.xaml
+/// </summary>
+public partial class EmailLabelEditView : Window
 {
-    /// <summary>
-    /// Interaction logic for EmailLabelEditView.xaml
-    /// </summary>
-    public partial class EmailLabelEditView : Window
+    public EmailLabelEditView()
     {
-        public EmailLabelEditView()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }

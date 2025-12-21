@@ -11,6 +11,7 @@ namespace EmailClientPluma
     {
         private bool IsDarkMode = SettingsView.IsDarkMode;
         public bool IsImg { get; set; } = false;
+
         public MainView()
         {
             InitializeComponent();
@@ -29,7 +30,6 @@ namespace EmailClientPluma
         // Dark mode values (black + gold buttons)
         private readonly Color Dark_Background = (Color)ColorConverter.ConvertFromString("#000000");
         private readonly Color Dark_Panel = (Color)ColorConverter.ConvertFromString("#3E4042");
-        private readonly Color Dark_Primary = (Color)ColorConverter.ConvertFromString("#2A003D");
         private readonly Color Dark_Accent = (Color)ColorConverter.ConvertFromString("#4B0A66");
         private readonly Color Dark_Text = Colors.White;
         private readonly Color Dark_ButtonBack = (Color)ColorConverter.ConvertFromString("#FFD700"); // gold
@@ -53,17 +53,20 @@ namespace EmailClientPluma
             }
         }
 
-        private void SettingsView_DarkModeChanged(object sender, EventArgs e) { 
-            if (SettingsView.IsDarkMode) {
+        private void SettingsView_DarkModeChanged(object sender, EventArgs e)
+        {
+            if (SettingsView.IsDarkMode)
+            {
                 IsDarkMode = true;
                 ApplyDarkMode();
                 ChangeImgTheme();
-            } 
-            else { 
+            }
+            else
+            {
                 IsDarkMode = false;
                 ApplyLightMode();
                 ChangeImgTheme();
-            } 
+            }
         }
 
 
@@ -89,7 +92,8 @@ namespace EmailClientPluma
         {
             SetBrushColor("BackgroundBrush", Dark_Background);
             SetBrushColor("PanelBackgroundBrush", Dark_Panel);
-            SetBrushColor("PrimaryBrush", Dark_ButtonBack);     // in dark mode PrimaryBrush used as button background -> gold
+            SetBrushColor("PrimaryBrush",
+                Dark_ButtonBack); // in dark mode PrimaryBrush used as button background -> gold
             SetBrushColor("AccentBrush", Dark_Accent);
             SetBrushColor("TextBrush", Dark_Text);
             SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
@@ -110,12 +114,12 @@ namespace EmailClientPluma
 
         private void ChangeContentBtn()
         {
-           
+
         }
 
         private void ChangeImgTheme()
         {
-          
+
         }
 
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -137,8 +141,8 @@ namespace EmailClientPluma
             EmailList.SelectedItem = null;
 
             // Expand the list to fill all space
-            LeftColumn.Width = GridLength.Auto;
-            CenterColumn.Width = new GridLength(3, GridUnitType.Star);
+            LeftColumn.Width = new GridLength(1, GridUnitType.Star);
+            CenterColumn.Width = new GridLength(5, GridUnitType.Star);
             RightColumn.Width = new GridLength(0); // collapse the right side
 
             IsImg = false;

@@ -6,127 +6,118 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace EmailClientPluma.MVVM.ViewModels
+namespace EmailClientPluma.MVVM.ViewModels;
+
+internal class EmailLabelEditViewModel : ObserableObject, IRequestClose
 {
-    class EmailLabelEditViewModel : ObserableObject, IRequestClose
+    private readonly IStorageService _storageService;
+    private string _searchText = "";
+
+
+    public EmailLabelEditViewModel(IStorageService storageService)
     {
-        private IStorageService _storageService;
-
-        public Account SelectedAccount { get; set; }
-        public Email SelectedEmail { get; set; }
-
-        public ObservableCollection<LabelItemViewModel> Labels { get; } = new();
-
-        public ICollectionView FilteredLabels { get; }
-
-        public string SearchText
+        _storageService = storageService;
+        FilteredLabels = CollectionViewSource.GetDefaultView(Labels);
+        FilteredLabels.Filter = o =>
         {
-            get => _searchText;
-            set
-            {
-                _searchText = value;
-                OnPropertyChanges();
-                FilteredLabels.Refresh();
-            }
-        }
-        private string _searchText = "";
+            if (string.IsNullOrWhiteSpace(SearchText)) return true;
+            if (o is not LabelItemViewModel l) return false;
+            return l.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+        };
 
-        public RelayCommandAsync SaveCommand { get; }
-        public RelayCommand CancelCommand { get; }
-
-        public void Setup(Account selectedAccount, Email selectedEmail)
-        {
-            SelectedAccount = selectedAccount;
-            SelectedEmail = selectedEmail;
-
-            foreach (var label in SelectedAccount.OwnedLabels)
-            {
-                Labels.Add(new LabelItemViewModel
-                {
-                    Id = label.Id,
-                    Name = label.Name,
-                    IsSelected = SelectedEmail?.Labels.Any(x => x.Id == label.Id) ?? false,
-                    Color = label.Color,
-                    IsModifiable = label.IsEditable
-                });
-            }
-
-        }
-
-
-        public EmailLabelEditViewModel(IStorageService storageService)
-        {
-            _storageService = storageService;
-            FilteredLabels = CollectionViewSource.GetDefaultView(Labels);
-            FilteredLabels.Filter = o =>
-            {
-                if (string.IsNullOrWhiteSpace(SearchText)) return true;
-                if (o is not LabelItemViewModel l) return false;
-                return l.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
-            };
-
-            SaveCommand = new RelayCommandAsync(SaveChanges);
-            CancelCommand = new RelayCommand(CancelChanges);
-        }
-
-
-        private void CancelChanges(object? obj)
-        {
-            RequestClose?.Invoke(this, false);
-        }
-
-        public async Task SaveChanges(object? obj)
-        {
-            foreach (var labelView in Labels)
-            {
-                if (!labelView.IsModifiable) continue;
-
-                var label = SelectedAccount.OwnedLabels.FirstOrDefault(item => item.Id == labelView.Id);
-                if (label is null) continue;
-
-
-                if (SelectedEmail.Labels.Contains(label))
-                {
-                    if (!labelView.IsSelected)
-                    {
-                        // Remove label
-                        SelectedEmail.Labels.Remove(label);
-                        await _storageService.DeleteEmailLabelAsync(label, SelectedEmail);
-                    }
-                }
-                else
-                {
-                    if (labelView.IsSelected)
-                    {
-                        // Add label
-                        SelectedEmail.Labels.Add(label);
-                    }
-                }
-            }
-
-            await _storageService.StoreLabelsAsync(SelectedEmail);
-            RequestClose?.Invoke(this, true);
-        }
-
-        public event EventHandler<bool?>? RequestClose;
+        SaveCommand = new RelayCommandAsync(SaveChanges);
+        CancelCommand = new RelayCommand(CancelChanges);
+    }
 
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-        public EmailLabelEditViewModel()
+    public EmailLabelEditViewModel()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-        {
+    {
+    }
 
+    public Account SelectedAccount { get; set; }
+    public Email SelectedEmail { get; set; }
+
+    public ObservableCollection<LabelItemViewModel> Labels { get; } = new();
+
+    public ICollectionView FilteredLabels { get; }
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            OnPropertyChanges();
+            FilteredLabels.Refresh();
+        }
+    }
+
+    public RelayCommandAsync SaveCommand { get; }
+    public RelayCommand CancelCommand { get; }
+
+    public event EventHandler<bool?>? RequestClose;
+
+    public void Setup(Account selectedAccount, Email selectedEmail)
+    {
+        SelectedAccount = selectedAccount;
+        SelectedEmail = selectedEmail;
+
+        foreach (var label in SelectedAccount.OwnedLabels)
+            Labels.Add(new LabelItemViewModel
+            {
+                Id = label.Id,
+                Name = label.Name,
+                IsSelected = SelectedEmail?.Labels.Any(x => x.Id == label.Id) ?? false,
+                Color = label.Color,
+                IsModifiable = label.IsEditable
+            });
+    }
+
+
+    private void CancelChanges(object? obj)
+    {
+        RequestClose?.Invoke(this, false);
+    }
+
+    public async Task SaveChanges(object? obj)
+    {
+        foreach (var labelView in Labels)
+        {
+            if (!labelView.IsModifiable) continue;
+
+            var label = SelectedAccount.OwnedLabels.FirstOrDefault(item => item.Id == labelView.Id);
+            if (label is null) continue;
+
+
+            if (SelectedEmail.Labels.Contains(label))
+            {
+                if (!labelView.IsSelected)
+                {
+                    // Remove label
+                    SelectedEmail.Labels.Remove(label);
+                    await _storageService.DeleteEmailLabelAsync(label, SelectedEmail);
+                }
+            }
+            else
+            {
+                if (labelView.IsSelected)
+                    // Add label
+                    SelectedEmail.Labels.Add(label);
+            }
         }
 
+        await _storageService.StoreLabelsAsync(SelectedEmail);
+        RequestClose?.Invoke(this, true);
     }
-    public class LabelItemViewModel
-    {
-        public int Id { get; set; } = -1;
-        public string Name { get; set; } = "";
-        public bool IsSelected { get; set; }     // Bound to CheckBox
-        public Color Color { get; set; }
-        public bool IsModifiable { get; set; } = true;
-    }
+}
 
-
+public class LabelItemViewModel
+{
+    public int Id { get; set; } = -1;
+    public string Name { get; set; } = "";
+    public bool IsSelected { get; set; } // Bound to CheckBox
+    public Color Color { get; set; }
+    public bool IsModifiable { get; set; } = true;
 }
