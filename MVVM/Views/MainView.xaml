@@ -502,7 +502,7 @@
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
-            HorizontalOffset="-100"
+            HorizontalOffset="0"
             Placement="Bottom"
             PlacementTarget="{Binding ElementName=AccountSettingsButton}"
             PopupAnimation="Slide"

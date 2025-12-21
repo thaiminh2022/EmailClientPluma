@@ -1,13 +1,13 @@
 const toolbarOptions = [
     ["bold", "italic", "underline", "strike"], // toggled buttons
     ["blockquote"],
-    ["link", "image", "video"],
+    ["link", "video"],
 
-    [{header: 1}, {header: 2}, {header: 3}, {header: 4}], // custom button values
-    [{list: "ordered"}, {list: "bullet"}, {list: "check"}],
-    [{script: "sub"}, {script: "super"}], // superscript/subscript
+    [{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }], // custom button values
+    [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+    [{ script: "sub" }, { script: "super" }], // superscript/subscript
 
-    [{color: []}, {background: []}], // dropdown with defaults from theme
+    [{ color: [] }, { background: [] }], // dropdown with defaults from theme
 
     ["clean"], // remove formatting button
 ];
@@ -29,5 +29,5 @@ window.setEditorContent = setEditorContent;
 
 quill.on('text-change', function () {
     const html = quill.root.innerHTML;
-    window.chrome.webview.postMessage({type: 'html', value: html});
+    window.chrome.webview.postMessage({ type: 'html', value: html });
 });
