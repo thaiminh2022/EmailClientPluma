@@ -54,7 +54,7 @@ Generated\ Files/
 *.trx
 
 # Jetbrains
-.idea
+**/.idea/
 
 # NUnit
 *.VisualState.xml
