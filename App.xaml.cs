@@ -38,19 +38,18 @@ public partial class App : Application
         services.AddSingleton<IEmailService, OutlookApiEmailService>();
 
         services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
+        
+        services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
         // window
         services.AddSingleton<IWindowFactory, WindowFactory>();
 
-        // Binh's property
-        services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
         //window
         services.AddTransient<NewEmailViewModel>();
         services.AddTransient<LabelEditorViewModel>();
         services.AddTransient<EmailLabelEditViewModel>();
 
-        // Might change this later, it's a singleton due to application design
         services.AddSingleton<MainViewModel>();
 
         services.AddTransient<SettingsViewModel>();
