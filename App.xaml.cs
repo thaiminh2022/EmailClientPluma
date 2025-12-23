@@ -1,11 +1,15 @@
-﻿using EmailClientPluma.Core.Services;
+﻿using System.IO;
+using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Windows;
-using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
+using EmailClientPluma.Core;
+using Serilog;
+using Serilog.Events;
 
 namespace EmailClientPluma;
 
@@ -18,6 +22,40 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
+        AddLogging(services);
+        AddServices(services);
+
+        Services = services.BuildServiceProvider();
+    }
+
+    private void AddLogging(ServiceCollection services)
+    {
+        var runId = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .WriteTo.Debug()
+            .WriteTo.Async(config => config.File(
+                path: Path.Combine(Helper.LogFolder, $"app-{runId}.log"),
+                retainedFileCountLimit: 14,
+                fileSizeLimitBytes: 10_000_000,
+                rollOnFileSizeLimit: true,
+                shared: true,
+                outputTemplate:
+                "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"
+                ))
+            .CreateLogger();
+        services.AddLogging(config =>
+        {
+            config.ClearProviders();
+            config.AddSerilog(Log.Logger, dispose: true);
+        });
+    }
+
+    private static void AddServices(ServiceCollection services)
+    {
         // authentication
         services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
         services.AddSingleton<MicrosoftAuthenticationService>(); // or AddScoped/AddTransient
@@ -55,16 +93,20 @@ public partial class App : Application
         services.AddTransient<SettingsViewModel>();
 
         services.AddTransient<WhichProvViewModel>();
-
-        Services = services.BuildServiceProvider();
     }
 
     public IServiceProvider Services { get; }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        Log.CloseAndFlush();
+        base.OnExit(e);
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-
+        
         var mainWindow = new MainView
         {
             DataContext = Services.GetRequiredService<MainViewModel>()

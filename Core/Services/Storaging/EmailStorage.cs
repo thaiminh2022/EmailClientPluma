@@ -3,25 +3,21 @@ using EmailClientPluma.Core.Models;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
 using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 
-internal class EmailStorage
+internal class EmailStorage(string connectionString, ILogger<StorageService> logger)
 {
-    private readonly string _connectionString;
-
-    public EmailStorage(string connectionString)
-    {
-        _connectionString = connectionString;
-    }
-
     private SqliteConnection CreateConnection()
     {
-        return new SqliteConnection(_connectionString);
+        return new SqliteConnection(connectionString);
     }
 
     public async Task StoreEmailsInternal(Account acc, List<Email> mails)
     {
+        logger.LogInformation("Start storing emails for {email}", acc.Email);
         const string sql = """
                            INSERT INTO EMAILS (
                                PROVIDER_MESSAGE_ID,
@@ -76,6 +72,7 @@ internal class EmailStorage
         {
             foreach (var m in mails)
             {
+                logger.LogInformation("Storing email with subject {subject}", m.MessageParts.Subject);
                 var msgPart = m.MessageParts;
                 var msgId = m.MessageIdentifiers;
 
@@ -106,12 +103,14 @@ internal class EmailStorage
         }
         catch (Exception ex)
         {
+            logger.LogCritical(ex, "CANNOT STORE EMAIL, THIS IS A PROGRAM ERROR");
             throw new WriteEmailException(inner: ex);
         }
     }
 
     public async Task<List<Email>> GetEmailsAsync(Account acc)
     {
+        logger.LogInformation("Getting email for {email}", acc.Email);
         await using var connection = CreateConnection();
         var sql = """
                   SELECT  
@@ -146,7 +145,7 @@ internal class EmailStorage
                 {
                     date = DateTimeOffset.Parse(r.DATE, null, DateTimeStyles.RoundtripKind);
                 }
-
+                
                 return new Email(
                     new Email.Identifiers
                     {
@@ -177,12 +176,14 @@ internal class EmailStorage
         }
         catch (Exception ex)
         {
+            logger.LogCritical(ex, "CANNOT READ EMAIL, THIS IS A PROGRAM ERROR");
             throw new ReadEmailException(inner: ex);
         }
     }
 
     public async Task UpdateEmailBodyAsync(Email email)
     {
+        logger.LogInformation("Finding body for this email with subject {subject}", email.MessageParts.Subject);
         var sql = """
                   UPDATE EMAILS
                   SET BODY = @Body
@@ -203,6 +204,7 @@ internal class EmailStorage
         }
         catch (Exception ex)
         {
+            logger.LogCritical(ex, "CANNOT WRITE EMAIL, THIS IS A PROGRAM ERROR");
             throw new WriteEmailException(inner: ex);
         }
     }

@@ -12,18 +12,32 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public WhichProvViewModel(IAccountService accountService)
         {
-            var accountService1 = accountService;
 
             AddAccountGoogleCommand = new RelayCommandAsync(async _ =>
             {
-                await accountService1.AddAccountAsync(Provider.Google);
-                RequestClose?.Invoke(this, true);
+                try
+                {
+                    await accountService.AddAccountAsync(Provider.Google);
+                    RequestClose?.Invoke(this, true);
+                }
+                catch ( Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
+                }
+    
             });
 
             AddAccountMicrosoftCommand = new RelayCommandAsync(async _ =>
             {
-                await accountService1.AddAccountAsync(Provider.Microsoft);
-                RequestClose?.Invoke(this, true);
+                try
+                {
+                    await accountService.AddAccountAsync(Provider.Microsoft);
+                    RequestClose?.Invoke(this, true);
+                }
+                catch (Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
+                }
             });
         }
 

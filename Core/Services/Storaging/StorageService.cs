@@ -1,5 +1,6 @@
 using EmailClientPluma.Core.Models;
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 
@@ -28,14 +29,14 @@ internal class StorageService : IStorageService
     private readonly EmailStorage _emailStorage;
     private readonly LabelStorage _labelStorage;
 
-    public StorageService()
+    public StorageService(ILogger<StorageService> logger)
     {
         var connectionString = $"Data Source={Helper.DatabasePath}";
         var tokenStore = new GoogleDataStore(Helper.DatabasePath);
 
-        _accountStorage = new AccountStorage(tokenStore, connectionString);
-        _emailStorage = new EmailStorage(connectionString);
-        _labelStorage = new LabelStorage(connectionString);
+        _accountStorage = new AccountStorage(tokenStore, connectionString, logger);
+        _emailStorage = new EmailStorage(connectionString, logger);
+        _labelStorage = new LabelStorage(connectionString, logger);
 
         var migrator = new StorageMigrator(connectionString);
         migrator.Migrate();

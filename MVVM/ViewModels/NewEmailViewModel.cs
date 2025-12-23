@@ -8,7 +8,6 @@ namespace EmailClientPluma.MVVM.ViewModels;
 
 internal class NewEmailViewModel : ObserableObject, IRequestClose
 {
-    private readonly IAccountService _accountService;
     private readonly List<IEmailService> _emailServices;
     private string? _inReplyTo;
     private bool _isEnable = true;
@@ -22,21 +21,15 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     private IEmailService GetEmailServiceByProvider(Provider prod)
     {
         var service = _emailServices.FirstOrDefault(x => x.GetProvider().Equals(prod));
-        if (service is null)
-        {
-            throw new NotImplementedException("This service is not implemented for this provider");
-        }
-
-        return service;
+        return service ?? throw new NotImplementedException("This service is not implemented for this provider");
     }
 
     public NewEmailViewModel(IAccountService accountService, IEnumerable<IEmailService> emailServices)
     {
-        _accountService = accountService;
         _emailServices = [.. emailServices];
-        Accounts = _accountService.GetAccounts();
+        Accounts = accountService.GetAccounts();
 
-        SendCommand = new RelayCommand(async _ =>
+        SendCommand = new RelayCommandAsync(async _ =>
         {
             if (string.IsNullOrEmpty(Body)) return;
             if (SelectedAccount is null) return;
@@ -57,7 +50,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
 
             try
             {
-                var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
+                var validated = await accountService.ValidateAccountAsync(SelectedAccount);
                 if (validated)
                 {
                     await GetEmailServiceByProvider(SelectedAccount.Provider).SendEmailAsync(SelectedAccount, email);
@@ -86,7 +79,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
         }
     }
 
-    public RelayCommand SendCommand { get; set; }
+    public RelayCommandAsync SendCommand { get; set; }
     public RelayCommand CancelCommand { get; set; }
 
 
@@ -119,7 +112,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
         {
             _isEnable = value;
             OnPropertyChanges();
-            OnPropertyChanges("IsNotEnable");
+            OnPropertyChanges(nameof(IsNotEnable));
         }
     }
 
@@ -130,7 +123,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
         {
             _isEnable = !value;
             OnPropertyChanges();
-            OnPropertyChanges("IsEnable");
+            OnPropertyChanges(nameof(IsEnable));
         }
     }
 

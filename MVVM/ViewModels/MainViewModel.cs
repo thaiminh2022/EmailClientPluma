@@ -7,18 +7,22 @@ using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows.Input;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
 internal class MainViewModel : ObserableObject
 {
+    private readonly ILogger<MainViewModel> _logger;
     public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
         IEnumerable<IEmailService> emailServices,
-        IEmailFilterService emailFilterService)
+        IEmailFilterService emailFilterService, ILogger<MainViewModel> logger)
     {
         _accountService = accountService;
         _emailServices = [.. emailServices];
         _filterService = emailFilterService;
+        _logger = logger;
 
         // make list auto sort descending by date
         FilteredEmails = [];
@@ -27,8 +31,7 @@ internal class MainViewModel : ObserableObject
         Accounts = _accountService.GetAccounts();
         SelectedAccount = Accounts.FirstOrDefault();
 
-            // COMMANDS
-
+        // COMMANDS
         ComposeCommand = new RelayCommand(_ =>
         {
             var newEmailWindow = windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
@@ -59,7 +62,7 @@ internal class MainViewModel : ObserableObject
             SettingCommand = new RelayCommand(_ =>
             {
                 var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
-                newEmailWindow.Show();
+                newEmailWindow.ShowDialog();
             });
 
             WhichProvCmd = new RelayCommand(_ =>
@@ -68,15 +71,22 @@ internal class MainViewModel : ObserableObject
                 whichProvWindow.ShowDialog();
             });
 
-            RemoveAccountCommand = new RelayCommand(_ =>
+            RemoveAccountCommand = new RelayCommandAsync(async _ =>
             {
                 if (SelectedAccount == null) return;
 
-            var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
-            if (result is null || result is false) return;
-
-            _accountService.RemoveAccountAsync(SelectedAccount);
-            SelectedAccount = null;
+                var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
+                if (result is null or false) return;
+                try
+                {
+                    await _accountService.RemoveAccountAsync(SelectedAccount);
+                }
+                catch (Exception e)
+                {
+                    MessageBoxHelper.Error(e.Message);
+                }
+                SelectedAccount = null;
+                
         }, _ => SelectedAccount is not null);
 
 
@@ -99,6 +109,10 @@ internal class MainViewModel : ObserableObject
                     // If we still have no next page (no more server mails), just stop
                     if (!gotMore || _currentPage + 1 >= TotalPages)
                         return;
+                }
+                catch (Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
                 }
                 finally
                 {
@@ -125,6 +139,7 @@ internal class MainViewModel : ObserableObject
             if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
             vm.SelectedAccount = SelectedAccount;
             labelEditorWindow.ShowDialog();
+            
         }, _ => _selectedAccount is not null);
 
         EditEmailLabelCommand = new RelayCommand(_ =>
@@ -138,6 +153,22 @@ internal class MainViewModel : ObserableObject
 
             emailLabelEditorWindow.ShowDialog();
         }, _ => SelectedEmail is not null && SelectedAccount is not null);
+        
+        RefreshEmailCommand = new RelayCommandAsync(async _ =>
+        {
+            if (SelectedAccount is null) 
+                return;
+            var emailService = GetServiceByProvider(SelectedAccount.Provider);
+            try
+            {
+                await emailService.FetchEmailHeaderAsync(SelectedAccount);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.Error(ex.Message);
+            }
+
+        },_ => SelectedAccount is not null);
     }
 
     // This should not be matter because this is for UI type hinting
@@ -198,9 +229,15 @@ internal class MainViewModel : ObserableObject
 
             CommandManager.InvalidateRequerySuggested();
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            _logger.LogWarning(ex, "Filter operation canceled, this should be normal behavior");
             // normal exit
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "ERROR WHILE FILTERING EMAIL");
+            MessageBoxHelper.Error("Error while filtering email: ", ex.Message);
         }
     }
 
@@ -271,22 +308,31 @@ internal class MainViewModel : ObserableObject
     {
         if (_selectedAccount is null)
             return;
+        try
+        {
+            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
 
-        var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+            if (!isValid || _selectedAccount.FirstTimeHeaderFetched)
+            {
+                return;
+            }
 
-        if (!isValid || _selectedAccount.FirstTimeHeaderFetched)
+            var emailService = GetServiceByProvider(_selectedAccount.Provider);
+            await emailService.FetchEmailHeaderAsync(_selectedAccount);
+
+            _selectedAccount.FirstTimeHeaderFetched = true;
+
+            await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
         {
             Mouse.OverrideCursor = null;
-            return;
         }
-
-        var emailService = GetServiceByProvider(_selectedAccount.Provider);
-        await emailService.FetchEmailHeaderAsync(_selectedAccount);
-
-        _selectedAccount.FirstTimeHeaderFetched = true;
-        Mouse.OverrideCursor = null;
-
-        await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+       
     }
 
     #endregion
@@ -310,34 +356,37 @@ internal class MainViewModel : ObserableObject
 
     private async Task FetchEmailBody()
     {
-        if (_selectedAccount is null || _selectedEmail is null)
+        try
         {
-            Mouse.OverrideCursor = null;
-            return;
-        }
+            if (_selectedAccount is null || _selectedEmail is null)
+                return;
 
-        if (_selectedEmail.BodyFetched)
-        {
-            Mouse.OverrideCursor = null;
+            if (_selectedEmail.BodyFetched)
+            {
+                CheckPhishing();
+                return;
+            }
+
+            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+
+            if (!isValid)
+                return;
+
+            var emailService = GetServiceByProvider(_selectedAccount.Provider);
+            await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             CheckPhishing();
-            return;
+
         }
-
-        var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-        if (!isValid)
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
         {
             Mouse.OverrideCursor = null;
-            return;
         }
 
-        var emailService = GetServiceByProvider(_selectedAccount.Provider);
-        await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail)
-            .ContinueWith(_ => { CheckPhishing(); });
-
-        Mouse.OverrideCursor = null;
         return;
-
         void CheckPhishing()
         {
             var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
@@ -375,7 +424,7 @@ internal class MainViewModel : ObserableObject
     public RelayCommand WhichProvCmd { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }
-    public RelayCommand RemoveAccountCommand { get; set; }
+    public RelayCommandAsync RemoveAccountCommand { get; set; }
     public RelayCommandAsync NextCommand { get; set; }
     public RelayCommandAsync PreviousCommand { get; set; }
 

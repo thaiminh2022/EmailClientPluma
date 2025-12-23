@@ -7,7 +7,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a37afcca-f347-4168-9fcc-4f9e70f986d7" name="Changes" comment="" />
+    <list default="true" id="a37afcca-f347-4168-9fcc-4f9e70f986d7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.EmailClientPluma/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.EmailClientPluma/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/App.xaml.cs" beforeDir="false" afterPath="$PROJECT_DIR$/App.xaml.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Helper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Helper.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Accounting/GoogleAuthenticationService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Accounting/GoogleAuthenticationService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Accounting/MicrosoftAuthenticationService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Accounting/MicrosoftAuthenticationService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/AccountStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/AccountStorage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/EmailStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/EmailStorage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/LabelStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/LabelStorage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/StorageService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/StorageService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Services/WindowFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/WindowFactory.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/EmailClientPluma.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/EmailClientPluma.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/EmailLabelEditViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/EmailLabelEditViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/LabelEditorViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/LabelEditorViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/MainViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/MainViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/NewEmailViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/NewEmailViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/SettingsViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/SettingsViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/WhichProvViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/WhichProvViewModel.cs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,8 +55,10 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/06dd464a072b487298f89051b0e90d08f61908/f3/0b3a0941/WpfXamlLoader.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/2bfce1879d5eb1bcd0e5c2651e5edbca4b29d41389e7f3d8fada6cda6d2c1d/Google.Apis.Gmail.v1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/c190bf3ce84e86c36e713bcbff46b31769d2b5e666afa8d4ec569fe81b983/SqliteConnection.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/ebe65732adf281db03e388c6486e28a574c76c8be32d99ca59dcfbecc65/Uri.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f74c15be4ebfb9eebdf1d29c607aa58a3dd7cfccafcbf075c7887256d97ccb40/SqliteDataReader.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fc2027f7e776fc105cddb56b1a25eeb3895b3ae6f3aac854d786e63bd01f75e2/CallSiteFactory.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -63,13 +83,13 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "email__per__provider",
+    "git-widget-placeholder": "error__handling",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.preferences.inline.completion",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -119,6 +139,7 @@
       <workItem from="1766050069458" duration="3392000" />
       <workItem from="1766104082917" duration="457000" />
       <workItem from="1766221422813" duration="8338000" />
+      <workItem from="1766510902669" duration="8941000" />
     </task>
     <task id="LOCAL-00001" summary="add some migration">
       <option name="closed" value="true" />

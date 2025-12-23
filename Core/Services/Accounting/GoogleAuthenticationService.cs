@@ -8,14 +8,16 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
 using System.Net;
 using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
 /// <summary>
-///     Authentication service implement for google
-///     It use google Oauth2 to get user credentials + profile info
+///     Authentication service implement for Google
+///     It use Google Oauth2 to get user credentials + profile info
 /// </summary>
-internal class GoogleAuthenticationService : IAuthenticationService
+internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> logger) : IAuthenticationService
 {
     public const string CLIENT_SECRET = @"secrets\secret.json";
 
@@ -39,6 +41,7 @@ internal class GoogleAuthenticationService : IAuthenticationService
         var tempId = Guid.NewGuid().ToString();
         try
         {
+            logger.LogInformation("Initializing authentication for google");
             // prompt user to login
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
@@ -49,7 +52,8 @@ internal class GoogleAuthenticationService : IAuthenticationService
 
             if (credentials is null)
             {
-                throw new AuthFailedException();
+                logger.LogError("Cannot get credentials for google");
+                return null;
             }
 
             var oauth2 = new Oauth2Service(new BaseClientService.Initializer
@@ -60,7 +64,7 @@ internal class GoogleAuthenticationService : IAuthenticationService
             var userInfo = await oauth2.Userinfo.Get().ExecuteAsync();
             if (userInfo == null)
             {
-                MessageBoxHelper.Error("Cannot find user info");
+                logger.LogError("Cannot find user {mail} info via OAUTH2", credentials.UserId);
                 return null;
             }
 
@@ -69,22 +73,25 @@ internal class GoogleAuthenticationService : IAuthenticationService
             var newUserCred = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
             await _dataStore.StoreAsync(userInfo.Id, newUserCred.Token);
 
-
+            logger.LogInformation("Finish storing credentials info");
+            logger.LogInformation("Finish AUTH FLOW");
             var cred = new Credentials(credentials.Token.AccessToken, credentials.Token.RefreshToken);
             return new AuthResponce(userInfo.Id, userInfo.Email, userInfo.Name, Provider.Google, cred);
         }
         catch (GoogleApiException ex)
         {
-            if (ex.HttpStatusCode == HttpStatusCode.Unauthorized ||
-                ex.HttpStatusCode == HttpStatusCode.Forbidden)
+            logger.LogError(ex, "Cannot login because info is forbidden");
+            if (ex.HttpStatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 throw new AuthForbiddenException();
         }
         catch (TokenResponseException ex)
         {
+            logger.LogError(ex, "Cannot login because info is forbidden");
             throw new AuthForbiddenException(inner: ex);
         }
         catch (TaskCanceledException ex)
         {
+            logger.LogWarning(ex, "User cancel auth flow");
             throw new AuthCancelException(inner: ex);
         }
 
@@ -99,11 +106,13 @@ internal class GoogleAuthenticationService : IAuthenticationService
     /// <returns>true if is valid or failed</returns>
     public async Task<bool> ValidateAsync(Account acc)
     {
+        logger.LogInformation("Validation init for account: {mail}", acc.Email);
         // reconstruct user credentials to check
         var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
 
         if (tokenRes.IsStale)
         {
+            logger.LogInformation("{mail} token is staled", acc.Email);
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
                 ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
@@ -126,6 +135,8 @@ internal class GoogleAuthenticationService : IAuthenticationService
             {
                 //throw new AuthRefreshException(inner: ex);
                 // trying to do interactive
+                
+                logger.LogError("Cannot refresh token for account {email}, trying interactive", acc.Email);
             }
         }
         else
@@ -145,7 +156,8 @@ internal class GoogleAuthenticationService : IAuthenticationService
             );
             if (credentials is null)
             {
-                throw new AuthFailedException();
+                logger.LogError("Cannot interactive logging for account {mail}, failing", acc.Email);
+                return false;
             }
 
             await _dataStore.StoreAsync(acc.ProviderUID, credentials.Token);
@@ -155,6 +167,7 @@ internal class GoogleAuthenticationService : IAuthenticationService
         {
             //throw new AuthCancelException(inner: ex);
             // this is for logging
+            logger.LogWarning(ex, "Authentication was cancel for account {email}", acc.Email);
         }
 
         return false;
