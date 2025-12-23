@@ -105,8 +105,21 @@ namespace EmailClientPluma.Core.Services.Storaging
                             FOREIGN KEY (OWNER_ID) REFERENCES ACCOUNTS(PROVIDER_UID) ON DELETE CASCADE
                         );";
 
+            const string createAttachmentsSql = @"
+                        CREATE TABLE IF NOT EXISTS ATTACHMENTS (
+                            ATTACHMENT_ID   INTEGER PRIMARY KEY AUTOINCREMENT,
+                            EMAIL_ID        INTEGER NOT NULL,
+                            FILENAME        TEXT    NOT NULL,
+                            MIMETYPE       TEXT    NOT NULL,
+                            SIZE            INTEGER NOT NULL,
+                            STORAGE_KEY     TEXT    NOT NULL,
+                            CREATEDUTC     TEXT    NOT NULL,
+                            FOREIGN KEY (EMAIL_ID) REFERENCES EMAILS(EMAIL_ID) ON DELETE CASCADE
+                        );";
+
             connection.Execute(createAccountsSql);
             connection.Execute(createEmailsSql);
+            connection.Execute(createAttachmentsSql);
         }
 
         // ---------------- v2: add flags / cache columns ----------------

@@ -84,7 +84,7 @@ namespace EmailClientPluma.Core.Services.Emailing
             message.From.Add(address);
 
             message.Subject = email.Subject;
-            
+
             if (!string.IsNullOrEmpty(email.InReplyTo))
                 message.InReplyTo = email.InReplyTo;
 
@@ -270,6 +270,12 @@ namespace EmailClientPluma.Core.Services.Emailing
                 }
             }
 
+            // PERSIST
+            await _storageService.UpdateEmailBodyAsync(email);
+
+
+
+            // ATTACHMENTS
             var attachments = new List<Attachment>();
 
             if (bodyParts.Attachments != null)
@@ -287,6 +293,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                         {
                             OwnerEmailID = email.MessageIdentifiers.EmailID,
                             FileName = mimePart.FileName ?? "attachment",
+                            MimeType = mimePart.ContentType.MimeType,
                             Content = ms.ToArray()
                         });
                     }
@@ -295,14 +302,17 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             email.MessageParts.Attachments = attachments;
 
-            // PERSIST
-            await _storageService.UpdateEmailBodyAsync(email);
 
-            //if (attachments.Count > 0)
-            //    await _storageService.SaveAttachmentsAsync(email, attachments);
+
+
+
+            if (attachments.Count > 0)
+            {
+                await _storageService.StoreAttachmentsFromEmail(email);
+            }
         }
 
-       
+
 
         public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
         {
@@ -402,5 +412,7 @@ namespace EmailClientPluma.Core.Services.Emailing
         }
 
         #endregion
+
+
     }
 }
