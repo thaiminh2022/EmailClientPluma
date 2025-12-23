@@ -53,6 +53,9 @@ Generated\ Files/
 [Bb]uild[Ll]og.*
 *.trx
 
+# Jetbrains
+.idea
+
 # NUnit
 *.VisualState.xml
 TestResult.xml

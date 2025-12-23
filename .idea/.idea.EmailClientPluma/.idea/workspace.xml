@@ -8,23 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a37afcca-f347-4168-9fcc-4f9e70f986d7" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.EmailClientPluma/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.EmailClientPluma/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/App.xaml.cs" beforeDir="false" afterPath="$PROJECT_DIR$/App.xaml.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Helper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Helper.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Accounting/GoogleAuthenticationService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Accounting/GoogleAuthenticationService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Accounting/MicrosoftAuthenticationService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Accounting/MicrosoftAuthenticationService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/AccountStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/AccountStorage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/EmailStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/EmailStorage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/LabelStorage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/LabelStorage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/Storaging/StorageService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/Storaging/StorageService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Services/WindowFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Services/WindowFactory.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/EmailClientPluma.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/EmailClientPluma.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/EmailLabelEditViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/EmailLabelEditViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/LabelEditorViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/LabelEditorViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/MainViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/MainViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/NewEmailViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/NewEmailViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/SettingsViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/SettingsViewModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MVVM/ViewModels/WhichProvViewModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/MVVM/ViewModels/WhichProvViewModel.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +45,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/ebe65732adf281db03e388c6486e28a574c76c8be32d99ca59dcfbecc65/Uri.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f74c15be4ebfb9eebdf1d29c607aa58a3dd7cfccafcbf075c7887256d97ccb40/SqliteDataReader.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fc2027f7e776fc105cddb56b1a25eeb3895b3ae6f3aac854d786e63bd01f75e2/CallSiteFactory.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/dev/CSharpProjects/EmailClientPluma/Core/Services/Accounting/GoogleAuthenticationService.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -89,7 +74,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -139,7 +124,7 @@
       <workItem from="1766050069458" duration="3392000" />
       <workItem from="1766104082917" duration="457000" />
       <workItem from="1766221422813" duration="8338000" />
-      <workItem from="1766510902669" duration="8941000" />
+      <workItem from="1766510902669" duration="9293000" />
     </task>
     <task id="LOCAL-00001" summary="add some migration">
       <option name="closed" value="true" />
@@ -197,7 +182,23 @@
       <option name="project" value="LOCAL" />
       <updated>1766229817859</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="add better exception context and logging">
+      <option name="closed" value="true" />
+      <created>1766520824327</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1766520824327</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fix naming">
+      <option name="closed" value="true" />
+      <created>1766521093683</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1766521093683</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -214,7 +215,9 @@
     <MESSAGE value="add microsoft login" />
     <MESSAGE value="fetch microsoft emails (untested), monitoring polling for google and microsoft" />
     <MESSAGE value="primitive refresh implementation" />
-    <option name="LAST_COMMIT_MESSAGE" value="primitive refresh implementation" />
+    <MESSAGE value="add better exception context and logging" />
+    <MESSAGE value="fix naming" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix naming" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
