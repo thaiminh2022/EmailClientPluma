@@ -9,7 +9,6 @@ using Google.Apis.Services;
 using System.Net;
 using EmailClientPluma.Core.Models.Exceptions;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -19,10 +18,10 @@ namespace EmailClientPluma.Core.Services.Accounting;
 /// </summary>
 internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> logger) : IAuthenticationService
 {
-    public const string CLIENT_SECRET = @"secrets\secret.json";
+    private const string ClientSecret = @"secrets\secret.json";
 
     // Ask user permissions (gmail, profile)
-    public static readonly string[] scopes =
+    private static readonly string[] _scopes =
     [
         "https://mail.google.com/",
         Oauth2Service.Scope.UserinfoEmail,
@@ -44,8 +43,8 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             logger.LogInformation("Initializing authentication for google");
             // prompt user to login
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
-                scopes,
+                GoogleClientSecrets.FromFile(ClientSecret).Secrets,
+                _scopes,
                 tempId,
                 CancellationToken.None,
                 _dataStore);
@@ -115,8 +114,8 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             logger.LogInformation("{mail} token is staled", acc.Email);
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
-                ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
-                Scopes = scopes
+                ClientSecrets = GoogleClientSecrets.FromFile(ClientSecret).Secrets,
+                Scopes = _scopes
             });
             var userCredentials = new UserCredential(flow, acc.ProviderUID, tokenRes);
 
@@ -148,8 +147,8 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
         try
         {
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
-                scopes,
+                GoogleClientSecrets.FromFile(ClientSecret).Secrets,
+                _scopes,
                 acc.ProviderUID,
                 CancellationToken.None,
                 _dataStore
