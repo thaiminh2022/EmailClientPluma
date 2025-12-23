@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Microsoft.Graph;
@@ -69,9 +70,9 @@ internal class OutlookApiEmailService : IEmailService
             acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
             await _storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            MessageBoxHelper.Error("Cannot fetch your account message");
+            throw new EmailFetchException(inner: ex);
         }
     }
 
@@ -315,10 +316,17 @@ internal class OutlookApiEmailService : IEmailService
         var client = GetGraphService(acc);
 
         // Get specific message with body
-        var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
-            .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
+        try
+        {
+            var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
+                .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
 
-        email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
+            email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
+        }
+        catch (Exception ex)
+        {
+            throw new EmailFetchException(inner: ex);
+        }
     }
 
     public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
@@ -370,11 +378,19 @@ internal class OutlookApiEmailService : IEmailService
         };
 
         var client = GetGraphService(acc);
-        await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+        try
         {
-            Message = message,
-            SaveToSentItems = true,
-        });
+            await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+            {
+                Message = message,
+                SaveToSentItems = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new EmailSendException(inner: ex);
+        }
+  
     }
 
     public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
@@ -405,8 +421,8 @@ internal class OutlookApiEmailService : IEmailService
             }
             catch (Exception ex)
             {
-                // keep going for others
-                MessageBoxHelper.Error(ex.Message);
+                // throw new EmailFetchException(inner: ex);
+                // ignore, for logging only
             }
         }
     }
@@ -427,9 +443,17 @@ internal class OutlookApiEmailService : IEmailService
         if (pag.Value.InboxNextLink is not null)
         {
             // inbox
-            var pageInbox = await client.Me.MailFolders["inbox"].Messages
-                .WithUrl(pag.Value.InboxNextLink)
-                .GetAsync(cancellationToken: token);
+            MessageCollectionResponse? pageInbox;
+            try
+            {
+                pageInbox = await client.Me.MailFolders["inbox"].Messages
+                    .WithUrl(pag.Value.InboxNextLink)
+                    .GetAsync(cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                throw new EmailTokenException(inner: ex);
+            }
 
             if (pageInbox?.Value is null || pageInbox.Value.Count == 0)
             {
@@ -454,10 +478,20 @@ internal class OutlookApiEmailService : IEmailService
 
         if (pag.Value.SentNextLink is not null)
         {
+
             // sent
-            var pageSent = await client.Me.MailFolders["sentitems"].Messages
-                .WithUrl(pag.Value.SentNextLink)
-                .GetAsync(cancellationToken: token);
+            MessageCollectionResponse? pageSent;
+            try
+            {
+                pageSent = await client.Me.MailFolders["sentitems"].Messages
+                    .WithUrl(pag.Value.SentNextLink)
+                    .GetAsync(cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                throw new EmailTokenException(inner: ex);
+            }
+       
 
             if (pageSent?.Value is not null && pageSent.Value.Count != 0)
             {

@@ -7,6 +7,7 @@ using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
 using System.Net;
+using EmailClientPluma.Core.Models.Exceptions;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -30,22 +31,26 @@ internal class GoogleAuthenticationService : IAuthenticationService
 
 
     /// <summary>
-    ///     Try to ask for authentiocating a new account
+    ///     Try to ask for authenticating a new account
     /// </summary>
     /// <returns>The account</returns>
     public async Task<AuthResponce?> AuthenticateAsync()
     {
-        var tempID = Guid.NewGuid().ToString();
+        var tempId = Guid.NewGuid().ToString();
         try
         {
             // prompt user to login
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                 scopes,
-                tempID,
+                tempId,
                 CancellationToken.None,
                 _dataStore);
 
+            if (credentials is null)
+            {
+                throw new AuthFailedException();
+            }
 
             var oauth2 = new Oauth2Service(new BaseClientService.Initializer
             {
@@ -59,7 +64,7 @@ internal class GoogleAuthenticationService : IAuthenticationService
                 return null;
             }
 
-            await _dataStore.DeleteAsync<TokenResponse>(tempID);
+            await _dataStore.DeleteAsync<TokenResponse>(tempId);
 
             var newUserCred = new UserCredential(credentials.Flow, userInfo.Id, credentials.Token);
             await _dataStore.StoreAsync(userInfo.Id, newUserCred.Token);
@@ -72,22 +77,23 @@ internal class GoogleAuthenticationService : IAuthenticationService
         {
             if (ex.HttpStatusCode == HttpStatusCode.Unauthorized ||
                 ex.HttpStatusCode == HttpStatusCode.Forbidden)
-                MessageBoxHelper.Error("Nguoi dung khong duoc phep dang nhap");
+                throw new AuthForbiddenException();
         }
         catch (TokenResponseException ex)
         {
-            MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex}");
+            throw new AuthForbiddenException(inner: ex);
         }
-        catch (Exception ex)
+        catch (TaskCanceledException ex)
         {
-            MessageBoxHelper.Error(ex);
+            throw new AuthCancelException(inner: ex);
         }
+
 
         return null;
     }
 
     /// <summary>
-    ///     Try validate by relogging
+    ///     Try to validate by relogging
     /// </summary>
     /// <param name="acc">The account</param>
     /// <returns>true if is valid or failed</returns>
@@ -103,22 +109,23 @@ internal class GoogleAuthenticationService : IAuthenticationService
                 ClientSecrets = GoogleClientSecrets.FromFile(CLIENT_SECRET).Secrets,
                 Scopes = scopes
             });
-            var usercred = new UserCredential(flow, acc.ProviderUID, tokenRes);
+            var userCredentials = new UserCredential(flow, acc.ProviderUID, tokenRes);
 
             try
             {
-                if (await usercred.RefreshTokenAsync(default))
+                if (await userCredentials.RefreshTokenAsync(CancellationToken.None))
                 {
-                    acc.Credentials.SessionToken = usercred.Token.AccessToken;
-                    acc.Credentials.RefreshToken = usercred.Token.RefreshToken;
-                    await _dataStore.StoreAsync(acc.ProviderUID, usercred.Token);
+                    acc.Credentials.SessionToken = userCredentials.Token.AccessToken;
+                    acc.Credentials.RefreshToken = userCredentials.Token.RefreshToken;
+                    await _dataStore.StoreAsync(acc.ProviderUID, userCredentials.Token);
 
                     return true;
                 }
             }
-            catch (TokenResponseException)
+            catch (TokenResponseException ex)
             {
-                MessageBoxHelper.Error($"Hay dang nhap lai tai khoan: {acc.Email}");
+                //throw new AuthRefreshException(inner: ex);
+                // trying to do interactive
             }
         }
         else
@@ -126,6 +133,7 @@ internal class GoogleAuthenticationService : IAuthenticationService
             return true;
         }
 
+        // can't silent login so doing interactive
         try
         {
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
@@ -135,13 +143,18 @@ internal class GoogleAuthenticationService : IAuthenticationService
                 CancellationToken.None,
                 _dataStore
             );
-            await _dataStore.StoreAsync(acc.ProviderUID, credentials.Token);
+            if (credentials is null)
+            {
+                throw new AuthFailedException();
+            }
 
+            await _dataStore.StoreAsync(acc.ProviderUID, credentials.Token);
             return true;
         }
         catch (TaskCanceledException ex)
         {
-            MessageBoxHelper.Error(ex.Message);
+            //throw new AuthCancelException(inner: ex);
+            // this is for logging
         }
 
         return false;

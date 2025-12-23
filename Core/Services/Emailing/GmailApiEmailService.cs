@@ -7,6 +7,7 @@ using Google.Apis.Services;
 using MimeKit;
 using System.IO;
 using System.Text;
+using EmailClientPluma.Core.Models.Exceptions;
 using MessagePart = Google.Apis.Gmail.v1.Data.MessagePart;
 
 
@@ -46,8 +47,7 @@ internal class GmailApiEmailService : IEmailService
             }
             catch (Exception ex)
             {
-                response = null;
-                MessageBoxHelper.Error(ex);
+                throw new EmailFetchException(inner: ex);
             }
 
         }
@@ -120,8 +120,7 @@ internal class GmailApiEmailService : IEmailService
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.Error(ex.Message);
-            email.MessageParts.Body = "(Unable to fetch body)";
+            throw new EmailFetchException(inner: ex);
         }
     }
 
@@ -151,7 +150,7 @@ internal class GmailApiEmailService : IEmailService
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.Error(ex.Message);
+            throw new EmailFetchException(inner: ex);
         }
     }
 
@@ -168,7 +167,17 @@ internal class GmailApiEmailService : IEmailService
 
         // Use the pagination token if we have one
         if (!string.IsNullOrEmpty(acc.PaginationToken)) request.PageToken = acc.PaginationToken;
-        var response = await request.ExecuteAsync(token);
+
+        ListMessagesResponse? response;
+        try
+        {
+            response = await request.ExecuteAsync(token);
+
+        }
+        catch (Exception ex)
+        {
+            throw new EmailTokenException(inner: ex);
+        }
 
         if (response.Messages is null || response.Messages.Count == 0)
         {
@@ -184,18 +193,25 @@ internal class GmailApiEmailService : IEmailService
         // Fetch and store older messages
         foreach (var msgRef in response.Messages)
         {
-            var msg = await service.Users.Messages.Get("me", msgRef.Id).ExecuteAsync();
-            var email = CreateEmailFromMessage(acc, msg);
+            try
+            {
+                var msg = await service.Users.Messages.Get("me", msgRef.Id).ExecuteAsync(token);
+                var email = CreateEmailFromMessage(acc, msg);
 
-            if (acc.Emails.Any(x =>
-                    x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
-                continue;
+                if (acc.Emails.Any(x =>
+                        x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
+                    continue;
 
-            acc.Emails.Add(email);
+                acc.Emails.Add(email);
+            }
+            catch (Exception ex)
+            {
+                throw new EmailFetchException(inner: ex);
+            }
+
         }
 
         await _storageService.StoreEmailAsync(acc);
-
         return true;
     }
 
@@ -216,8 +232,14 @@ internal class GmailApiEmailService : IEmailService
         {
             Raw = base64UrlEmail
         };
-
-        await service.Users.Messages.Send(gmailMessage, "me").ExecuteAsync();
+        try
+        {
+            await service.Users.Messages.Send(gmailMessage, "me").ExecuteAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new EmailSendException(inner: ex);
+        }
     }
 
     private string EncodeBase64Url(string text)

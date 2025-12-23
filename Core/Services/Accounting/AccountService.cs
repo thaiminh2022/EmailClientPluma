@@ -49,11 +49,9 @@ internal class AccountService : IAccountService
     ///     Add a new account
     /// </summary>
     /// <param name="provider">the type of provider the new account use</param>
-    /// <returns></returns>
     public async Task AddAccountAsync(Provider provider)
     {
         var res = await GetAuthServiceByProvider(provider).AuthenticateAsync();
-
         if (res is null)
             return;
 
@@ -102,7 +100,6 @@ internal class AccountService : IAccountService
     /// <returns>true if valid else false</returns>
     public async Task<bool> ValidateAccountAsync(Account acc)
     {
-        ArgumentNullException.ThrowIfNull(acc);
         if (string.IsNullOrEmpty(acc.ProviderUID))
             return false;
 
@@ -153,7 +150,7 @@ internal class AccountService : IAccountService
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.Error("Account initialize exception: ", ex);
+            throw new Exception("Account init exception", innerException: ex);
         }
     }
 

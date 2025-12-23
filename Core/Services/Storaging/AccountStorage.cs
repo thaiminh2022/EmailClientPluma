@@ -1,5 +1,7 @@
-﻿using Dapper;
+﻿using System.Reflection.Metadata;
+using Dapper;
 using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
 
@@ -61,7 +63,7 @@ internal class AccountStorage
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.Error(ex.Message);
+                throw new ReadAccountException(inner: ex);
             }
         }
 
@@ -86,18 +88,23 @@ internal class AccountStorage
                       PAGINATION_TOKEN = excluded.PAGINATION_TOKEN,
                       LAST_SYNC_TOKEN  = excluded.LAST_SYNC_TOKEN;
                   """;
-
-        var affected = await connection.ExecuteAsync(sql, new
+        try
         {
-            account.ProviderUID,
-            Provider = account.Provider.ToString(),
-            account.Email,
-            account.DisplayName,
-            account.PaginationToken,
-            account.LastSyncToken
-        });
-
-        return affected;
+            var affected = await connection.ExecuteAsync(sql, new
+            {
+                account.ProviderUID,
+                Provider = account.Provider.ToString(),
+                account.Email,
+                account.DisplayName,
+                account.PaginationToken,
+                account.LastSyncToken
+            });
+            return affected;
+        }
+        catch (Exception ex)
+        {
+            throw new WriteAccountException(inner: ex);
+        }
     }
 
     public async Task UpdatePaginationAndNextTokenAsync(Account account)
@@ -110,15 +117,20 @@ internal class AccountStorage
                     UPDATE ACCOUNTS SET PAGINATION_TOKEN = @PaginationToken, LAST_SYNC_TOKEN = @LastSyncToken
                     WHERE  PROVIDER_UID = @ProviderUID
                   """;
-
-        await connection.ExecuteAsync(sql, new
+        try
         {
-            account.PaginationToken,
-            account.LastSyncToken,
-            account.ProviderUID
-        }, tx);
-
-        await tx.CommitAsync();
+            await connection.ExecuteAsync(sql, new
+            {
+                account.PaginationToken,
+                account.LastSyncToken,
+                account.ProviderUID
+            }, tx);
+            await tx.CommitAsync();
+        }
+        catch (Exception)
+        {
+            throw new WriteAccountException();
+        }
     }
 
     public async Task RemoveAccountAsync(Account account)
@@ -126,17 +138,29 @@ internal class AccountStorage
         await using var connection = CreateConnection();
 
         const string sql = @"DELETE FROM ACCOUNTS WHERE PROVIDER_UID = @ProviderUID;";
-        await connection.ExecuteAsync(sql, new { account.ProviderUID });
 
-        switch (account.Provider)
+        try
         {
-            case Provider.Google:
-                await _tokenStore.DeleteAsync<TokenResponse>(account.ProviderUID);
-                break;
-            case Provider.Microsoft:
-                break;
-            default:
-                throw new NotImplementedException("Deleting account for this provider isnt implemented yet");
+            await connection.ExecuteAsync(sql, new { account.ProviderUID });
+
+            switch (account.Provider)
+            {
+                case Provider.Google:
+                    await _tokenStore.DeleteAsync<TokenResponse>(account.ProviderUID);
+                    break;
+                case Provider.Microsoft:
+                    break;
+                default:
+                    throw new NotImplementedException("Deleting account for this provider isnt implemented yet");
+            }
+        }
+        catch (NotImplementedException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new WriteAccountException(inner: ex);
         }
     }
 }

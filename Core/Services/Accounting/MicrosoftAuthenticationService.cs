@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows;
 using System.Windows.Interop;
+using EmailClientPluma.Core.Models.Exceptions;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -93,7 +94,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
                 MsalCacheHelper.UserRootDirectory)
             .Build();
 
-        MsalCacheHelper cacheHelper = await MsalCacheHelper.CreateAsync(
+        var cacheHelper = await MsalCacheHelper.CreateAsync(
             storageProperties,
             new TraceSource("MSAL.CacheTrace")).ConfigureAwait(false);
         return cacheHelper;
@@ -123,20 +124,14 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
                 Provider.Microsoft,
                 new Credentials(string.Empty, string.Empty));
         }
-        catch (MsalClientException)
+        catch (MsalClientException ex)
         {
-            MessageBoxHelper.Info("Microsoft authentication canceled");
+            throw new AuthFailedException(msg: "Lỗi phần mềm, xin đừng sử dụng chức năng này", inner: ex);
         }
-        catch (MsalServiceException)
+        catch (MsalServiceException ex)
         {
-            MessageBoxHelper.Info("Cannot get Microsoft authentication info");
+            throw new AuthFailedException(inner: ex);
         }
-        catch (Exception ex)
-        {
-            MessageBoxHelper.Error(ex);
-        }
-
-        return null;
     }
     private struct UserProfile
     {
@@ -174,7 +169,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
 
     public async Task<bool> ValidateAsync(Account acc)
     {
-        AuthenticationResult? res;
+        AuthenticationResult? res = null;
         IAccount? microsoftAccount = null;
 
         try
@@ -203,20 +198,27 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
             // interactive login
         }
 
-        if (microsoftAccount is null)
+        try
         {
-            res = await PublicClient.AcquireTokenInteractive(Scopes)
-                .WithPrompt(Prompt.SelectAccount)
-                .ExecuteAsync();
+            if (microsoftAccount is null)
+            {
+                res = await PublicClient.AcquireTokenInteractive(Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .ExecuteAsync();
+            }
+            else
+            {
+                res = await PublicClient.AcquireTokenInteractive(Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .WithAccount(microsoftAccount)
+                    .ExecuteAsync();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            res = await PublicClient.AcquireTokenInteractive(Scopes)
-                .WithPrompt(Prompt.SelectAccount)
-                .WithAccount(microsoftAccount)
-                .ExecuteAsync();
+            //throw new AuthFailedException(inner: ex);
+            //this is for logging
         }
-
         return res is not null;
     }
 }

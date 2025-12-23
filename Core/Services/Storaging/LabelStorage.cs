@@ -1,5 +1,7 @@
-﻿using Dapper;
+﻿using System.Windows.Documents;
+using Dapper;
 using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using Microsoft.Data.Sqlite;
 
 namespace EmailClientPluma.Core.Services.Storaging;
@@ -31,12 +33,20 @@ internal class LabelStorage
 
         foreach (var label in EmailLabel.Labels)
         {
-            var id = await connection.ExecuteScalarAsync<int>(sql, new
+            try
             {
-                LabelName = label.Name,
-                OwnerId = acc.ProviderUID,
-                Color = Helper.ColorToARGB(label.Color)
-            });
+                await connection.ExecuteScalarAsync<int>(sql, new
+                {
+                    LabelName = label.Name,
+                    OwnerId = acc.ProviderUID,
+                    Color = Helper.ColorToARGB(label.Color)
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new WriteLabelException(inner: ex);
+            }
+
         }
     }
 
@@ -75,6 +85,7 @@ internal class LabelStorage
 
         foreach (var label in acc.OwnedLabels)
             if (label.Id == -1)
+            {
                 // new label, insert without ID
                 try
                 {
@@ -86,11 +97,13 @@ internal class LabelStorage
                     });
                     label.Id = id;
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    MessageBoxHelper.Error(e);
+                    throw new WriteLabelException(inner: ex);
                 }
+            }
             else
+            {
                 try
                 {
                     await connection.ExecuteAsync(updateSql, new
@@ -100,10 +113,11 @@ internal class LabelStorage
                         Color = Helper.ColorToARGB(label.Color)
                     });
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
-                    MessageBoxHelper.Error(e);
+                    throw new WriteLabelException(inner: ex);
                 }
+            }
     }
 
     public async Task StoreLabelsAsync(Email mail)
@@ -131,12 +145,19 @@ internal class LabelStorage
 
             if (!int.TryParse(labelId?.ToString(), out var id))
                 continue;
-
-            await connection.ExecuteAsync(sql, new
+            try
             {
-                LabelId = id,
-                mail.MessageIdentifiers.EmailId
-            });
+                await connection.ExecuteAsync(sql, new
+                {
+                    LabelId = id,
+                    mail.MessageIdentifiers.EmailId
+                });
+            }
+            catch (Exception ex)
+            {
+                throw new WriteLabelException(inner: ex);
+            }
+
         }
     }
 
@@ -149,12 +170,19 @@ internal class LabelStorage
                     DELETE FROM EMAIL_LABELS
                     WHERE LABEL_ID = @LabelId AND EMAIL_ID = @EmailId
                   """;
-
-        await connection.ExecuteAsync(sql, new
+        try
         {
-            LabelId = label.Id,
-            mail.MessageIdentifiers.EmailId
-        });
+            await connection.ExecuteAsync(sql, new
+            {
+                LabelId = label.Id,
+                mail.MessageIdentifiers.EmailId
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new RemoveLabelException(inner: ex);
+        }
+
     }
 
     public async Task<IEnumerable<EmailLabel>> GetLabelsAsync(Account acc)
@@ -167,21 +195,26 @@ internal class LabelStorage
                   FROM LABELS
                   WHERE OWNER_ID = @OwnerId
                   """;
-
-        var labels = await connection.QueryAsync<EmailLabelRow>(sql, new
+        try
         {
-            OwnerId = acc.ProviderUID
-        });
-
-        return labels.Select(x =>
-        {
-            var label = new EmailLabel(x.LABEL_NAME, Helper.ColorFromARGB(x.COLOR), x.IS_EDITABLE)
+            var labels = await connection.QueryAsync<EmailLabelRow>(sql, new
             {
-                Id = x.ID
-            };
+                OwnerId = acc.ProviderUID
+            });
+            return labels.Select(x =>
+            {
+                var label = new EmailLabel(x.LABEL_NAME, Helper.ColorFromARGB(x.COLOR), x.IS_EDITABLE)
+                {
+                    Id = x.ID
+                };
 
-            return label;
-        });
+                return label;
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new ReadLabelException(inner: ex);
+        }
     }
 
     public async Task<IEnumerable<EmailLabel>> GetLabelsAsync(Email email)
@@ -195,22 +228,29 @@ internal class LabelStorage
                   JOIN LABELS l ON el.LABEL_ID = l.ID
                   WHERE OWNER_ID = @OwnerId AND el.EMAIL_ID = @EmailId
                   """;
-
-        var labels = await connection.QueryAsync<EmailLabelRow>(sql, new
+        try
         {
-            OwnerId = email.MessageIdentifiers.OwnerAccountId,
-            email.MessageIdentifiers.EmailId
-        });
-
-        return labels.Select(x =>
-        {
-            var label = new EmailLabel(x.LABEL_NAME, Helper.ColorFromARGB(x.COLOR), x.IS_EDITABLE)
+            var labels = await connection.QueryAsync<EmailLabelRow>(sql, new
             {
-                Id = x.ID
-            };
+                OwnerId = email.MessageIdentifiers.OwnerAccountId,
+                email.MessageIdentifiers.EmailId
+            });
 
-            return label;
-        });
+            return labels.Select(x =>
+            {
+                var label = new EmailLabel(x.LABEL_NAME, Helper.ColorFromARGB(x.COLOR), x.IS_EDITABLE)
+                {
+                    Id = x.ID
+                };
+
+                return label;
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new ReadEmailException(inner: ex);
+        }
+
     }
 }
 
