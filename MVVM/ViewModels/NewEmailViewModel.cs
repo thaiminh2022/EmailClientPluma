@@ -143,9 +143,17 @@ namespace EmailClientPluma.MVVM.ViewModels
                     {
                         byte[] fileBytes = File.ReadAllBytes(filePath);
 
+                        string ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+                        using var key = Registry.ClassesRoot.OpenSubKey(ext);
+                        string? mime = key?.GetValue("Content Type") as string;
+
+                        
+
                         Attachments.Add(new Attachment
                         {
                             FileName = Path.GetFileName(filePath),
+                            MimeType = mime ?? "application/octet-stream",
                             Content = fileBytes
                         });
                     }
