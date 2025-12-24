@@ -3,8 +3,10 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using Microsoft.Win32;
+using Org.BouncyCastle.Utilities;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Security.Cryptography;
 
 
 namespace EmailClientPluma.MVVM.ViewModels
@@ -126,7 +128,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 
-            AddAttachment = new RelayCommand(_ =>
+            AddAttachment = new RelayCommand(async _ =>
             {
                 OpenFileDialog ofd = new OpenFileDialog
                 {
@@ -141,13 +143,36 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     try
                     {
-                        byte[] fileBytes = File.ReadAllBytes(filePath);
+                       byte[] fileData = await File.ReadAllBytesAsync(filePath);
+                       
 
-                        Attachments.Add(new Attachment
+                        // Hash original file (dedupe key)
+                        string storageKey = Convert.ToHexString(SHA256.HashData(fileData));
+
+                        DirectoryInfo dir = Directory.CreateDirectory(
+                            Path.Combine(Helper.DataFolder, "Attachments"));
+
+                        string finalPath = Path.Combine(dir.FullName, storageKey);
+
+
+
+                        if(!File.Exists(finalPath))
+                        {
+                            await File.WriteAllBytesAsync(finalPath, fileData);
+                        }
+
+                        string ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+                        using var key = Registry.ClassesRoot.OpenSubKey(ext);
+                        string? mime = key?.GetValue("Content Type") as string;
+
+                        Attachment attachment = new Attachment
                         {
                             FileName = Path.GetFileName(filePath),
-                            Content = fileBytes
-                        });
+                            MimeType = mime ?? "application/octet-stream",
+                            Size = fileData.Length,
+                            StorageKey = storageKey
+                        };
                     }
                     catch (Exception ex)
                     {
@@ -155,8 +180,9 @@ namespace EmailClientPluma.MVVM.ViewModels
                             $"Could not add attachment {Path.GetFileName(filePath)}: {ex.Message}");
                     }
                 }
-            
+
             }, _ => true);
+
 
             RemoveAttachment = new RelayCommand(_ =>
             {

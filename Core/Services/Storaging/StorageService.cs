@@ -53,6 +53,7 @@ namespace EmailClientPluma.Core.Services.Storaging
             _accountStorage = new AccountStorage(tokenStore, connectionString);
             _emailStorage = new EmailStorage(connectionString);
             _labelStorage = new LabelStorage(connectionString);
+            _attachmentStorage = new AttachmentStorage(connectionString);
 
             var migrator = new StorageMigrator(connectionString);
             migrator.Migrate();
