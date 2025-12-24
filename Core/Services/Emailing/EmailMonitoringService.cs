@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services.Storaging;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Security;
@@ -14,10 +15,10 @@ namespace EmailClientPluma.Core.Services.Emailing
     }
     internal class EmailMonitoringService : IEmailMonitoringService
     {
-        readonly IStorageService _storageService;
+        private readonly IStorageService _storageService;
 
-        readonly Dictionary<string, AccountMonitor> _monitors = [];
-        readonly object _lock = new object();
+        private readonly Dictionary<string, AccountMonitor> _monitors = [];
+        private readonly object _lock = new();
 
         public EmailMonitoringService(IStorageService storageService)
         {
@@ -44,7 +45,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                 if (_monitors.ContainsKey(acc.ProviderUID))
                     return;
 
-                var knownEmailIds = acc.Emails.Select(e => e.MessageIdentifiers.ImapUID);
+                var knownEmailIds = acc.Emails.Select(e => e.MessageIdentifiers.ImapUid);
                 var monitor = new AccountMonitor(knownEmailIds);
                 _monitors.Add(acc.ProviderUID, monitor);
 
@@ -180,7 +181,7 @@ namespace EmailClientPluma.Core.Services.Emailing
                                 {
                                     continue;
                                 }
-                            
+
 
                                 //fetch the full body
                                 var email = Helper.CreateEmailFromSummary(acc, inbox, item);

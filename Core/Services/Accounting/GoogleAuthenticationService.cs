@@ -5,10 +5,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
-using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
-using Org.BouncyCastle.Ocsp;
-using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Accounting
 {
@@ -79,11 +76,11 @@ namespace EmailClientPluma.Core.Services.Accounting
             }
             catch (TokenResponseException ex)
             {
-                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex.Error}");
+                MessageBoxHelper.Info($"Nguoi dung huy dang nhap: {ex}");
             }
             catch (Exception ex)
             {
-                MessageBoxHelper.Error(ex.Message);
+                MessageBoxHelper.Error(ex);
             }
             return null;
         }
@@ -137,7 +134,7 @@ namespace EmailClientPluma.Core.Services.Accounting
                      _dataStore
                 );
                 await _dataStore.StoreAsync(acc.ProviderUID, credentials.Token);
-                
+
                 return true;
             }
             catch (TaskCanceledException ex)

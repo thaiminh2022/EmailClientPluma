@@ -11,8 +11,8 @@ namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class NewEmailViewModel : ObserableObject, IRequestClose
     {
-        readonly IAccountService _accountService;
-        readonly IEmailService _emailService;
+        private readonly IAccountService _accountService;
+        private readonly IEmailService _emailService;
 
         public ObservableCollection<Account> Accounts { get; set; }
         private Account? _selectedAccount;
@@ -27,7 +27,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public Account? SelectedAccount
         {
-            get { return _selectedAccount; }
+            get => _selectedAccount;
             set
             {
                 _selectedAccount = value;
@@ -61,7 +61,8 @@ namespace EmailClientPluma.MVVM.ViewModels
         public string? ToAddresses { get => _toAddresses; set { _toAddresses = value; OnPropertyChanges(); } }
         public string? Subject { get => _subject; set { _subject = value; OnPropertyChanges(); } }
         public string? Body { get; set; }
-        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); } }
+        public bool IsEnable { get => _isEnable; set { _isEnable = value; OnPropertyChanges(); OnPropertyChanges("IsNotEnable"); } }
+        public bool IsNotEnable { get => !_isEnable; set { _isEnable = !value; OnPropertyChanges(); OnPropertyChanges("IsEnable"); } }
         public Email? ReplyToEmail { get => _replyToEmail; set { _replyToEmail = value; OnPropertyChanges(); } }
 
         public void SetupReply(Account acc, Email email)
@@ -69,7 +70,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             SelectedAccount = acc;
             ToAddresses = email.MessageParts.From;
             Subject = $"Re: {email.MessageParts.Subject}";
-            _inReplyTo = email.MessageIdentifiers.MessageID;
+            _inReplyTo = email.MessageIdentifiers.MessageId;
             _replyTo = email.MessageParts.From;
             IsEnable = false;
             ReplyToEmail = email;

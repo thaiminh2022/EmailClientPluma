@@ -2,9 +2,11 @@
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
+using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
+using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
 namespace EmailClientPluma
 {
@@ -40,9 +42,15 @@ namespace EmailClientPluma
 
             //window
             services.AddTransient<NewEmailViewModel>();
+            services.AddTransient<LabelEditorViewModel>();
+            services.AddTransient<EmailLabelEditViewModel>();
 
-            // Might change this later, it's a singleton due to aplication design
+            // Might change this later, it's a singleton due to application design
             services.AddSingleton<MainViewModel>();
+
+            services.AddTransient<SettingsViewModel>();
+
+            services.AddTransient<WhichProvViewModel>();
 
             Services = services.BuildServiceProvider();
         }

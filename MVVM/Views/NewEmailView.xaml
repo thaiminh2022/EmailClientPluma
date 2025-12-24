@@ -15,8 +15,12 @@
     mc:Ignorable="d">
     <Window.DataContext>
         <viewmodels:NewEmailViewModel />
-        
     </Window.DataContext>
+
+    <Window.Resources>
+        <Style TargetType="TextBlock" BasedOn="{StaticResource GBTB}" />
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions />
         <Grid.RowDefinitions>
@@ -118,7 +122,7 @@
                     <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True"
                                   behaviors:WebView2Editor.HtmlContent="{Binding Body}" />
                 </TabItem>
-                <TabItem Header="Select Reply">
+                <TabItem Header="Select Reply" IsEnabled="{Binding IsNotEnable}">
                     <wv2:WebView2 behaviors:WebView2SelectEditor.EnableBinding="True"
                                   behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}" 
                                   behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}"
@@ -150,16 +154,12 @@
             HorizontalAlignment="Left"
             Orientation="Horizontal">
             <Button
-                Background="#0b57d0"
-                Command="{Binding SendCommand}"
-                Foreground="White">
+                Command="{Binding SendCommand}">
                 Send
             </Button>
             <Button
                 Margin="5,0,0,0"
-                Background="#0b57d0"
-                Command="{Binding CancelCommand}"
-                Foreground="White">
+                Command="{Binding CancelCommand}">
                 Cancel
             </Button>
 
