@@ -1,6 +1,7 @@
 ﻿using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using MailKit;
+using Microsoft.Win32;
 using MimeKit;
 using Org.BouncyCastle.Utilities;
 using System.IO;
@@ -141,6 +142,21 @@ namespace EmailClientPluma.Core
                 Size = new FileInfo(finalPath).Length,
                 StorageKey = storageKey
             };
+        }
+
+        public static async Task EventDownloadAttachmentAsync(Attachment att)
+        {
+            SaveFileDialog sfd = new SaveFileDialog
+            {
+                FileName = att.FileName,
+                Filter = $"{att.FileName}|*.*"
+            };
+
+            if (sfd.ShowDialog() != true)
+                return;
+
+            byte[] storedBytes = await File.ReadAllBytesAsync(att.FilePath);
+            await File.WriteAllBytesAsync(sfd.FileName, storedBytes);
         }
     }
 }

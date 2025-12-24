@@ -143,8 +143,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     try
                     {
-                       byte[] fileData = await File.ReadAllBytesAsync(filePath);
-                       
+                        byte[] fileData = await File.ReadAllBytesAsync(filePath);
+
 
                         // Hash original file (dedupe key)
                         string storageKey = Convert.ToHexString(SHA256.HashData(fileData));
@@ -156,9 +156,10 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 
-                        if(!File.Exists(finalPath))
+                        if (!File.Exists(finalPath))
                         {
                             await File.WriteAllBytesAsync(finalPath, fileData);
+                            
                         }
 
                         string ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -173,6 +174,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                             Size = fileData.Length,
                             StorageKey = storageKey
                         };
+
+                        
                     }
                     catch (Exception ex)
                     {
@@ -190,6 +193,12 @@ namespace EmailClientPluma.MVVM.ViewModels
                     Attachments.Remove(SelectedAttachment);
             }, _ => true);
         }
+
+
+            
+
+
+        
 
         // This should not be matter because this is for UI type hinting
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.

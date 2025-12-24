@@ -112,6 +112,8 @@ namespace EmailClientPluma.MVVM.ViewModels
             }
         }
 
+
+
         private async Task FetchEmailBody()
         {
             if (_selectedAccount is null || _selectedEmail is null)
