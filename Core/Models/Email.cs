@@ -62,11 +62,9 @@ namespace EmailClientPluma.Core.Models
 
     internal record Attachment
     {
-        public long AttachmentID { get; set; } // set by database    
-        public long OwnerEmailID { get; set; }
+        public int AttachmentID { get; set; } // set by database    
+        public int OwnerEmailID { get; set; }
         required public string FileName { get; set; }
-
-        required public string MimeType { get; set; }
         required public byte[] Content { get; set; }
 
     }

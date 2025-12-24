@@ -19,21 +19,4 @@
             public string? DATE { get; set; }
         }
     }
-
-    internal partial class StorageService
-    {
-        private sealed class AttachmentRow
-        {
-            public long ATTACHMENT_ID { get; set; }
-            public long EMAIL_ID { get; set; }
-
-            public string FILENAME { get; set; } = null!;
-            public string MIMETYPE { get; set; } = null!;
-            public long SIZE { get; set; }
-
-            public string STORAGE_KEY { get; set; } = null!;
-            public string CREATEDUTC { get; set; } = null!;
-
-        }
-    }
 }
