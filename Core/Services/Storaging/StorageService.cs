@@ -5,9 +5,7 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
-using System.IO;
 using System.Windows;
-using System.Security.Cryptography;
 
 
 namespace EmailClientPluma.Core.Services.Storaging
@@ -22,8 +20,6 @@ namespace EmailClientPluma.Core.Services.Storaging
         Task StoreEmailAsync(Account acc);
         Task StoreEmailAsync(Account acc, Email mail);
         Task UpdateEmailBodyAsync(Email email);
-        Task StoreAttachmentsFromEmail(Email email);
-        Task<IEnumerable<Attachment>> GetAttachmentsFromEmail(Email email); 
 
         Task<IEnumerable<EmailLabel>> GetLabelsAsync(Account acc);
         Task StoreLabelAsync(Account acc);
@@ -133,83 +129,6 @@ namespace EmailClientPluma.Core.Services.Storaging
         public async Task DeleteEmailLabelAsync(EmailLabel label, Email email)
         {
             await _labelStorage.DeleteEmailLabelAsync(label, email);
-        }
-
-        #endregion
-
-        #region Attachments
-        public async Task StoreAttachmentsFromEmail (Email email)
-        {
-            using var connection = CreateConnection();
-            await connection.OpenAsync();
-
-            
-            foreach (var part in email.MessageParts.Attachments)
-            {
-                // 1. Decode bytes
-                
-                byte[] bytes = part.Content;
-
-                // 2. Generate storage key
-                string storageKey = Convert.ToHexString(
-                    SHA256.HashData(bytes));
-
-
-                // 3. Save to vault (dedup)
-                DirectoryInfo directory = Directory.CreateDirectory(Path.Combine(Helper.DataFolder,"Attachments"));
-                string path = Path.Combine(directory.FullName, storageKey);
-
-                if (!File.Exists(path))
-                    await File.WriteAllBytesAsync(path, bytes);
-
-                // 4. Insert metadata row
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText =
-                """
-                INSERT INTO ATTACHMENTS
-                (EMAIL_ID, FILENAME, MIMETYPE, SIZE, STORAGE_KEY, CREATEDUTC)
-                VALUES (@email,@name,@mime,@size,@key,@utc);
-                """;
-
-                cmd.Parameters.AddWithValue("@email", email.MessageIdentifiers.EmailID);
-                cmd.Parameters.AddWithValue("@name", part.FileName);
-                cmd.Parameters.AddWithValue("@mime", part.MimeType);
-                cmd.Parameters.AddWithValue("@size", bytes.Length);
-                cmd.Parameters.AddWithValue("@key", storageKey);
-                cmd.Parameters.AddWithValue("@utc", DateTime.UtcNow);
-
-                await cmd.ExecuteNonQueryAsync();
-            }
-        }
-
-        public async Task<IEnumerable<Attachment>> GetAttachmentsFromEmail(Email email)
-        {
-            using var connection = CreateConnection();
-            var sql = @"
-                        SELECT ATTACHMENT_ID,
-                               EMAIL_ID,
-                               FILENAME,
-                               MIMETYPE,
-                               SIZE,
-                               STORAGE_KEY,
-                               CREATEDUTC
-                        FROM ATTACHMENTS
-                        WHERE EMAILID = @EmailId
-                       ";
-            var rows = await connection.QueryAsync<AttachmentRow>(sql, new { EmailId = email.MessageIdentifiers.EmailID });
-            var attachments = rows.Select(r =>
-            {
-                return new Attachment
-                {
-                    AttachmentID = r.ATTACHMENT_ID,
-                    OwnerEmailID = r.EMAIL_ID,
-                    FileName = r.FILENAME,
-                    MimeType = r.MIMETYPE,
-                    Content = File.ReadAllBytes(
-                        Path.Combine(Helper.DataFolder, r.STORAGE_KEY)),
-                };
-            }).ToList();
-            return attachments;
         }
 
         #endregion
