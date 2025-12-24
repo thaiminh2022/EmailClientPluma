@@ -1,10 +1,11 @@
-using EmailClientPluma.Core.Models;
 using Dapper;
 using EmailClientPluma.Core.Models;
+
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2.Responses;
 using Microsoft.Data.Sqlite;
+using System.Threading.Tasks;
 using System.Windows;
 
 
@@ -12,20 +13,29 @@ namespace EmailClientPluma.Core.Services.Storaging
 {
     interface IStorageService
     {
+        //ACCOUNTS
         Task<IEnumerable<Account>> GetAccountsAsync();
         Task<int> StoreAccountAsync(Account account);
         Task RemoveAccountAsync(Account account);
 
+        //EMAILS
         Task<IEnumerable<Email>> GetEmailsAsync(Account acc);
         Task StoreEmailAsync(Account acc);
         Task StoreEmailAsync(Account acc, Email mail);
         Task UpdateEmailBodyAsync(Email email);
 
+        //LABELS
         Task<IEnumerable<EmailLabel>> GetLabelsAsync(Account acc);
         Task StoreLabelAsync(Account acc);
         Task StoreLabelsAsync(Email mail);
         Task DeleteLabelAsync(EmailLabel label);
         Task DeleteEmailLabelAsync(EmailLabel label, Email email);
+
+        //ATTACHMENTS
+        Task<IEnumerable<Attachment>> GetAttachmentsAsync(Email email);
+        Task StoreAttachmentsAsync(Email email);
+        Task StoreAttachmentsAsync(Email email, IEnumerable<Attachment> attachments);
+        Task<bool> DeleteAttachmentAsync(Attachment attachment);
 
     }
     internal class StorageService : IStorageService
@@ -33,6 +43,7 @@ namespace EmailClientPluma.Core.Services.Storaging
         private readonly AccountStorage _accountStorage;
         private readonly EmailStorage _emailStorage;
         private readonly LabelStorage _labelStorage;
+        private readonly AttachmentStorage _attachmentStorage;
 
         public StorageService()
         {
@@ -129,6 +140,24 @@ namespace EmailClientPluma.Core.Services.Storaging
         public async Task DeleteEmailLabelAsync(EmailLabel label, Email email)
         {
             await _labelStorage.DeleteEmailLabelAsync(label, email);
+        }
+
+        #endregion
+
+        #region Attachments
+        public async Task<IEnumerable<Attachment>> GetAttachmentsAsync(Email email)
+        {
+            return await _attachmentStorage.GetAttachmentsAsync(email);
+        }
+        public async Task StoreAttachmentsAsync(Email email, IEnumerable<Attachment> attachments)
+        {
+            await _attachmentStorage.StoreAttachmentsInternal(email, attachments);
+        }
+
+        public async Task StoreAttachmentsAsync(Email email) => await StoreAttachmentsAsync(email, email.MessageParts.Attachments);
+        public async Task<bool> DeleteAttachmentAsync(Attachment attachment)
+        {
+            return await _attachmentStorage.DeleteAttachmentInternal(attachment);
         }
 
         #endregion

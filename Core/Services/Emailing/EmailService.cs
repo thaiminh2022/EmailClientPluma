@@ -342,6 +342,8 @@ namespace EmailClientPluma.Core.Services.Emailing
                 }
             }
 
+            await _storageService.UpdateEmailBodyAsync(email);
+
             var attachments = new List<Attachment>();
 
             if (bodyParts.Attachments != null)
@@ -352,27 +354,18 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                     if (entity is MimePart mimePart)
                     {
-                        using var ms = new MemoryStream();
-                        await mimePart.Content.DecodeToAsync(ms);
-
-                        attachments.Add(new Attachment
-                        {
-                            OwnerEmailID = email.MessageIdentifiers.EmailId,
-                            FileName = mimePart.FileName ?? "attachment",
-                            Content = ms.ToArray()
-                        });
+                        Attachment attach = await Helper.CreateAttachmentFMP(email, mimePart);
+                        attachments.Add(attach);
                     }
                 }
             }
 
             email.MessageParts.Attachments = attachments;
-
-            // PERSIST
-            await _storageService.UpdateEmailBodyAsync(email);
-
-            //if (attachments.Count > 0)
-            //    await _storageService.SaveAttachmentsAsync(email, attachments);
+            if(attachments.Count > 0) 
+                await _storageService.StoreAttachmentsAsync(email, attachments);
         }
+
+           
         public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
         {
             var candidates = acc.Emails

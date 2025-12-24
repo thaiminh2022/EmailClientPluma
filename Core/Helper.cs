@@ -2,7 +2,9 @@
 using EmailClientPluma.Core.Services.Accounting;
 using MailKit;
 using MimeKit;
+using Org.BouncyCastle.Utilities;
 using System.IO;
+using System.Security.Cryptography;
 using System.Windows.Media;
 
 namespace EmailClientPluma.Core
@@ -99,6 +101,46 @@ namespace EmailClientPluma.Core
         public static int ColorToARGB(Color c)
         {
             return (c.A << 24) | (c.R << 16) | (c.G << 8) | c.B;
+        }
+
+        public async static Task<Attachment> CreateAttachmentFMP(Email email, MimePart part)
+        {
+
+            using var sha = SHA256.Create();
+
+            DirectoryInfo dir = Directory.CreateDirectory(
+                Path.Combine(Helper.DataFolder, "Attachments")
+            );
+
+            string tempPath = Path.Combine(dir.FullName, Guid.NewGuid().ToString("N") + ".tmp");
+
+            // 1️ Stream decode → disk + hasher
+            await using (var fileStream = File.Create(tempPath))
+            await using (var crypto = new CryptoStream(fileStream, sha, CryptoStreamMode.Write))
+            {
+                await part.Content.DecodeToAsync(crypto);
+                await crypto.FlushFinalBlockAsync();
+            }
+
+            // 2️ Finalize SHA256 and build storage key
+            string storageKey = Convert.ToHexString(sha.Hash!);
+            string finalPath = Path.Combine(dir.FullName, storageKey);
+
+            // 3️ Deduplicate
+            if (!File.Exists(finalPath))
+                File.Move(tempPath, finalPath);
+            else
+                File.Delete(tempPath);
+
+            // 4️ Build DB record
+            return new Attachment
+            {
+                OwnerEmailID = email.MessageIdentifiers.EmailId,
+                FileName = part.FileName,
+                MimeType = part.ContentType.MimeType,
+                Size = new FileInfo(finalPath).Length,
+                StorageKey = storageKey
+            };
         }
     }
 }

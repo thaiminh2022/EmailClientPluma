@@ -1,6 +1,8 @@
 ﻿using MailKit;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
+using System.Windows.Shapes;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -81,7 +83,19 @@ namespace EmailClientPluma.Core.Models
         public string MimeType { get; set; } = "";
         public long Size { get; set; }
 
-        public byte[] Content { get; set; } = Array.Empty<byte>();
+        public string FilePath
+        {
+            get
+            {
+                DirectoryInfo directory = Directory.CreateDirectory(
+                    System.IO.Path.Combine(Helper.DataFolder, "Attachments"));
+
+                return System.IO.Path.Combine(directory.FullName, StorageKey);
+            }
+        }
+
+        
+        public byte[] Content => File.ReadAllBytes(FilePath);
         public string StorageKey { get; set; } = "";
 
     }
