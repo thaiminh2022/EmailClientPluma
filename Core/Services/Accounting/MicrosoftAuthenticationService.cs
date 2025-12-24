@@ -50,6 +50,12 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
 
     public async Task SignOutAsync(Account acc)
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         logger.LogInformation("Account logout for microsoft");
         var accounts = await PublicClient.GetAccountsAsync();
         var microsoftAccount = accounts.FirstOrDefault(x => x.HomeAccountId.Identifier == acc.ProviderUID);
@@ -61,15 +67,16 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
                 await PublicClient.RemoveAsync(microsoftAccount);
                 logger.LogInformation("Account {mail} finish log out", acc.Email);
             }
-            catch
+            catch (Exception ex)
             {
                 logger.LogError("Logout failed, account {mail} still exists", acc.Email);
+                throw new RemoveAccountException(inner: ex);
+
             }
         }
         else
         {
             logger.LogWarning("Account {mail} already logout", acc.Email);
-            MessageBoxHelper.Info("Account already sign out, delete info only");
         }
     }
 
@@ -120,6 +127,12 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
 
     public async Task<AuthResponce?> AuthenticateAsync()
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         try
         {
             var result = await PublicClient.AcquireTokenInteractive(Scopes)
@@ -189,6 +202,12 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
 
     public async Task<bool> ValidateAsync(Account acc)
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         AuthenticationResult? res = null;
         IAccount? microsoftAccount = null;
 

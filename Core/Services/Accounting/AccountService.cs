@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using EmailClientPluma.Core.Models.Exceptions;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -120,13 +121,13 @@ internal class AccountService : IAccountService
     {
         _emailMonitoringService.StopMonitor(account);
         _accounts.Remove(account);
-
         if (GetAuthServiceByProvider(account.Provider) is IMicrosoftClientApp iClient)
         {
             await iClient.SignOutAsync(account);
         }
 
         await _storageService.RemoveAccountAsync(account);
+
     }
 
     // Call the storage service to get all the saved account

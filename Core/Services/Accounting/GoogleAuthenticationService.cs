@@ -21,7 +21,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
     private const string ClientSecret = @"secrets\secret.json";
 
     // Ask user permissions (gmail, profile)
-    private static readonly string[] _scopes =
+    private static readonly string[] Scopes =
     [
         "https://mail.google.com/",
         Oauth2Service.Scope.UserinfoEmail,
@@ -37,6 +37,13 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
     /// <returns>The account</returns>
     public async Task<AuthResponce?> AuthenticateAsync()
     {
+
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         var tempId = Guid.NewGuid().ToString();
         try
         {
@@ -44,7 +51,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             // prompt user to login
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 GoogleClientSecrets.FromFile(ClientSecret).Secrets,
-                _scopes,
+                Scopes,
                 tempId,
                 CancellationToken.None,
                 _dataStore);
@@ -105,6 +112,12 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
     /// <returns>true if is valid or failed</returns>
     public async Task<bool> ValidateAsync(Account acc)
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         logger.LogInformation("Validation init for account: {mail}", acc.Email);
         // reconstruct user credentials to check
         var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
@@ -115,7 +128,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
                 ClientSecrets = GoogleClientSecrets.FromFile(ClientSecret).Secrets,
-                Scopes = _scopes
+                Scopes = Scopes
             });
             var userCredentials = new UserCredential(flow, acc.ProviderUID, tokenRes);
 
@@ -148,7 +161,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
         {
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 GoogleClientSecrets.FromFile(ClientSecret).Secrets,
-                _scopes,
+                Scopes,
                 acc.ProviderUID,
                 CancellationToken.None,
                 _dataStore

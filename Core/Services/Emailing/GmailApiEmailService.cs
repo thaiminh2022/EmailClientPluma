@@ -8,30 +8,27 @@ using MimeKit;
 using System.IO;
 using System.Text;
 using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Extensions.Logging;
 using MessagePart = Google.Apis.Gmail.v1.Data.MessagePart;
 
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
-internal class GmailApiEmailService : IEmailService
+internal class GmailApiEmailService(IStorageService storageService, ILogger<GmailApiEmailService> logger) : IEmailService
 {
     private const int INITIAL_HEADER_WINDOW = 20;
-    private readonly IStorageService _storageService;
-
-    public GmailApiEmailService(IStorageService storageService)
-    {
-        _storageService = storageService;
-    }
 
     public async Task FetchEmailHeaderAsync(Account acc)
     {
-        var service = CreateGmailService(acc);
-        var lastHistoryId = await EmailAPIHelper.GetLastSyncedHistoryIdAsync(acc, _storageService);
+        logger.LogInformation("Staring fetching email for: {email}", acc.Email);
+        var service = await CreateGmailService(acc);
+        var lastHistoryId = await EmailAPIHelper.GetLastSyncedHistoryIdAsync(acc, storageService);
 
         ListMessagesResponse? response = null;
 
         if (lastHistoryId is null)
         {
+            logger.LogInformation("User {email} is a first time fetcher", acc.Email);
             try
             {
                 // New batch
@@ -43,16 +40,19 @@ internal class GmailApiEmailService : IEmailService
 
                 acc.PaginationToken = response.NextPageToken;
                 if (string.IsNullOrEmpty(response.NextPageToken)) acc.NoMoreOlderEmail = true;
-                await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+                await storageService.UpdatePaginationAndNextTokenAsync(acc);
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Cannot fetch email for {email}", acc.Email);
                 throw new EmailFetchException(inner: ex);
             }
 
         }
         else
         {
+            logger.LogInformation("Incremental fetching for {email}", acc.Email);
+            
             // Incremental fetch
             try
             {
@@ -85,8 +85,9 @@ internal class GmailApiEmailService : IEmailService
 
                 return;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.LogWarning(ex, "Incremental failed, trying to fetch normally");
                 // If history fails, fall back to standard list
                 var request = service.Users.Messages.List("me");
                 request.MaxResults = INITIAL_HEADER_WINDOW;
@@ -110,16 +111,18 @@ internal class GmailApiEmailService : IEmailService
 
     public async Task FetchEmailBodyAsync(Account acc, Email email)
     {
-        using var service = CreateGmailService(acc);
+        logger.LogInformation("Fetching body for {mail} with subject {subject}", acc.Email, email.MessageParts.Subject);
+        using var service = await CreateGmailService(acc);
 
         try
         {
             var msg = await service.Users.Messages.Get("me", email.MessageIdentifiers.ProviderMessageId).ExecuteAsync();
             email.MessageParts.Body = ExtractBodyFromMessage(msg);
-            await _storageService.UpdateEmailBodyAsync(email);
+            await storageService.UpdateEmailBodyAsync(email);
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Body fetching failed for {email} with subject {subject}", acc.Email, email.MessageParts.Subject);
             throw new EmailFetchException(inner: ex);
         }
     }
@@ -135,8 +138,10 @@ internal class GmailApiEmailService : IEmailService
 
         if (candidates.Count == 0)
             return;
-
-        using var service = CreateGmailService(acc);
+        
+        
+        logger.LogInformation("Fetching recent body around for {email} with {n} zone", acc.Email, candidates.Count);
+        using var service = await CreateGmailService(acc);
 
         try
         {
@@ -145,11 +150,12 @@ internal class GmailApiEmailService : IEmailService
                 var msg = await service.Users.Messages.Get("me", candidate.MessageIdentifiers.ProviderMessageId)
                     .ExecuteAsync();
                 candidate.MessageParts.Body = ExtractBodyFromMessage(msg);
-                await _storageService.UpdateEmailBodyAsync(candidate);
+                await storageService.UpdateEmailBodyAsync(candidate);
             }
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error fetching recent bodies for {email}", acc.Email);
             throw new EmailFetchException(inner: ex);
         }
     }
@@ -159,7 +165,9 @@ internal class GmailApiEmailService : IEmailService
         if (acc.NoMoreOlderEmail)
             return false;
 
-        using var service = CreateGmailService(acc);
+        logger.LogInformation("Fetching older headers for {email}", acc.Email);
+        
+        using var service = await CreateGmailService(acc);
 
         var request = service.Users.Messages.List("me");
         request.MaxResults = window;
@@ -176,11 +184,13 @@ internal class GmailApiEmailService : IEmailService
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error getting token for {tok}", acc.Email);
             throw new EmailTokenException(inner: ex);
         }
 
         if (response.Messages is null || response.Messages.Count == 0)
         {
+            logger.LogWarning("No more fetching since no more older email");
             acc.NoMoreOlderEmail = true;
             return false;
         }
@@ -188,7 +198,7 @@ internal class GmailApiEmailService : IEmailService
         acc.PaginationToken = response.NextPageToken;
         if (string.IsNullOrEmpty(response.NextPageToken)) acc.NoMoreOlderEmail = true;
 
-        await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+        await storageService.UpdatePaginationAndNextTokenAsync(acc);
 
         // Fetch and store older messages
         foreach (var msgRef in response.Messages)
@@ -206,12 +216,13 @@ internal class GmailApiEmailService : IEmailService
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Cannot fetch message from refs");
                 throw new EmailFetchException(inner: ex);
             }
 
         }
 
-        await _storageService.StoreEmailAsync(acc);
+        await storageService.StoreEmailAsync(acc);
         return true;
     }
 
@@ -222,8 +233,10 @@ internal class GmailApiEmailService : IEmailService
 
     public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
     {
-        using var service = CreateGmailService(acc);
+        using var service = await CreateGmailService(acc);
 
+        logger.LogInformation("Sending email for {email} with subject: {sub}", acc.Email, email.Subject);
+        
         // Create RFC 2822 formatted email
         var rawEmail = CreateRfc2822Email(acc, email);
         var base64UrlEmail = EncodeBase64Url(rawEmail);
@@ -238,6 +251,7 @@ internal class GmailApiEmailService : IEmailService
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Sending email error");
             throw new EmailSendException(inner: ex);
         }
     }
@@ -281,8 +295,15 @@ internal class GmailApiEmailService : IEmailService
 
     #region Helper
 
-    private GmailService CreateGmailService(Account acc)
+    private async Task<GmailService> CreateGmailService(Account acc)
     {
+        logger.LogInformation("Getting gmail service for {}", acc.Email);
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+        
         var credentials = GoogleCredential.FromAccessToken(acc.Credentials.SessionToken);
         return new GmailService(new BaseClientService.Initializer
         {
@@ -299,7 +320,7 @@ internal class GmailApiEmailService : IEmailService
             return;
 
         acc.Emails.Add(email);
-        await _storageService.StoreEmailAsync(acc, email);
+        await storageService.StoreEmailAsync(acc, email);
     }
 
     private string DecodeBase64Url(string base64Url)
