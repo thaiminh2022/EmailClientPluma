@@ -357,7 +357,7 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                         attachments.Add(new Attachment
                         {
-                            OwnerEmailID = email.MessageIdentifiers.EmailID,
+                            OwnerEmailID = email.MessageIdentifiers.EmailId,
                             FileName = mimePart.FileName ?? "attachment",
                             Content = ms.ToArray()
                         });
