@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta content="ie=edge" http-equiv="X-UA-Compatible"/>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="ie=edge" http-equiv="X-UA-Compatible" />
     <title>Quill editor</title>
-    <link href="style.css" rel="stylesheet"/>
+    <link href="style.css" rel="stylesheet" />
+    <link href="darktheme.css" rel="stylesheet" />
 
     <style>
         .container {
@@ -13,12 +15,14 @@
             width: 100vw;
             display: grid;
             grid-template-columns: 50% 50%;
+            background: #fff;
         }
 
         /* Floating reply button */
         #reply-bubble {
             position: absolute;
-            display: none; /* hidden by default */
+            display: none;
+            /* hidden by default */
             padding: 6px 10px;
             font-size: 12px;
             border-radius: 999px;
@@ -37,6 +41,7 @@
         .html-email-container {
             position: relative;
             overflow: auto;
+            margin: 10px;
         }
 
         .email-subject {
@@ -55,24 +60,26 @@
         }
     </style>
 </head>
-<body>
-<div id="reply-bubble">Reply</div>
-<div class="container">
-    <div class="html-email-container">
-        <div class="email-subject">This is subject</div>
-        <div class="email-meta">
-            <p id="from">From</p>
-            <p id="to">To</p>
-            <p id="date">Date</p>
-        </div>
-        <div class="email-body">Dangerously set html here</div>
-    </div>
-    <div class="editor-container">
-        <div id="editor"></div>
-    </div>
-</div>
 
-<script src="quilljs.js"></script>
-<script src="selectReplyEditor.js"></script>
+<body>
+    <div id="reply-bubble">Reply</div>
+    <div class="container">
+        <div class="html-email-container">
+            <div class="email-subject">This is subject</div>
+            <div class="email-meta">
+                <p id="from">From</p>
+                <p id="to">To</p>
+                <p id="date">Date</p>
+            </div>
+            <div class="email-body">Dangerously set html here</div>
+        </div>
+        <div class="editor-container" id="editorcontain">
+            <div id="editor"></div>
+        </div>
+    </div>
+
+    <script src="quilljs.js"></script>
+    <script src="selectReplyEditor.js"></script>
 </body>
+
 </html>

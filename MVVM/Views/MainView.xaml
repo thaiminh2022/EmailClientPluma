@@ -1,5 +1,5 @@
 ﻿<Window
-    x:Class="EmailClientPluma.MainView"
+    x:Class="EmailClientPluma.MVVM.Views.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="clr-namespace:EmailClientPluma.Behaviors"
@@ -25,7 +25,7 @@
         <viewmodels:MainViewModel />
     </Window.DataContext>
 
-    <Grid>
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
@@ -79,10 +79,7 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <!--  "Chip"  -->
-                            <Border
-                                Padding="10,6"
-                                Background="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Background}"
-                                CornerRadius="10">
+                            <Border Padding="10,6" CornerRadius="10">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -115,9 +112,9 @@
             <!--  Center panel  -->
             <Border
                 Grid.Column="1"
-                Margin="0,0,10,0"
+                Margin="10,0,10,0"
                 Padding="8"
-                Background="{DynamicResource PanelBackgroundBrush}"
+                Background="{DynamicResource BackgroundBrush}"
                 BorderBrush="{DynamicResource LightPurple}"
                 BorderThickness="1"
                 CornerRadius="8">
@@ -126,21 +123,31 @@
                         x:Name="EmailList"
                         Grid.Row="2"
                         Margin="0,0,0,0"
+                        BorderBrush="Transparent"
                         ItemsSource="{Binding FilteredEmails}"
                         SelectedItem="{Binding SelectedEmail}"
                         SelectionChanged="EmailList_SelectionChanged">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Border
-                                    Margin="2"
-                                    Padding="6"
-                                    BorderThickness="0.5"
-                                    CornerRadius="5">
+                                <Grid Margin="5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
                                     <TextBlock
+                                        Grid.Row="0"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        Text="{Binding MessageParts.DateDisplay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        FontSize="14"
+                                        FontWeight="SemiBold"
                                         Foreground="{DynamicResource TextBrush}"
                                         Text="{Binding MessageParts.Subject}"
                                         TextTrimming="CharacterEllipsis" />
-                                </Border>
+
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -156,7 +163,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Visibility="Collapsed">
-                <Grid>
+                <Grid Background="{DynamicResource BackgroundBrush}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto" />
                         <RowDefinition Height="auto" />
@@ -184,8 +191,8 @@
                     <Border
                         Grid.Row="0"
                         Margin="8"
-                        Padding="10"
-                        Background="#FFF7F7FF"
+                        Padding="5"
+                        Background="{DynamicResource PanelBackgroundBrush}"
                         BorderBrush="#22000000"
                         BorderThickness="1"
                         CornerRadius="6">
@@ -306,8 +313,8 @@
                     <Border
                         Grid.Row="2"
                         Margin="0,10,0,0"
-                        Style="{StaticResource WebViewContainerStyle}">
-                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" />
+                        Background="White">
+                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" behaviors:Webview2ColorScheme.PreferredScheme="{Binding CurrentTheme}" />
                     </Border>
                 </Grid>
             </Border>
@@ -341,7 +348,10 @@
                 PlacementTarget="{Binding ElementName=MoreSearch}"
                 PopupAnimation="Scroll"
                 StaysOpen="False">
-                <Border BorderBrush="{DynamicResource TextBrush}" BorderThickness="3">
+                <Border
+                    Padding="5"
+                    BorderBrush="{DynamicResource TextBrush}"
+                    BorderThickness="3">
                     <StackPanel Margin="0,0,0,0">
                         <!--  From  -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
@@ -388,34 +398,6 @@
                             <TextBox Width="300" Text="{Binding Filters.DoesNotHave, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
-                        <!--  Size  -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock
-                                Width="100"
-                                VerticalAlignment="Center"
-                                Text="Size" />
-                            <ComboBox
-                                Width="100"
-                                ItemContainerStyle="{StaticResource CustomComboItem}"
-                                SelectedIndex="{Binding Filters.SizeOperatorIndex, Mode=TwoWay}"
-                                Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="greater than" />
-                                <ComboBoxItem Content="less than" />
-                            </ComboBox>
-                            <TextBox
-                                Width="60"
-                                Margin="10,0"
-                                Text="{Binding Filters.SizeValue, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox
-                                Width="70"
-                                ItemContainerStyle="{StaticResource CustomComboItem}"
-                                SelectedIndex="{Binding Filters.SizeUnitIndex, Mode=TwoWay}"
-                                Style="{StaticResource CustomCombo}">
-                                <ComboBoxItem Content="MB" />
-                                <ComboBoxItem Content="KB" />
-                            </ComboBox>
-                        </StackPanel>
-
                         <!--  Date  -->
                         <StackPanel Margin="0,5" Orientation="Horizontal">
                             <TextBlock
@@ -437,31 +419,6 @@
                                 SelectedDate="{Binding Filters.SelectedDate, Mode=TwoWay}" />
                         </StackPanel>
 
-                        <!--  Search  -->
-                        <StackPanel Margin="0,5" Orientation="Horizontal">
-                            <TextBlock
-                                Width="100"
-                                VerticalAlignment="Center"
-                                Text="Search" />
-
-                        </StackPanel>
-
-                        <!--  Footer  -->
-                        <StackPanel
-                            Margin="0,15,0,0"
-                            HorizontalAlignment="Right"
-                            Orientation="Horizontal">
-                            <CheckBox
-                                Margin="0,0,20,0"
-                                Content="Has attachment"
-                                Foreground="{DynamicResource TextBrush}"
-                                IsChecked="{Binding Filters.HasAttachment, Mode=TwoWay}" />
-                            <Button
-                                Width="100"
-                                Margin="0,0,10,0"
-                                Content="Create filter" />
-                            <Button Width="80" Content="Search" />
-                        </StackPanel>
                     </StackPanel>
                 </Border>
             </Popup>
@@ -502,7 +459,7 @@
         <Popup
             x:Name="AccountSettingsPopup"
             AllowsTransparency="True"
-            HorizontalOffset="-100"
+            HorizontalOffset="0"
             Placement="Bottom"
             PlacementTarget="{Binding ElementName=AccountSettingsButton}"
             PopupAnimation="Slide"

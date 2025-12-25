@@ -1,0 +1,211 @@
+/* =========================
+   Quill (Snow) Dark Theme
+   Apply by wrapping editor:
+   <div class="quill-dark">
+     <div id="toolbar"></div>
+     <div id="editor"></div>
+   </div>
+   ========================= */
+
+/* ---- Base container ---- */
+.quill-dark .ql-toolbar.ql-snow,
+.quill-dark .ql-container.ql-snow {
+    border-color: #333;
+}
+
+/* ---- Toolbar ---- */
+.quill-dark .ql-toolbar.ql-snow {
+    background: #252526;
+    color: #e6e6e6;
+}
+
+/* Buttons/pickers layout polish */
+.quill-dark .ql-toolbar.ql-snow button,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-item {
+    color: #e6e6e6 !important;
+}
+
+/* Icon strokes/fills (Quill uses SVG) */
+.quill-dark .ql-toolbar.ql-snow button .ql-stroke {
+    stroke: #e6e6e6 !important;
+}
+
+.quill-dark .ql-toolbar.ql-snow button .ql-fill,
+.quill-dark .ql-toolbar.ql-snow button .ql-stroke.ql-fill {
+    fill: #e6e6e6 !important;
+}
+
+/* Picker arrows are strokes too */
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label .ql-stroke {
+    stroke: #e6e6e6 !important;
+}
+
+/* Hover state */
+.quill-dark .ql-toolbar.ql-snow button:hover,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label:hover {
+    background: #343434;
+}
+
+.quill-dark .ql-toolbar.ql-snow button:hover .ql-stroke,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label:hover .ql-stroke {
+    stroke: #ffffff !important;
+}
+
+.quill-dark .ql-toolbar.ql-snow button:hover .ql-fill {
+    fill: #ffffff !important;
+}
+
+/* Active / pressed state */
+.quill-dark .ql-toolbar.ql-snow button.ql-active,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label.ql-active,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-item.ql-selected {
+    background: #3a3a3a;
+}
+
+.quill-dark .ql-toolbar.ql-snow button.ql-active .ql-stroke,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label.ql-active .ql-stroke {
+    stroke: #ffffff !important;
+}
+
+.quill-dark .ql-toolbar.ql-snow button.ql-active .ql-fill {
+    fill: #ffffff !important;
+}
+
+/* Focus outline (optional subtle) */
+.quill-dark .ql-toolbar.ql-snow button:focus,
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 1px #4b4b4b;
+}
+
+/* Disabled state */
+.quill-dark .ql-toolbar.ql-snow button:disabled,
+.quill-dark .ql-toolbar.ql-snow button[disabled] {
+    opacity: 0.55;
+}
+
+.quill-dark .ql-toolbar.ql-snow button:disabled .ql-stroke,
+.quill-dark .ql-toolbar.ql-snow button[disabled] .ql-stroke {
+    stroke: #9a9a9a !important;
+}
+
+.quill-dark .ql-toolbar.ql-snow button:disabled .ql-fill,
+.quill-dark .ql-toolbar.ql-snow button[disabled] .ql-fill {
+    fill: #9a9a9a !important;
+}
+
+/* ---- Picker dropdown (font, size, header etc.) ---- */
+.quill-dark .ql-toolbar.ql-snow .ql-picker {
+    color: #e6e6e6;
+}
+
+/* Dropdown panel */
+.quill-dark .ql-toolbar.ql-snow .ql-picker-options {
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: #e6e6e6;
+}
+
+/* Items inside dropdown */
+.quill-dark .ql-toolbar.ql-snow .ql-picker-options .ql-picker-item {
+    color: #e6e6e6 !important;
+}
+
+.quill-dark .ql-toolbar.ql-snow .ql-picker-options .ql-picker-item:hover {
+    background: #3a3a3a;
+}
+
+/* Current selection label background (optional) */
+.quill-dark .ql-toolbar.ql-snow .ql-picker-label {
+    border-color: transparent;
+}
+
+/* ---- Color picker / background picker swatches ---- */
+.quill-dark .ql-toolbar.ql-snow .ql-color-picker .ql-picker-item,
+.quill-dark .ql-toolbar.ql-snow .ql-icon-picker .ql-picker-item {
+    border-color: #444;
+}
+
+/* ---- Link tooltip (Snow theme) ---- */
+.quill-dark .ql-snow .ql-tooltip {
+    background: #2b2b2b;
+    border: 1px solid #444;
+    color: #e6e6e6;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+
+.quill-dark .ql-snow .ql-tooltip input[type="text"] {
+    background: #1e1e1e;
+    color: #e6e6e6;
+    border: 1px solid #555;
+}
+
+.quill-dark .ql-snow .ql-tooltip a {
+    color: #8ab4ff;
+}
+
+/* ---- Editor container ---- */
+.quill-dark .ql-container.ql-snow {
+    background: #1e1e1e;
+}
+
+/* The editable area */
+.quill-dark .ql-editor {
+    color: #e6e6e6;
+    caret-color: #ffffff;
+}
+
+/* Placeholder */
+.quill-dark .ql-editor.ql-blank::before {
+    color: #8a8a8a;
+}
+
+/* Headings inside editor (optional polish) */
+.quill-dark .ql-editor h1,
+.quill-dark .ql-editor h2,
+.quill-dark .ql-editor h3 {
+    color: #f0f0f0;
+}
+
+/* Links in editor */
+.quill-dark .ql-editor a {
+    color: #8ab4ff;
+}
+
+/* Blockquote */
+.quill-dark .ql-editor blockquote {
+    border-left: 4px solid #3f3f3f;
+    color: #d0d0d0;
+}
+
+/* Code block */
+.quill-dark .ql-editor pre.ql-syntax {
+    background: #111;
+    color: #e6e6e6;
+    border: 1px solid #333;
+}
+
+/* Tables (if you use a table module) – safe defaults */
+.quill-dark .ql-editor table {
+    border-color: #444;
+}
+
+.quill-dark .ql-editor td,
+.quill-dark .ql-editor th {
+    border-color: #444;
+}
+
+/* Scrollbar (optional, webkit) */
+.quill-dark .ql-container ::-webkit-scrollbar {
+    width: 10px;
+}
+
+.quill-dark .ql-container ::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 8px;
+}
+
+.quill-dark .ql-container ::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}

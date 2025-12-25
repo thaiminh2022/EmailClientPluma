@@ -2,14 +2,13 @@
 
 const toolbarOptions = [
     ["bold", "italic", "underline", "strike"], // toggled buttons
-    ["blockquote"],
-    ["link", "image", "video"],
+    ["blockquote", "link"],
 
-    [{header: 1}, {header: 2}, {header: 3}, {header: 4}], // custom button values
-    [{list: "ordered"}, {list: "bullet"}, {list: "check"}],
-    [{script: "sub"}, {script: "super"}], // superscript/subscript
+    [{ header: 1 }, { header: 2 }, { header: 3 }, { header: 4 }], // custom button values
+    [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
+    [{ script: "sub" }, { script: "super" }], // superscript/subscript
 
-    [{color: []}, {background: []}], // dropdown with defaults from theme
+    [{ color: [] }, { background: [] }], // dropdown with defaults from theme
 
     ["clean"], // remove formatting button
 ];
@@ -34,14 +33,14 @@ quill.on("text-change", function () {
         return;
 
     const html = quill.root.innerHTML;
-    window.chrome.webview.postMessage({type: "html", value: html});
+    window.chrome.webview.postMessage({ type: "html", value: html });
 });
 
 //#endregion
 
 //#region email select
 
-function setEmailContent(subject, {from, to, date}, email) {
+function setEmailContent(subject, { from, to, date }, email) {
     document.querySelector(".email-subject").textContent = subject;
     document.getElementById("from").textContent = from;
     document.getElementById("to").textContent = to;
@@ -151,3 +150,14 @@ bubble.addEventListener("click", () => {
 });
 
 //#endregion
+
+const host = document.getElementById("editorcontain");
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+function syncTheme(e) {
+    const isDark = e?.matches ?? mq.matches;
+    host.classList.toggle("quill-dark", isDark);
+}
+
+syncTheme();
+if (mq.addEventListener) mq.addEventListener("change", syncTheme);

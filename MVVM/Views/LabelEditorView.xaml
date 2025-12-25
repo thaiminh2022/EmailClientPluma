@@ -1,26 +1,25 @@
-﻿<Window x:Class="EmailClientPluma.MVVM.Views.LabelEditorView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewmodels="clr-namespace:EmailClientPluma.MVVM.ViewModels"
-        xmlns:converters="clr-namespace:EmailClientPluma.Converters"
-        mc:Ignorable="d"
-        Title="Label Manager"
-        Height="500"
-        Width="800"
-        Background="#F9FAFB">
+﻿<Window
+    x:Class="EmailClientPluma.MVVM.Views.LabelEditorView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:EmailClientPluma.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="clr-namespace:EmailClientPluma.MVVM.ViewModels"
+    Title="Label Manager"
+    Width="800"
+    Height="500"
+    Background="{DynamicResource BackgroundBrush}"
+    mc:Ignorable="d">
     <Window.Resources>
         <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
         <converters:ReverseBoolToVisibilityConverter x:Key="ReverseBoolToVisibilityConverter" />
         <Style TargetType="ListViewItem">
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Stretch" />
-            <Setter Property="Padding"
-                    Value="5" />
-            <Setter Property="Cursor"
-                    Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
+        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
     </Window.Resources>
     <Window.DataContext>
         <viewmodels:LabelEditorViewModel />
@@ -30,62 +29,67 @@
             <ColumnDefinition Width="250" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0"
-              Margin="0,0,10,0">
+        <Grid Grid.Column="0" Margin="0,0,10,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <ComboBox Grid.Row="0"
-                      ItemsSource="{Binding Accounts}"
-                      SelectedItem="{Binding SelectedAccount}"
-                      Margin="0,0,0,10"
-                      Padding="6">
+            <ComboBox
+                Grid.Row="0"
+                Margin="0,0,0,10"
+                Padding="6"
+                ItemsSource="{Binding Accounts}"
+                SelectedItem="{Binding SelectedAccount}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
-                            <TextBlock Text="{Binding DisplayName}"
-                                       FontWeight="Bold" />
-                            <TextBlock Text="{Binding Email}"
-                                       FontSize="11"
-                                       Foreground="Gray" />
+                            <TextBlock FontWeight="Bold" Text="{Binding DisplayName}" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="Gray"
+                                Text="{Binding Email}" />
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Border Grid.Row="1"
-                    BorderBrush="#E5E7EB"
-                    BorderThickness="1"
-                    Background="White"
-                    CornerRadius="4">
-                <ListView ItemsSource="{Binding SelectedAccount.OwnedLabels, FallbackValue=[]}"
-                          SelectedItem="{Binding SelectedLabel}"
-                          BorderThickness="0">
+            <Border
+                Grid.Row="1"
+                BorderBrush="{DynamicResource TextBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+                <ListView
+                    Background="{DynamicResource PanelBackgroundBrush}"
+                    BorderThickness="0"
+                    ItemsSource="{Binding SelectedAccount.OwnedLabels, FallbackValue=[]}"
+                    SelectedItem="{Binding SelectedLabel}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal"
-                                        Margin="2">
-                                <Border Width="12"
-                                        Height="12"
-                                        CornerRadius="6"
-                                        Margin="0,0,8,0"
-                                        Background="{Binding Color, Converter={StaticResource ColorToBrushConverter}}" />
-                                <TextBlock Text="{Binding Name}"
-                                           VerticalAlignment="Center" />
+                            <StackPanel Margin="2" Orientation="Horizontal">
+                                <Border
+                                    Width="12"
+                                    Height="12"
+                                    Margin="0,0,8,0"
+                                    Background="{Binding Color, Converter={StaticResource ColorToBrushConverter}}"
+                                    CornerRadius="6" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource TextBrush}"
+                                    Text="{Binding Name}" />
                             </StackPanel>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
             </Border>
-            <Button Grid.Row="2"
-                    Command="{Binding AddLabelCommand}"
-                    Content="+ Create New Label"
-                    Margin="0,10,0,0"
-                    Padding="10"
-                    Background="#2563EB"
-                    Foreground="White"
-                    BorderThickness="0" />
+            <Button
+                Grid.Row="2"
+                Margin="0,10,0,0"
+                Padding="10"
+                Background="#2563EB"
+                BorderThickness="0"
+                Command="{Binding AddLabelCommand}"
+                Content="+ Create New Label"
+                Foreground="White" />
         </Grid>
         <Grid Column="1">
             <Grid.RowDefinitions>
@@ -93,49 +97,55 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Border
-                Background="White"
+                Padding="20"
+                Background="{DynamicResource BackgroundBrush}"
                 BorderBrush="#E5E7EB"
                 BorderThickness="1"
-                CornerRadius="8"
-                Padding="20">
+                CornerRadius="8">
                 <Grid>
-                    <TextBlock Text="Select a label to edit"
-                               Visibility="{Binding SelectedLabel, Converter={StaticResource ReverseBoolToVisibilityConverter}, FallbackValue=Collapsed}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Foreground="Gray" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource TextBrush}"
+                        Text="Select a label to edit"
+                        Visibility="{Binding SelectedLabel, Converter={StaticResource ReverseBoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                     <StackPanel IsEnabled="{Binding IsEditEnabled}">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedLabel}"
-                                                 Value="{x:Null}">
-                                        <Setter Property="Visibility"
-                                                Value="Hidden" />
+                                    <DataTrigger Binding="{Binding SelectedLabel}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Hidden" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <TextBlock Text="EDIT LABEL"
-                                   FontWeight="Bold"
-                                   Foreground="#6B7280"
-                                   FontSize="12"
-                                   Margin="0,0,0,15" />
-                        <TextBlock Text="Label Name"
-                                   Foreground="#374151"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,5" />
-                        <TextBox Text="{Binding SelectedLabel.Name, FallbackValue=''}"
-                                 Padding="8"
-                                 Margin="0,0,0,20" />
-                        <TextBlock Text="Color"
-                                   Foreground="#374151"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,5" />
-                        <ListBox ItemsSource="{Binding AvailableColors}"
-                                 SelectedItem="{Binding SelectedLabel.Color, FallbackValue=Transparent}"
-                                 BorderThickness="0"
-                                 Background="Transparent">
+                        <TextBlock
+                            Margin="0,0,0,15"
+                            FontSize="12"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource TextBrush}"
+                            Text="EDIT LABEL" />
+                        <TextBlock
+                            Margin="0,0,0,5"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource TextBrush}"
+                            Text="Label Name" />
+                        <TextBox
+                            Margin="0,0,0,20"
+                            Padding="8"
+                            Background="{DynamicResource PanelBackgroundBrush}"
+                            Foreground="{DynamicResource TextBrush}"
+                            Text="{Binding SelectedLabel.Name, FallbackValue=''}" />
+                        <TextBlock
+                            Margin="0,0,0,5"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource TextBrush}"
+                            Text="Color" />
+                        <ListBox
+                            Background="{DynamicResource PanelBackgroundBrush}"
+                            BorderThickness="0"
+                            ItemsSource="{Binding AvailableColors}"
+                            SelectedItem="{Binding SelectedLabel.Color, FallbackValue=Transparent}">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel IsItemsHost="True" />
@@ -146,27 +156,21 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="ListBoxItem">
-                                                <Border x:Name="ColorBorder"
-                                                        Width="30"
-                                                        Height="30"
-                                                        CornerRadius="15"
-                                                        Margin="5"
-                                                        Background="{Binding Converter={StaticResource ColorToBrushConverter}}"
-                                                        BorderBrush="Transparent"
-                                                        BorderThickness="2"
-                                                        Cursor="Hand" />
+                                                <Border
+                                                    x:Name="ColorBorder"
+                                                    Width="30"
+                                                    Height="30"
+                                                    Margin="5"
+                                                    Background="{Binding Converter={StaticResource ColorToBrushConverter}}"
+                                                    BorderBrush="Transparent"
+                                                    BorderThickness="2"
+                                                    CornerRadius="15"
+                                                    Cursor="Hand" />
                                                 <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsSelected"
-                                                             Value="True">
-                                                        <Setter TargetName="ColorBorder"
-                                                                Property="BorderBrush"
-                                                                Value="#374151" />
-                                                        <Setter TargetName="ColorBorder"
-                                                                Property="BorderThickness"
-                                                                Value="2" />
-                                                        <Setter TargetName="ColorBorder"
-                                                                Property="Margin"
-                                                                Value="3" />
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ColorBorder" Property="BorderBrush" Value="#374151" />
+                                                        <Setter TargetName="ColorBorder" Property="BorderThickness" Value="2" />
+                                                        <Setter TargetName="ColorBorder" Property="Margin" Value="3" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -175,37 +179,42 @@
                                 </Style>
                             </ListBox.ItemContainerStyle>
                         </ListBox>
-                        <Button Command="{Binding DeleteLabelCommand}"
-                                Content="Delete Label"
-                                HorizontalAlignment="Left"
-                                Margin="0,40,0,0"
-                                Padding="15,8"
-                                Background="#FEF2F2"
-                                Foreground="#EF4444"
-                                BorderBrush="#FECACA" />
-                        <TextBlock Text="This is a system label and cannot be edited."
-                                   Foreground="Orange"
-                                   Margin="0,10,0,0"
-                                   Visibility="{Binding IsEditEnabled, Converter={StaticResource ReverseBoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+                        <Button
+                            Margin="0,40,0,0"
+                            Padding="15,8"
+                            HorizontalAlignment="Left"
+                            Background="#FEF2F2"
+                            BorderBrush="#FECACA"
+                            Command="{Binding DeleteLabelCommand}"
+                            Content="Delete Label"
+                            Foreground="#EF4444" />
+                        <TextBlock
+                            Margin="0,10,0,0"
+                            Foreground="Orange"
+                            Text="This is a system label and cannot be edited."
+                            Visibility="{Binding IsEditEnabled, Converter={StaticResource ReverseBoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                     </StackPanel>
                 </Grid>
             </Border>
             <DockPanel Grid.Row="1">
-                <StackPanel DockPanel.Dock="Bottom"
-                            HorizontalAlignment="Right"
-                            Orientation="Horizontal">
-                    <Button Padding="12 2"
-                            Margin="0 5 12 0"
-                            Background="#2563EB"
-                            Foreground="White"
-                            Command="{Binding SaveChangesCommand}">
+                <StackPanel
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Bottom"
+                    Orientation="Horizontal">
+                    <Button
+                        Margin="0,5,12,0"
+                        Padding="12,2"
+                        Background="#2563EB"
+                        Command="{Binding SaveChangesCommand}"
+                        Foreground="White">
                         Save
                     </Button>
-                    <Button Padding="12 2"
-                            Background="#2563EB"
-                            Foreground="White"
-                            Margin="0 5 0 0"
-                            Command="{Binding CancelChangesCommand}">
+                    <Button
+                        Margin="0,5,0,0"
+                        Padding="12,2"
+                        Background="#2563EB"
+                        Command="{Binding CancelChangesCommand}"
+                        Foreground="White">
                         Cancel
                     </Button>
                 </StackPanel>

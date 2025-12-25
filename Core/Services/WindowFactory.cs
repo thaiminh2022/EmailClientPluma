@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 
@@ -28,7 +29,14 @@ internal class WindowFactory(IServiceProvider serviceProvider, ILogger<WindowFac
         {
             rc.RequestClose += (_, result) =>
             {
-                window.DialogResult = result;
+                var asDialog = (bool?)typeof(Window)
+                    .GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)?
+                    .GetValue(window);
+
+                if (asDialog is true)
+                {
+                    window.DialogResult = result;
+                }
                 window.Close();
             };
         }
