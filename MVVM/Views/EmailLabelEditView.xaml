@@ -9,12 +9,14 @@
     Title="EmailLabelEditView"
     Width="800"
     Height="450"
+    Background="{DynamicResource BackgroundBrush}"
     mc:Ignorable="d">
 
     <Window.DataContext>
         <viewmodels:EmailLabelEditViewModel />
     </Window.DataContext>
     <Window.Resources>
+        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
         <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
         <Style x:Key="LabelItemContainerStyle" TargetType="Border">
             <Setter Property="Padding" Value="6" />
@@ -23,7 +25,7 @@
             <Setter Property="Background" Value="#08000000" />
         </Style>
     </Window.Resources>
-    <Grid Margin="16">
+    <Grid Margin="16" Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -56,9 +58,10 @@
         <!--  Labels list  -->
         <Border
             Grid.Row="2"
-            BorderBrush="#33000000"
+            BorderBrush="{DynamicResource TextBrush}"
             BorderThickness="1"
             CornerRadius="4">
+
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding FilteredLabels}">
                     <ItemsControl.ItemTemplate>

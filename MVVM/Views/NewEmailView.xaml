@@ -19,7 +19,7 @@
         <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
     </Window.Resources>
 
-    <Grid>
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
             <RowDefinition Height="149*" />
@@ -83,6 +83,8 @@
                     MinWidth="300"
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
+                    Background="{DynamicResource PanelBackgroundBrush}"
+                    Foreground="{DynamicResource TextBrush}"
                     IsEnabled="{Binding IsEnable}"
                     Text="{Binding ToAddresses}" />
                 <!--  Subject  -->
@@ -102,6 +104,8 @@
                     MinWidth="300"
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
+                    Background="{DynamicResource PanelBackgroundBrush}"
+                    Foreground="{DynamicResource TextBrush}"
                     Text="{Binding Subject}" />
             </Grid>
         </StackPanel>
@@ -115,13 +119,17 @@
 
             <TabControl>
                 <TabItem Header="Normal Mode">
-                    <wv2:WebView2 behaviors:WebView2Editor.EnableBinding="True" behaviors:WebView2Editor.HtmlContent="{Binding Body}" />
+                    <wv2:WebView2
+                        behaviors:WebView2Editor.EnableBinding="True"
+                        behaviors:WebView2Editor.HtmlContent="{Binding Body}"
+                        behaviors:Webview2ColorScheme.PreferredScheme="{Binding CurrentAppTheme}" />
                 </TabItem>
                 <TabItem Header="Select Reply" IsEnabled="{Binding IsNotEnable}">
                     <wv2:WebView2
                         behaviors:WebView2SelectEditor.EmailContent="{Binding ReplyToEmail}"
                         behaviors:WebView2SelectEditor.EnableBinding="True"
-                        behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}" />
+                        behaviors:WebView2SelectEditor.HtmlContent="{Binding Body}"
+                        behaviors:Webview2ColorScheme.PreferredScheme="{Binding CurrentAppTheme}" />
                 </TabItem>
             </TabControl>
         </Grid>

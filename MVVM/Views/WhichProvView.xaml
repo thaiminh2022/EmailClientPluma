@@ -16,7 +16,7 @@
     <Window.DataContext>
         <viewmodels:WhichProvViewModel />
     </Window.DataContext>
-    <Grid>
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <TextBlock
             Margin="0,20,0,0"
             HorizontalAlignment="Center"

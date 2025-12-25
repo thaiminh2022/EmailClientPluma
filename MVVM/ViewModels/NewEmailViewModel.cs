@@ -19,6 +19,8 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     private string? _toAddresses;
 
 
+    public AppTheme CurrentAppTheme => AppSettings.CurrentTheme;
+
     private IEmailService GetEmailServiceByProvider(Provider prod)
     {
         var service = _emailServices.FirstOrDefault(x => x.GetProvider().Equals(prod));
