@@ -14,6 +14,8 @@ namespace EmailClientPluma.MVVM.ViewModels;
 internal class MainViewModel : ObserableObject
 {
     public event Action AllAccountsRemoved;
+    public AppTheme CurrentTheme => AppSettings.CurrentTheme;
+
     public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
         IEnumerable<IEmailService> emailServices,
         IEmailFilterService emailFilterService)
@@ -22,6 +24,12 @@ internal class MainViewModel : ObserableObject
         _emailServices = [.. emailServices];
         _filterService = emailFilterService;
 
+        SettingsView.DarkModeChanged += (_, _) =>
+        {
+            OnPropertyChanges(nameof(CurrentTheme));
+        };
+
+
         // make list auto sort descending by date
         FilteredEmails = [];
         Filters.PropertyChanged += async (s, e) => await UpdateFilteredEmailsAsync();
@@ -29,7 +37,7 @@ internal class MainViewModel : ObserableObject
         Accounts = _accountService.GetAccounts();
         SelectedAccount = Accounts.FirstOrDefault();
 
-            // COMMANDS
+        // COMMANDS
 
         ComposeCommand = new RelayCommand(_ =>
         {

@@ -9,24 +9,16 @@ namespace EmailClientPluma.MVVM.Views
     public partial class SettingsView : Window
     {
         private static bool _isDarkMode;
-
         public static bool IsDarkMode
         {
             get => _isDarkMode;
             set
             {
-                if (_isDarkMode != value)
-                {
-                    _isDarkMode = value;
-
-                    // Notify listeners
-                    DarkModeChanged?.Invoke(null, EventArgs.Empty);
-                }
+                _isDarkMode = value;
+                DarkModeChanged?.Invoke(null, EventArgs.Empty);
             }
         }
-
-        public static event EventHandler DarkModeChanged;
-
+        public static event EventHandler? DarkModeChanged;
         public SettingsView()
         {
             InitializeComponent();
