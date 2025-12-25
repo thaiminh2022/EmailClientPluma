@@ -30,6 +30,12 @@ namespace EmailClientPluma.MVVM.ViewModels
 
                 var mainView = _factory.CreateWindow<MainView, MainViewModel>();
                 mainView.Show();
+
+                if (mainView.DataContext is MainViewModel mvm)
+                {
+                    mvm.SelectedAccount = value;
+                }
+                
                 Application.Current.MainWindow = mainView;
                 RequestClose?.Invoke(this, true);
 
