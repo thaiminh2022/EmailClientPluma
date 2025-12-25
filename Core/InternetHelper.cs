@@ -64,8 +64,10 @@ public static class InternetHelper
         {
             return (InternetStatus.TlsError, null);
         }
-        catch (HttpRequestException ex) when (ex.InnerException is System.Net.Sockets.SocketException se
-                                        && se.SocketErrorCode == System.Net.Sockets.SocketError.HostNotFound)
+        catch (HttpRequestException ex) when (ex.InnerException is System.Net.Sockets.SocketException
+                                              {
+                                                  SocketErrorCode: System.Net.Sockets.SocketError.HostNotFound
+                                              })
         {
             return (InternetStatus.DnsError, null);
         }
