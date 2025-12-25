@@ -3,6 +3,7 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
+using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -12,6 +13,7 @@ namespace EmailClientPluma.MVVM.ViewModels;
 
 internal class MainViewModel : ObserableObject
 {
+    public event Action AllAccountsRemoved;
     public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
         IEnumerable<IEmailService> emailServices,
         IEmailFilterService emailFilterService)
@@ -72,12 +74,17 @@ internal class MainViewModel : ObserableObject
             {
                 if (SelectedAccount == null) return;
 
-            var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
-            if (result is null || result is false) return;
+                var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
+                if (result is null || result is false) return;
 
-            _accountService.RemoveAccountAsync(SelectedAccount);
-            SelectedAccount = null;
-        }, _ => SelectedAccount is not null);
+                _accountService.RemoveAccountAsync(SelectedAccount);
+                
+                SelectedAccount = null;
+
+                if (Accounts.Count == 0) { 
+                    AllAccountsRemoved?.Invoke(); 
+                }
+            }, _ => SelectedAccount is not null);
 
 
         NextCommand = new RelayCommandAsync(async _ =>

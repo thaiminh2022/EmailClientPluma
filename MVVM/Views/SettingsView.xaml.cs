@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Graph.Models.ExternalConnectors;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,20 +20,29 @@ namespace EmailClientPluma.MVVM.Views
     /// </summary>
     public partial class SettingsView : Window
     {
-        private static bool _isDarMode;
+        private static bool _isDarkMode = Settings.Default.DarkModeOn;
+
         public static bool IsDarkMode
         {
-            get { return _isDarMode; }
+            get => _isDarkMode;
             set
             {
-                if (_isDarMode != value)
+                if (_isDarkMode != value)
                 {
-                    _isDarMode = value;
+                    _isDarkMode = value;
+
+                    // Save to persistent settings
+                    Settings.Default.DarkModeOn = value;
+                    Settings.Default.Save();
+
+                    // Notify listeners
                     DarkModeChanged?.Invoke(null, EventArgs.Empty);
                 }
             }
         }
+
         public static event EventHandler DarkModeChanged;
+
         public SettingsView()
         {
             InitializeComponent();

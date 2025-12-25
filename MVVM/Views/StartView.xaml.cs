@@ -9,6 +9,7 @@ using System.Windows;
 using EmailClientPluma.Core;
 using EmailClientPluma;
 using System.Windows.Controls;
+using EmailClientPluma.Core.Models;
 namespace EmailClientPluma.MVVM.Views
 {
     /// <summary>
@@ -16,10 +17,43 @@ namespace EmailClientPluma.MVVM.Views
     /// </summary>
     public partial class StartView : Window
     {
+        public static StartView Instance { get; private set; }
         public StartView()
         {
             InitializeComponent();
+            Instance = this;
+            Loaded += (s, e) => CheckAccounts();
         }
+
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+
+            if (SettingsView.IsDarkMode)
+            {
+                ThemeHelper.ApplyDark();
+            }
+            else
+            {
+                ThemeHelper.ApplyLight();
+            }
+        }
+
+        private void CheckAccounts()
+        {
+            if (AccountsListView.Items.Count == 0)
+            {
+                TitleTextBlock.Text = "Welcome to Pluma!\nSelect an account to continue";
+            }
+            else
+            {
+                var Firts = AccountsListView.Items[0];
+                var firstAccount = Firts as Account;
+                string username = firstAccount.DisplayName;
+                TitleTextBlock.Text = $"Welcome back, {username}\nWhat would you like to be as today?";
+            }
+        }
+
 
         private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

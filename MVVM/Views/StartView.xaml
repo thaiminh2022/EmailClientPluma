@@ -8,47 +8,85 @@
         xmlns:viewmodels="clr-namespace:EmailClientPluma.MVVM.ViewModels"
         xmlns:local="clr-namespace:EmailClientPluma.MVVM.Views"
         mc:Ignorable="d"
-        Title="StartView" Height="450" Width="800">
-    <Window.DataContext>
-        <viewmodels:StartViewModel />
-    </Window.DataContext>
+        Title="StartView" Height="450" Width="800"
+        d:DataContext="{d:DesignInstance Type=viewmodels:StartViewModel, IsDesignTimeCreatable=False}">
+    <!-- NOTE: runtime DataContext removed so DI can provide the real VM -->
+    <Window.Resources>
+        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
+    </Window.Resources>
     <Grid>
         <StackPanel VerticalAlignment="Center">
         <TextBlock
+            x:Name="TitleTextBlock"
             Margin="0,20,0,20"
             HorizontalAlignment="Center"
+            TextAlignment="Center"
             FontSize="24"
-            FontWeight="Bold"
-            Text="Select an Account to Continue" />
-        <ListView
+            FontWeight="Bold"/>
+            <ListView
+            x:Name="AccountsListView"
             Height="120"
             Width="300"
             ItemsSource="{Binding Accounts}"
             SelectedItem="{Binding SelectedAccount, Mode=TwoWay}" SelectionChanged="ListView_SelectionChanged">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Border
-                Margin="2"
-                Padding="6"
-                CornerRadius="5">
-                        <TextBlock FontWeight="Medium" Text="{Binding DisplayName}" />
-                    </Border>
-                </DataTemplate>
-            </ListView.ItemTemplate>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="2" Padding="6" CornerRadius="5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Display name on the left -->
+                                <TextBlock Grid.Column="0"
+                                       FontWeight="Medium"
+                                       Text="{Binding DisplayName}" />
+
+                                <!-- Provider on the right: shows "from Provider(Google)" -->
+                                <TextBlock Grid.Column="1"
+                                       Margin="12,0,0,0"
+                                       Foreground="Gray"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding Provider, StringFormat=from Provider({0})}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
             </ListView>
             <TextBlock  TextAlignment="Center" FontSize="20" FontWeight="Bold"
                        Text="Don't have one? Add one from a provider"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,10,0,0">
                 <Button
-                    Width="160"
-                    Margin="10,0,10,0"
-                    Command="{Binding AddAccountGoogleCommand}"
-                    Content="Add Google Account" />
+                    Width="200"
+                    Margin="10,0,10,10"
+                    Command="{Binding AddAccountGoogleCommand}">
+                    <StackPanel Background="{DynamicResource PrimaryBrush}" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image Source="Images/Provider/google.png"
+                               Width="20"
+                               Height="20"
+                               Margin="0,0,8,0"
+                               VerticalAlignment="Center"
+                               Stretch="Uniform"/>
+                        <TextBlock Foreground="{DynamicResource ButtonForegroundBrush}" Text="Add Google Account"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
                 <Button
-                    Width="160"
-                    Margin="10,0,10,0"
-                    Command="{Binding AddAccountMicrosoftCommand}"
-                    Content="Add Microsoft Account" />
+                    Width="200"
+                    Margin="10,0,10,10"
+                    Command="{Binding AddAccountMicrosoftCommand}">
+                    <StackPanel Background="{DynamicResource PrimaryBrush}" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Image Source="Images/Provider/microsoft.png"
+                        Width="20"
+                        Height="20"
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Stretch="Uniform"/>
+                        <TextBlock Foreground="{DynamicResource ButtonForegroundBrush}" Text="Add Microsoft Account"
+                        VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </StackPanel>
     </Grid>

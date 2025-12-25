@@ -1,4 +1,9 @@
-﻿using EmailClientPluma.MVVM.Views;
+﻿using EmailClientPluma.Core;
+using EmailClientPluma.Core.Services;
+using EmailClientPluma.Core.Services.Accounting;
+using EmailClientPluma.Core.Services.Storaging;
+using EmailClientPluma.MVVM.ViewModels;
+using EmailClientPluma.MVVM.Views;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,42 +20,51 @@ namespace EmailClientPluma
         public MainView()
         {
             InitializeComponent();
-            ApplyLightMode();
+            if (SettingsView.IsDarkMode) { 
+                IsDarkMode = true; ApplyDarkMode(); 
+            } 
+            else { 
+                IsDarkMode = false; ApplyLightMode();
+            }
             SettingsView.DarkModeChanged += SettingsView_DarkModeChanged;
+
+            DataContextChanged += (s, e) =>
+            {
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.AllAccountsRemoved += OnAllAccountsRemoved;
+                }
+            };
         }
 
-        // Light mode values
-        private readonly Color Light_Background = (Color)ColorConverter.ConvertFromString("#F7F4FB");
-        private readonly Color Light_Panel = (Color)ColorConverter.ConvertFromString("#FAF8FF");
-        private readonly Color Light_Primary = (Color)ColorConverter.ConvertFromString("#7E57C2");
-        private readonly Color Light_Accent = (Color)ColorConverter.ConvertFromString("#B39DDB");
-        private readonly Color Light_Text = Colors.Black;
-        private readonly Color Light_ButtonFore = Colors.White;
-
-        // Dark mode values (black + gold buttons)
-        private readonly Color Dark_Background = (Color)ColorConverter.ConvertFromString("#000000");
-        private readonly Color Dark_Panel = (Color)ColorConverter.ConvertFromString("#3E4042");
-        private readonly Color Dark_Accent = (Color)ColorConverter.ConvertFromString("#4B0A66");
-        private readonly Color Dark_Text = Colors.White;
-        private readonly Color Dark_ButtonBack = (Color)ColorConverter.ConvertFromString("#FFD700");
-        private readonly Color Dark_ButtonFore = Colors.Black;
-
-        // Helper to fetch brush resource and set its Color
-        private void SetBrushColor(string key, Color color)
+        private void OnAllAccountsRemoved()
         {
-            if (Application.Current.Resources[key] is SolidColorBrush brush)
+            // Run on UI thread
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                if (brush.IsFrozen)
+                // Resolve StartViewModel from the DI container and set it as DataContext
+                var startView = new StartView();
+
+                // If your App exposes the IServiceProvider as Services (common pattern),
+                // resolve the view model and assign it so commands and collections initialize properly.
+                if (Application.Current is App app && app.Services != null)
                 {
-                    var clone = brush.Clone();
-                    clone.Color = color;
-                    Application.Current.Resources[key] = clone;
+                    var vm = app.Services.GetService(typeof(MVVM.ViewModels.StartViewModel)) as MVVM.ViewModels.StartViewModel;
+                    if (vm != null)
+                        startView.DataContext = vm;
                 }
-                else
+
+                // If this window is the application's main window, replace it so the app doesn't exit.
+                if (Application.Current.MainWindow == this)
                 {
-                    brush.Color = color;
+                    Application.Current.MainWindow = startView;
                 }
-            }
+
+                startView.Show();
+
+                // Close the current main view
+                this.Close();
+            });
         }
 
         private void SettingsView_DarkModeChanged(object sender, EventArgs e)
@@ -72,13 +86,7 @@ namespace EmailClientPluma
 
         private void ApplyLightMode()
         {
-            SetBrushColor("BackgroundBrush", Light_Background);
-            SetBrushColor("PanelBackgroundBrush", Light_Panel);
-            SetBrushColor("PrimaryBrush", Light_Primary);
-            SetBrushColor("AccentBrush", Light_Accent);
-            SetBrushColor("TextBrush", Light_Text);
-            SetBrushColor("ButtonForegroundBrush", Light_ButtonFore);
-            SetBrushColor("GoldBrush", (Color)ColorConverter.ConvertFromString("#FFD700"));
+            ThemeHelper.ApplyLight();
 
             ComposeIcon.Source = new BitmapImage(new Uri("Images/White/pen.png", UriKind.Relative));
             SettingsIcon.Source = new BitmapImage(new Uri("Images/White/settings.png", UriKind.Relative));
@@ -90,14 +98,7 @@ namespace EmailClientPluma
 
         private void ApplyDarkMode()
         {
-            SetBrushColor("BackgroundBrush", Dark_Background);
-            SetBrushColor("PanelBackgroundBrush", Dark_Panel);
-            SetBrushColor("PrimaryBrush",
-                Dark_ButtonBack); // in dark mode PrimaryBrush used as button background -> gold
-            SetBrushColor("AccentBrush", Dark_Accent);
-            SetBrushColor("TextBrush", Dark_Text);
-            SetBrushColor("ButtonForegroundBrush", Dark_ButtonFore);
-            SetBrushColor("GoldBrush", Dark_ButtonBack);
+            ThemeHelper.ApplyDark();
 
             ComposeIcon.Source = new BitmapImage(new Uri("Images/Black/pen_black.png", UriKind.Relative));
             SettingsIcon.Source = new BitmapImage(new Uri("Images/Black/settings_black.png", UriKind.Relative));

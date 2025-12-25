@@ -27,6 +27,8 @@
     <None Remove="MVVM\Views\Images\Black\social_black.png" />
     <None Remove="MVVM\Views\Images\Black\spam_black.png" />
     <None Remove="MVVM\Views\Images\Black\trash_black.png" />
+    <None Remove="MVVM\Views\Images\Provider\google.png" />
+    <None Remove="MVVM\Views\Images\Provider\microsoft.png" />
     <None Remove="MVVM\Views\Images\settings.png" />
     <None Remove="MVVM\Views\Images\White\ad.png" />
     <None Remove="MVVM\Views\Images\White\drafts.png" />
@@ -90,6 +92,10 @@
         <None Update="secrets\secret.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="Settings.settings">
+          <Generator>SettingsSingleFileGenerator</Generator>
+          <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -109,6 +115,12 @@
 	  <Resource Include="MVVM\Views\Images\Black\settings_black.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
+	  <Content Include="MVVM\Views\Images\Provider\google.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="MVVM\Views\Images\Provider\microsoft.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	  <Resource Include="MVVM\Views\Images\White\pen.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
@@ -121,6 +133,14 @@
 	  <Resource Include="MVVM\Views\Images\White\settings.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Settings.Designer.cs">
+	    <DesignTimeSharedInput>True</DesignTimeSharedInput>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>Settings.settings</DependentUpon>
+	  </Compile>
 	</ItemGroup>
 
 </Project>
