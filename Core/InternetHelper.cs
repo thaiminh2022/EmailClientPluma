@@ -22,7 +22,6 @@ public static class InternetHelper
     private static readonly Uri TestUri = new("http://www.msftconnecttest.com/connecttest.txt");
     private const string ExpectedBody = "Microsoft Connect Test";
 
-    // Recommended: no auto-redirect so we can detect captive portal redirects.
     private static readonly HttpClient Client = new(new HttpClientHandler
     {
         AllowAutoRedirect = false
@@ -63,7 +62,6 @@ public static class InternetHelper
         }
         catch (HttpRequestException ex) when (ex.InnerException is AuthenticationException)
         {
-            // This is exactly your screenshot: cert validation failed
             return (InternetStatus.TlsError, null);
         }
         catch (HttpRequestException ex) when (ex.InnerException is System.Net.Sockets.SocketException se
