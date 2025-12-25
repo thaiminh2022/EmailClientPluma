@@ -1,17 +1,5 @@
-﻿using Microsoft.Graph.Models.ExternalConnectors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
+
 
 namespace EmailClientPluma.MVVM.Views
 {
@@ -20,7 +8,7 @@ namespace EmailClientPluma.MVVM.Views
     /// </summary>
     public partial class SettingsView : Window
     {
-        private static bool _isDarkMode = Settings.Default.DarkModeOn;
+        private static bool _isDarkMode;
 
         public static bool IsDarkMode
         {
@@ -30,10 +18,6 @@ namespace EmailClientPluma.MVVM.Views
                 if (_isDarkMode != value)
                 {
                     _isDarkMode = value;
-
-                    // Save to persistent settings
-                    Settings.Default.DarkModeOn = value;
-                    Settings.Default.Save();
 
                     // Notify listeners
                     DarkModeChanged?.Invoke(null, EventArgs.Empty);
