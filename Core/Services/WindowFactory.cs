@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services;
@@ -30,11 +31,20 @@ internal class WindowFactory : IWindowFactory
         };
 
         if (vm is IRequestClose rc)
+        {
             rc.RequestClose += (_, result) =>
             {
-                window.DialogResult = result;
+                var asDialog = (bool?)typeof(Window)
+                    .GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)?
+                    .GetValue(window);
+
+                if (asDialog is true)
+                {
+                    window.DialogResult = result;
+                }
                 window.Close();
             };
+        }
 
         return window;
     }

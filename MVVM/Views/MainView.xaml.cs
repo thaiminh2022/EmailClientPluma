@@ -1,16 +1,9 @@
-﻿using EmailClientPluma.Core;
-using EmailClientPluma.Core.Services;
-using EmailClientPluma.Core.Services.Accounting;
-using EmailClientPluma.Core.Services.Storaging;
-using EmailClientPluma.MVVM.ViewModels;
-using EmailClientPluma.MVVM.Views;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using EmailClientPluma.Core;
 
-namespace EmailClientPluma
+namespace EmailClientPluma.MVVM.Views
 {
 
     public partial class MainView : Window
@@ -31,45 +24,8 @@ namespace EmailClientPluma
             }
 
             SettingsView.DarkModeChanged += SettingsView_DarkModeChanged;
-
-            DataContextChanged += (s, e) =>
-            {
-                if (DataContext is MainViewModel vm)
-                {
-                    vm.AllAccountsRemoved += OnAllAccountsRemoved;
-                }
-            };
         }
 
-        private void OnAllAccountsRemoved()
-        {
-            // Run on UI thread
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                // Resolve StartViewModel from the DI container and set it as DataContext
-                var startView = new StartView();
-
-                // If your App exposes the IServiceProvider as Services (common pattern),
-                // resolve the view model and assign it so commands and collections initialize properly.
-                if (Application.Current is App app && app.Services != null)
-                {
-                    var vm = app.Services.GetService(typeof(MVVM.ViewModels.StartViewModel)) as MVVM.ViewModels.StartViewModel;
-                    if (vm != null)
-                        startView.DataContext = vm;
-                }
-
-                // If this window is the application's main window, replace it so the app doesn't exit.
-                if (Application.Current.MainWindow == this)
-                {
-                    Application.Current.MainWindow = startView;
-                }
-
-                startView.Show();
-
-                // Close the current main view
-                this.Close();
-            });
-        }
 
         private void SettingsView_DarkModeChanged(object? sender, EventArgs e)
         {

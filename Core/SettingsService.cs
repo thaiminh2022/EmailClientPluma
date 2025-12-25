@@ -21,6 +21,7 @@
                     AppTheme.Dark => "Dark",
                     _ => "Auto"
                 };
+                Properties.Settings.Default.Save();
             }
         }
 

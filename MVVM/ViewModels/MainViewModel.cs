@@ -3,17 +3,16 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
-using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Windows;
 using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
-internal class MainViewModel : ObserableObject
+internal class MainViewModel : ObserableObject, IRequestClose
 {
-    public event Action AllAccountsRemoved;
     public AppTheme CurrentTheme => AppSettings.CurrentTheme;
 
     public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
@@ -66,33 +65,37 @@ internal class MainViewModel : ObserableObject
         }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                 SelectedEmail.MessageParts.From != SelectedAccount.Email);
 
-            SettingCommand = new RelayCommand(_ =>
+        SettingCommand = new RelayCommand(_ =>
+        {
+            var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+            newEmailWindow.Show();
+        });
+
+        WhichProvCmd = new RelayCommand(_ =>
+        {
+            var whichProvWindow = windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
+            whichProvWindow.ShowDialog();
+        });
+
+        RemoveAccountCommand = new RelayCommandAsync(async _ =>
+        {
+            if (SelectedAccount == null) return;
+
+            var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
+            if (result is null or false) return;
+
+            await _accountService.RemoveAccountAsync(SelectedAccount);
+            
+            SelectedAccount = null;
+
+            if (Accounts.Count == 0)
             {
-                var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
-                newEmailWindow.Show();
-            });
-
-            WhichProvCmd = new RelayCommand(_ =>
-            {
-                var whichProvWindow = windowFactory.CreateWindow<WhichProvView, WhichProvViewModel>();
-                whichProvWindow.ShowDialog();
-            });
-
-            RemoveAccountCommand = new RelayCommand(_ =>
-            {
-                if (SelectedAccount == null) return;
-
-                var result = MessageBoxHelper.Confirmation($"Are you sure to remove {SelectedAccount.Email}?");
-                if (result is null || result is false) return;
-
-                _accountService.RemoveAccountAsync(SelectedAccount);
-                
-                SelectedAccount = null;
-
-                if (Accounts.Count == 0) { 
-                    AllAccountsRemoved?.Invoke(); 
-                }
-            }, _ => SelectedAccount is not null);
+                var chooseLogin = windowFactory.CreateWindow<StartView, StartViewModel>();
+                chooseLogin.Show();
+                Application.Current.MainWindow = chooseLogin;
+                RequestClose?.Invoke(this, true);
+            }
+        }, _ => SelectedAccount is not null);
 
 
         NextCommand = new RelayCommandAsync(async _ =>
@@ -390,7 +393,7 @@ internal class MainViewModel : ObserableObject
     public RelayCommand WhichProvCmd { get; set; }
     public RelayCommand ComposeCommand { get; set; }
     public RelayCommand ReplyCommand { get; set; }
-    public RelayCommand RemoveAccountCommand { get; set; }
+    public RelayCommandAsync RemoveAccountCommand { get; set; }
     public RelayCommandAsync NextCommand { get; set; }
     public RelayCommandAsync PreviousCommand { get; set; }
 
@@ -398,4 +401,6 @@ internal class MainViewModel : ObserableObject
     public RelayCommand EditEmailLabelCommand { get; set; }
 
     #endregion
+
+    public event EventHandler<bool?>? RequestClose;
 }

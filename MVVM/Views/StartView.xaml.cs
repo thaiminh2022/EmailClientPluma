@@ -1,13 +1,7 @@
-﻿using EmailClientPluma.MVVM.Views;
-using EmailClientPluma.MVVM.ViewModels;
-using EmailClientPluma.Core.Services;
-using EmailClientPluma.Core.Services.Accounting;
-using EmailClientPluma.Core.Services.Emailing;
-using EmailClientPluma.Core.Services.Storaging;
+﻿using EmailClientPluma.MVVM.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using EmailClientPluma.Core;
-using EmailClientPluma;
 using System.Windows.Controls;
 using EmailClientPluma.Core.Models;
 namespace EmailClientPluma.MVVM.Views
@@ -17,11 +11,9 @@ namespace EmailClientPluma.MVVM.Views
     /// </summary>
     public partial class StartView : Window
     {
-        public static StartView Instance { get; private set; }
         public StartView()
         {
             InitializeComponent();
-            Instance = this;
             Loaded += (s, e) => CheckAccounts();
         }
 
@@ -47,31 +39,10 @@ namespace EmailClientPluma.MVVM.Views
             }
             else
             {
-                var Firts = AccountsListView.Items[0];
-                var firstAccount = Firts as Account;
-                string username = firstAccount.DisplayName;
+                var first = AccountsListView.Items[0];
+                var firstAccount = first as Account;
+                string username = firstAccount?.DisplayName ?? "";
                 TitleTextBlock.Text = $"Welcome back, {username}\nWhat would you like to be as today?";
-            }
-        }
-
-
-        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (DataContext is StartViewModel vm && vm.SelectedAccount != null)
-            {
-                var mainWindow = new MainView
-                {
-                    DataContext = ((App)Application.Current).Services.GetRequiredService<MainViewModel>()
-                };
-
-                // Pass selected account into MainViewModel
-                if (mainWindow.DataContext is MainViewModel mainVm)
-                {
-                    mainVm.SelectedAccount = vm.SelectedAccount;
-                }
-
-                mainWindow.Show();
-                this.Close();
             }
         }
 

@@ -1,18 +1,17 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using System.Windows;
+using EmailClientPluma.Core.Services;
+using EmailClientPluma.MVVM.Views;
 
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
     internal class StartViewModel : ObserableObject, IRequestClose
     {
-        private readonly IAccountService _accountService;
-
+        private readonly IWindowFactory _factory;
         public ObservableCollection<Account> Accounts { get; }
 
         public RelayCommandAsync AddAccountGoogleCommand { get; }
@@ -25,25 +24,34 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 _selectedAccount = value;
                 OnPropertyChanges();
+
+
+                if (value is null) return;
+
+                var mainView = _factory.CreateWindow<MainView, MainViewModel>();
+                mainView.Show();
+                Application.Current.MainWindow = mainView;
+                RequestClose?.Invoke(this, true);
+
             }
         }
         private Account? _selectedAccount;
 
-        public StartViewModel(IAccountService accountService)
+        public StartViewModel(IAccountService accountService, IWindowFactory factory)
         {
-            _accountService = accountService;
+            _factory = factory;
 
             // initialize observable collection from service
-            Accounts = _accountService.GetAccounts();
+            Accounts = accountService.GetAccounts();
 
             AddAccountGoogleCommand = new RelayCommandAsync(async _ =>
             {
-                await _accountService.AddAccountAsync(Provider.Google);
+                await accountService.AddAccountAsync(Provider.Google);
             });
 
             AddAccountMicrosoftCommand = new RelayCommandAsync(async _ =>
             {
-                await _accountService.AddAccountAsync(Provider.Microsoft);
+                await accountService.AddAccountAsync(Provider.Microsoft);
             });
         }
 
