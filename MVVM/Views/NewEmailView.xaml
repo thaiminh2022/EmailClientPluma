@@ -9,30 +9,25 @@
     xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
     Title="New Email"
     Width="800"
-    Height="450"
+    Height="500"
     mc:Ignorable="d">
     <Window.DataContext>
         <viewmodels:NewEmailViewModel />
     </Window.DataContext>
-
     <Window.Resources>
         <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
     </Window.Resources>
-
     <Grid Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
-            <RowDefinition Height="149*" />
+            <RowDefinition Height="4*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-
         <StackPanel>
             <Grid Margin="10" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <!--  labels  -->
                     <ColumnDefinition Width="*" />
-                    <!--  inputs  -->
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -46,8 +41,7 @@
                     Margin="0,0,8,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    FontFamily="Microsoft Sans Serif"
-                    FontSize="18"
+                    FontSize="14"
                     FontWeight="Bold"
                     Text="From" />
                 <!--  right margin for gap  -->
@@ -62,7 +56,13 @@
                     SelectedItem="{Binding SelectedAccount}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Email}" />
+                            <StackPanel>
+                                <TextBlock FontWeight="Bold" Text="{Binding DisplayName}" />
+                                <TextBlock
+                                    FontSize="11"
+                                    Foreground="Gray"
+                                    Text="{Binding Email}" />
+                            </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
@@ -73,14 +73,12 @@
                     Margin="0,0,8,0"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    FontFamily="Microsoft Sans Serif"
-                    FontSize="18"
+                    FontSize="14"
                     FontWeight="Bold"
                     Text="To" />
                 <TextBox
                     Grid.Row="1"
                     Grid.Column="1"
-                    MinWidth="300"
                     Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
                     Background="{DynamicResource PanelBackgroundBrush}"
@@ -95,18 +93,22 @@
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     FontFamily="Microsoft Sans Serif"
-                    FontSize="18"
+                    FontSize="14"
                     FontWeight="Bold"
                     Text="Subject" />
-                <TextBox
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    MinWidth="300"
-                    Margin="0,4,0,4"
-                    HorizontalAlignment="Stretch"
-                    Background="{DynamicResource PanelBackgroundBrush}"
-                    Foreground="{DynamicResource TextBrush}"
-                    Text="{Binding Subject}" />
+                <Grid Grid.Row="2" Grid.Column="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        Margin="0,4,0,4"
+                        Background="{DynamicResource PanelBackgroundBrush}"
+                        Foreground="{DynamicResource TextBrush}"
+                        Text="{Binding Subject}" />
+                    <Button Grid.Column="1" Command="{Binding SendCommand}">✈️ Send</Button>
+                </Grid>
+
             </Grid>
         </StackPanel>
         <Grid Grid.Row="1" Margin="0,10,0,0">
@@ -116,7 +118,6 @@
                 Opacity="1"
                 Stretch="UniformToFill" />
             <!--  Main TextBox  -->
-
             <TabControl>
                 <TabItem Header="Normal Mode">
                     <wv2:WebView2
@@ -133,18 +134,118 @@
                 </TabItem>
             </TabControl>
         </Grid>
-        <StackPanel
-            Grid.Row="2"
-            Margin="10,0,0,0"
-            HorizontalAlignment="Left"
-            Orientation="Horizontal">
-            <Button Command="{Binding SendCommand}">
-                Send
-            </Button>
-            <Button Margin="5,0,0,0" Command="{Binding CancelCommand}">
-                Cancel
-            </Button>
+        <!--  Attachments block  -->
+        <StackPanel Grid.Row="2" Margin="0,8,0,8">
+            <DockPanel LastChildFill="True">
+                <TextBlock
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Left"
+                    FontSize="12"
+                    FontWeight="Bold"
+                    Text="Attachments" />
+                <!--  Actions  -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button
+                        Padding="10,4"
+                        Command="{Binding AddAttachmentCommand}"
+                        Content="Add"
+                        ToolTip="Add files as attachments" />
+                    <Button
+                        Margin="6,0,0,0"
+                        Padding="10,4"
+                        Command="{Binding RemoveSelectedAttachmentCommand}"
+                        Content="Remove"
+                        ToolTip="Remove selected attachment" />
+                </StackPanel>
+            </DockPanel>
+            <!--  List  -->
+            <Border
+                Margin="0,6,0,0"
+                Padding="8"
+                Background="{DynamicResource PanelBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <!--  Small hint / counter  -->
+                    <DockPanel Grid.Row="0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold" Text="Count: " />
+                            <TextBlock
+                                DockPanel.Dock="Left"
+                                FontSize="12"
+                                Opacity="0.75"
+                                Text="{Binding AttachmentsCountText}" />
+                        </StackPanel>
+                        <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
+                            <TextBlock FontWeight="Bold" Text="Total Size: " />
+                            <TextBlock
+                                DockPanel.Dock="Right"
+                                FontSize="12"
+                                Opacity="0.75"
+                                Text="{Binding TotalAttachmentSizeText}" />
+                            <TextBlock FontWeight="Bold" Text=" &lt; 20MB" />
+                        </StackPanel>
 
+                    </DockPanel>
+                    <ListBox
+                        Grid.Row="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ItemsSource="{Binding Attachments}"
+                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                        ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                        SelectedItem="{Binding SelectedAttachment}">
+                        <!--  Horizontal flow  -->
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Margin="0,10" Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+
+                        <!--  Chip template  -->
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <!--  Chip content  -->
+                                <StackPanel
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    ToolTip="{Binding FileName}">
+                                    <TextBlock
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        Opacity="0.8"
+                                        Text="📎" />
+                                    <TextBlock
+                                        MaxWidth="100"
+                                        VerticalAlignment="Center"
+                                        FontWeight="SemiBold"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        Text="{Binding FileName}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{DynamicResource TextBrush}"
+                                        Opacity="0.7"
+                                        Text="{Binding SizeText}" />
+                                </StackPanel>
+
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+            <!--  Send / Cancel (improved)  -->
         </StackPanel>
     </Grid>
 </Window>
