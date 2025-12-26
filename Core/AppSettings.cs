@@ -35,12 +35,12 @@
             }
         }
 
-        public static bool IncreasePollingTimeWhileIdle
+        public static bool IncreasePollingTimeIfIdleForTooLong
         {
-            get => Properties.Settings.Default.IncreasePollingTimeWhileIdle;
+            get => Properties.Settings.Default.IncreasePollingTimeIfIdleForTooLong;
             set
             {
-                Properties.Settings.Default.IncreasePollingTimeWhileIdle = value;
+                Properties.Settings.Default.IncreasePollingTimeIfIdleForTooLong = value;
                 Properties.Settings.Default.Save();
             }
         }

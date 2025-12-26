@@ -37,7 +37,7 @@ namespace EmailClientPluma.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("00:01:00")]
+        [global::System.Configuration.DefaultSettingValueAttribute("00:00:30")]
         public global::System.TimeSpan AutoRefreshTime {
             get {
                 return ((global::System.TimeSpan)(this["AutoRefreshTime"]));
@@ -62,12 +62,12 @@ namespace EmailClientPluma.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool IncreasePollingTimeWhileIdle {
+        public bool IncreasePollingTimeIfIdleForTooLong {
             get {
-                return ((bool)(this["IncreasePollingTimeWhileIdle"]));
+                return ((bool)(this["IncreasePollingTimeIfIdleForTooLong"]));
             }
             set {
-                this["IncreasePollingTimeWhileIdle"] = value;
+                this["IncreasePollingTimeIfIdleForTooLong"] = value;
             }
         }
         
