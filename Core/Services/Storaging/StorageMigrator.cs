@@ -112,16 +112,34 @@ namespace EmailClientPluma.Core.Services.Storaging
                         );";
 
             const string createAttachmentsSql = @"
-                        CREATE TABLE IF NOT EXISTS ATTACHMENTS (
-                            ATTACHMENT_ID   INTEGER PRIMARY KEY AUTOINCREMENT,
-                            EMAIL_ID        INTEGER NOT NULL,
-                            FILENAME        TEXT    NOT NULL,
-                            MIMETYPE       TEXT    NOT NULL,
-                            SIZE            INTEGER NOT NULL,
-                            STORAGE_KEY     TEXT    NOT NULL,
-                            CREATEDUTC     TEXT    NOT NULL,
-                            FOREIGN KEY (EMAIL_ID) REFERENCES EMAILS(EMAIL_ID) ON DELETE CASCADE
+                        CREATE TABLE IF NOT EXISTS ATTACHMENTS
+                        (
+                            ATTACHMENT_ID     INTEGER PRIMARY KEY AUTOINCREMENT,
+                            EMAIL_ID          INTEGER NOT NULL,
+
+                            FILENAME          TEXT,
+                            MIMETYPE          TEXT,
+                            SIZE              INTEGER,
+                            CREATEDUTC        TEXT,
+
+                            IMAP_UID          INTEGER NOT NULL,
+                            UID_VALIDITY      INTEGER NOT NULL,
+                            FOLDER_FULLNAME   TEXT    NOT NULL,
+                            MIME_PART_PATH    TEXT    NOT NULL,
+
+                            UNIQUE(FOLDER_FULLNAME, IMAP_UID, UID_VALIDITY, MIME_PART_PATH)
+
+                            
                         );";
+
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_attachment_unique
+            ON ATTACHMENTS (IMAP_UID, UID_VALIDITY, FOLDER_FULLNAME, MIME_PART_PATH);
+            """;
+            cmd.ExecuteNonQueryAsync();
+
 
             connection.Execute(createAccountsSql);
             connection.Execute(createEmailsSql);

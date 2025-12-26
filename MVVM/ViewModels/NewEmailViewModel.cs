@@ -45,6 +45,8 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         private Attachment? _selectedAttachment;
 
+        private int TempOGattachmentId = 0;
+
         public Attachment? SelectedAttachment
         {
             get => _selectedAttachment;
@@ -86,6 +88,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             SendCommand = new RelayCommand(async (_) =>
             {
+                
                 if (string.IsNullOrEmpty(Body)) return;
                 if (SelectedAccount is null) return;
                 if (string.IsNullOrEmpty(ToAddresses)) return;
@@ -105,6 +108,8 @@ namespace EmailClientPluma.MVVM.ViewModels
                     Attachments = Attachments.ToList()
                 };
 
+                TempOGattachmentId = 0;
+
                 try
                 {
                     var validated = await _accountService.ValidateAccountAsync(SelectedAccount);
@@ -112,12 +117,15 @@ namespace EmailClientPluma.MVVM.ViewModels
                     {
                         await _emailService.SendEmailAsync(SelectedAccount, email);
                         RequestClose?.Invoke(this, true);
+                        Helper.DeleteFolder(Path.Combine(Helper.DataFolder, "OutgoingAttachments"));
                     }
+                    
                 }
                 catch (Exception ex)
                 {
                     MessageBoxHelper.Error(ex.Message);
                     RequestClose?.Invoke(this, false);
+                    Helper.DeleteFolder(Path.Combine(Helper.DataFolder, "OutgoingAttachments"));
                 }
             });
 
@@ -126,7 +134,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 RequestClose?.Invoke(this, null);
             });
 
-
+           
 
             AddAttachment = new RelayCommand(async _ =>
             {
@@ -145,16 +153,12 @@ namespace EmailClientPluma.MVVM.ViewModels
                     {
                         byte[] fileData = await File.ReadAllBytesAsync(filePath);
 
-
-                        // Hash original file (dedupe key)
-                        string storageKey = Convert.ToHexString(SHA256.HashData(fileData));
-
                         DirectoryInfo dir = Directory.CreateDirectory(
-                            Path.Combine(Helper.DataFolder, "Attachments"));
+                            Path.Combine(Helper.DataFolder, "OutgoingAttachments"));
 
-                        string finalPath = Path.Combine(dir.FullName, storageKey);
+                        string finalPath = Path.Combine(dir.FullName, TempOGattachmentId.ToString());
 
-
+                        
 
                         if (!File.Exists(finalPath))
                         {
@@ -169,13 +173,18 @@ namespace EmailClientPluma.MVVM.ViewModels
 
                         Attachment attachment = new Attachment
                         {
+                            AttachmentID = TempOGattachmentId,
+                            IsOutgoing = true,
                             FileName = Path.GetFileName(filePath),
                             MimeType = mime ?? "application/octet-stream",
-                            Size = fileData.Length,
-                            StorageKey = storageKey
+                            Size = new FileInfo(filePath).Length,
+                            
                         };
 
-                        
+                        Attachments.Add(attachment);
+                        TempOGattachmentId++;
+
+
                     }
                     catch (Exception ex)
                     {
@@ -194,11 +203,11 @@ namespace EmailClientPluma.MVVM.ViewModels
             }, _ => true);
         }
 
+       
 
-            
 
 
-        
+
 
         // This should not be matter because this is for UI type hinting
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.

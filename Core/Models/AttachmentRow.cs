@@ -10,7 +10,7 @@
         public long SIZE { get; set; }
 
         public long CREATEDUTC { get; set; }
-        public string STORAGE_KEY { get; set; } = "";
+        
 
     }
 }

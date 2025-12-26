@@ -1,8 +1,9 @@
-﻿using MailKit;
+﻿using EmailClientPluma.Core.Services.Emailing;
+using MailKit;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
-using System.Windows.Shapes;
+using static EmailClientPluma.Core.Models.Email;
 
 namespace EmailClientPluma.Core.Models
 {
@@ -76,28 +77,34 @@ namespace EmailClientPluma.Core.Models
 
     internal record Attachment
     {
+        // ---------- identity ----------
         public int AttachmentID { get; set; }
-        public int OwnerEmailID { get; set; }
+        public bool IsOutgoing { get; set; }
 
-        public string FileName { get; set; } = "";
-        public string MimeType { get; set; } = "";
-        public long Size { get; set; }
+        public int OwnerEmailID { get; init; }
 
-        public string FilePath
-        {
-            get
-            {
-                DirectoryInfo directory = Directory.CreateDirectory(
-                    System.IO.Path.Combine(Helper.DataFolder, "Attachments"));
+        // ---------- metadata ----------
+        public string FileName { get; init; } = "";
+        public string MimeType { get; init; } = "";
+        public long? Size { get; init; }
 
-                return System.IO.Path.Combine(directory.FullName, StorageKey);
-            }
-        }
+        // ---------- IMAP identity (incoming only) ----------
+        public uint? ImapUid { get; set; }
+        public uint? ImapUidValidity { get; set; }
+        public string? FolderFullName { get; set; }
+        public string? MimePartPath { get;  set; }
 
+        // ---------- cache ----------
+        public string FilePath =>
+            Path.Combine(
+                Helper.DataFolder,
+                IsOutgoing ? "OutgoingAttachments" : "Attachments",
+                AttachmentID.ToString()
+            );
+
+        public byte[]? Content =>
+            File.Exists(FilePath) ? File.ReadAllBytes(FilePath) : null;
         
-        public byte[] Content => File.ReadAllBytes(FilePath);
-        public string StorageKey { get; set; } = "";
-
     }
-
-}
+        
+ }

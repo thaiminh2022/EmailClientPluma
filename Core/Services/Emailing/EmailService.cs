@@ -5,6 +5,7 @@ using MailKit.Net.Imap;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using Org.BouncyCastle.Crypto;
 using System.IO;
 
 namespace EmailClientPluma.Core.Services.Emailing
@@ -227,6 +228,8 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                 // store emails
                 await _storageService.StoreEmailAsync(acc, email);
+
+
             }
 
         }
@@ -344,6 +347,8 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             await _storageService.UpdateEmailBodyAsync(email);
 
+            //ATTACHMENTS
+
             var attachments = new List<Attachment>();
 
             if (bodyParts.Attachments != null)
@@ -352,9 +357,22 @@ namespace EmailClientPluma.Core.Services.Emailing
                 {
                     var entity = await folder.GetBodyPartAsync(uniqueID, attachment);
 
+                    var mimePartPath = attachment.PartSpecifier;
+
+
                     if (entity is MimePart mimePart)
                     {
-                        Attachment attach = await Helper.CreateAttachmentFMP(email, mimePart);
+                        Attachment attach = new Attachment
+                        {
+                            OwnerEmailID = email.MessageIdentifiers.EmailId,
+                            FileName = mimePart.FileName,
+                            MimeType = mimePart.ContentType.MimeType,
+                            Size = mimePart.Content?.Stream.CanSeek == true ? mimePart.Content.Stream.Length : null,
+                            ImapUid = email.MessageIdentifiers.ImapUid,
+                            ImapUidValidity = email.MessageIdentifiers.ImapUidValidity,
+                            FolderFullName = email.MessageIdentifiers.FolderFullName,
+                            MimePartPath = mimePartPath
+                        };
                         attachments.Add(attach);
                     }
                 }
@@ -402,6 +420,61 @@ namespace EmailClientPluma.Core.Services.Emailing
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
+
+        #endregion
+
+        #region Attachments
+
+        public async Task FetchAttachmentsAsync(Account acc,Email email)
+        {
+            foreach (var attachment in email.MessageParts.Attachments)
+            {
+                if (attachment.FilePath != null)
+                    continue; // already fetched
+
+                using var imap = await ConnectImapAsync(acc);
+
+                var folder = await imap.GetFolderAsync(attachment.FolderFullName);
+                await folder.OpenAsync(FolderAccess.ReadOnly);
+
+                if(attachment.ImapUid == 0 || attachment.ImapUid == null)
+                    throw new InvalidOperationException("Attachment ImapUid is invalid.");
+                var uid = new UniqueId(attachment.ImapUid??0);
+
+                var summaries = await folder.FetchAsync(
+                    new[] { uid },
+                    MessageSummaryItems.BodyStructure);
+
+                var summary = summaries.FirstOrDefault();
+
+                // Find attachment BodyPart by PartSpecifier
+                var bodyPart = summary.Attachments
+                    .First(p => p.PartSpecifier == attachment.MimePartPath);
+
+                var entity = await folder.GetBodyPartAsync(uid, bodyPart);
+
+                if (entity is MimePart mimePart)
+                {
+                    using var memoryStream = new MemoryStream();
+                    await mimePart.Content.DecodeToAsync(memoryStream);
+
+                    var directory = Path.GetDirectoryName(attachment.FilePath);
+                    if (!Directory.Exists(directory))
+                        Directory.CreateDirectory(directory);
+
+                    // write the stream to the file
+                    using (var fileStream = new FileStream(attachment.FilePath, FileMode.Create, FileAccess.Write))
+                    {
+                        memoryStream.Position = 0; // rewind to start
+                        await memoryStream.CopyToAsync(fileStream);
+                    }
+                }
+            }
+        }
+
+
+
+
 
         #endregion
     }
