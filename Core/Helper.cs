@@ -23,7 +23,7 @@ internal static class Helper
     private static string GetLogFolder()
     {
         var dataFolder = GetDataFolder();
-        var path = Path.Combine(dataFolder, "log/");
+        var path = Path.Combine(dataFolder, "log");
         Directory.CreateDirectory(path);
         return path;
     }

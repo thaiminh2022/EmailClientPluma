@@ -16,10 +16,10 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 {
     private const int INITIAL_HEADER_WINDOW = 20;
 
-    private async Task<GraphServiceClient> GetGraphService(Account acc)
+    private async Task<GraphServiceClient> GetGraphService(Account acc, bool forceCheckInternet = false)
     {
         logger.LogInformation("Getting graph service for {}", acc.Email);
-        if (!await InternetHelper.HasInternetConnection())
+        if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");
             throw new NoInternetException();
@@ -384,7 +384,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
             SentDateTime = email.Date
         };
 
-        var client = await GetGraphService(acc);
+        var client = await GetGraphService(acc, forceCheckInternet:true);
         try
         {
             await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()

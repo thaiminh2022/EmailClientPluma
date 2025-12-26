@@ -399,6 +399,8 @@ internal class MainViewModel : ObserableObject, IRequestClose
         return;
         void CheckPhishing()
         {
+            if (!AppSettings.UsePhishingDetector) return;
+
             var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
             if (check is PhishDetector.SuspiciousLevel.None or PhishDetector.SuspiciousLevel.Minor) return;
             MessageBoxHelper.Warning("Cảnh báo phishing: ", check.ToString());

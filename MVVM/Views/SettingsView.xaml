@@ -28,11 +28,19 @@
             BorderBrush="{DynamicResource AccentBrush}"
             BorderThickness="0,0,0,1"
             DockPanel.Dock="Top">
-            <TextBlock
-                FontSize="20"
-                FontWeight="Bold"
-                Foreground="{DynamicResource TextBrush}"
-                Text="Settings" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource TextBrush}"
+                    Text="Settings" />
+                <Button Grid.Column="1" Command="{Binding SaveCommand}">Save Settings</Button>
+            </Grid>
+
         </Border>
 
 
@@ -72,9 +80,10 @@
                         <StackPanel Margin="10">
                             <DockPanel>
                                 <TextBlock Width="200" Text="Auto refresh (seconds)" />
-                                <TextBox Width="100" Text="60" />
+                                <TextBox Width="100" Text="{Binding AutoRefreshSecs, FallbackValue=30}" />
                             </DockPanel>
-                            <CheckBox Content="Background message sync" />
+                            <CheckBox Content="Background message sync" IsChecked="{Binding BackgroundMessageSync, FallbackValue=True}" />
+                            <CheckBox Content="Increase polling time when idle for too long" IsChecked="{Binding IncreasePollingWhileIdleTooLong, FallbackValue=True}" />
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -82,40 +91,67 @@
 
             <!--  ACCOUNTS  -->
             <TabItem Header="Accounts">
-                <StackPanel Margin="20">
-                    <GroupBox
-                        BorderBrush="{DynamicResource TextBrush}"
-                        BorderThickness="1"
-                        Header="Google Account">
-                        <StackPanel Margin="10">
-                            <Button Width="250" Content="Add Google Account" />
-                            <DockPanel Margin="5">
-                                <TextBlock
-                                    Width="300"
-                                    VerticalAlignment="Center"
-                                    Text="example@gmail.com" />
-                                <Button Content="Remove" />
-                            </DockPanel>
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <!--  Add button  -->
+                        <RowDefinition Height="Auto" />
+                        <!--  Scrollable content  -->
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Margin="0,5" Command="{Binding AddAccountCommand}">Add Account</Button>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <GroupBox
+                                BorderBrush="{DynamicResource TextBrush}"
+                                BorderThickness="1"
+                                Header="Google Accounts">
+                                <StackPanel Margin="10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding RemoveGoogleAccountCommand}" Content="Remove" />
+                                    </StackPanel>
+                                    <ListView
+                                        ItemsSource="{Binding GoogleAccounts}"
+                                        SelectedItem="{Binding SelectedAccount}"
+                                        SelectionMode="Single">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="{Binding DisplayName}" />
+                                                    <TextBlock FontSize="11" Text="{Binding Email}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </StackPanel>
+                            </GroupBox>
+                            <GroupBox
+                                BorderBrush="{DynamicResource TextBrush}"
+                                BorderThickness="1"
+                                Header="Microsoft Accounts">
+                                <StackPanel Margin="10">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Command="{Binding RemoveMicrosoftAccountCommand}" Content="Remove" />
+                                    </StackPanel>
+                                    <ListView
+                                        ItemsSource="{Binding MicrosoftAccounts}"
+                                        SelectedItem="{Binding SelectedAccount}"
+                                        SelectionMode="Single">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="Bold" Text="{Binding DisplayName}" />
+                                                    <TextBlock FontSize="11" Text="{Binding Email}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </StackPanel>
+                            </GroupBox>
                         </StackPanel>
-                    </GroupBox>
-                </StackPanel>
-            </TabItem>
+                    </ScrollViewer>
 
 
-            <!--  MONITORING  -->
-            <TabItem Header="Monitoring">
-                <StackPanel Margin="20">
-                    <GroupBox
-                        BorderBrush="{DynamicResource TextBrush}"
-                        BorderThickness="1"
-                        Header="Email Monitoring">
-                        <StackPanel Margin="10">
-                            <CheckBox Content="Enable real-time monitoring" />
-                            <CheckBox Content="Show toast notifications" />
-                            <CheckBox Content="Play sound on new mail" />
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
+                </Grid>
             </TabItem>
 
             <!--  SECURITY  -->
@@ -126,15 +162,40 @@
                         BorderThickness="1"
                         Header="Phishing Protection">
                         <StackPanel Margin="10">
-                            <CheckBox Content="Enable phishing detector" IsChecked="True" />
+                            <CheckBox Content="Use phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
+                            <CheckBox Content="Use BERT phishing detector" IsChecked="{Binding UseBertPhishingDetector, FallbackValue=True}" />
                         </StackPanel>
                     </GroupBox>
 
 
                 </StackPanel>
             </TabItem>
-
-
+            <!--  STORAGE  -->
+            <TabItem Header="Storage">
+                <StackPanel Margin="20">
+                    <GroupBox
+                        BorderBrush="{DynamicResource TextBrush}"
+                        BorderThickness="1"
+                        Header="Local database">
+                        <StackPanel Margin="10">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Margin="0" Command="{Binding OpenDatabaseFolder}">Open data folder</Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox
+                        BorderBrush="{DynamicResource TextBrush}"
+                        BorderThickness="1"
+                        Header="Log files">
+                        <StackPanel Margin="10">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Margin="0" Command="{Binding OpenLogFolder}">Open logs folder</Button>
+                            </StackPanel>
+                            <Button Margin="0,5" Command="{Binding DeleteLogFolder}">Clear log files</Button>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>

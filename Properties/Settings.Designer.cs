@@ -34,5 +34,65 @@ namespace EmailClientPluma.Properties {
                 this["Theme"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("00:00:30")]
+        public global::System.TimeSpan AutoRefreshTime {
+            get {
+                return ((global::System.TimeSpan)(this["AutoRefreshTime"]));
+            }
+            set {
+                this["AutoRefreshTime"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool BackgroundMessageSync {
+            get {
+                return ((bool)(this["BackgroundMessageSync"]));
+            }
+            set {
+                this["BackgroundMessageSync"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IncreasePollingTimeIfIdleForTooLong {
+            get {
+                return ((bool)(this["IncreasePollingTimeIfIdleForTooLong"]));
+            }
+            set {
+                this["IncreasePollingTimeIfIdleForTooLong"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UsePhishingDetector {
+            get {
+                return ((bool)(this["UsePhishingDetector"]));
+            }
+            set {
+                this["UsePhishingDetector"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseBERTPhishingDetector {
+            get {
+                return ((bool)(this["UseBERTPhishingDetector"]));
+            }
+            set {
+                this["UseBERTPhishingDetector"] = value;
+            }
+        }
     }
 }

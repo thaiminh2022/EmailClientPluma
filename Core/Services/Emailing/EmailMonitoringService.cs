@@ -32,6 +32,8 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
 
     public void StartMonitor(Account acc)
     {
+        if (!AppSettings.BackgroundMessageSync) return;
+
 
         lock (_lock)
         {
@@ -97,11 +99,11 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
     {
         // Adaptive polling intervals
         // THIS WILL GIVE ERROR WHEN OPEN WITH C# < 7
-        const int ACTIVE_INTERVAL_MS = 30_000;    // 30 seconds when active
-        const int IDLE_INTERVAL_MS = 120_000;     // 2 minutes when idle
-        const int ERROR_RETRY_INTERVAL_MS = 60_000; // 1 minute after error
+        int activeIntervalMs = AppSettings.AutoRefreshTime.Milliseconds; // default is 30 secs
+        int idleIntervalMs = 120_000;     // per 2 minutes when idle
+        int errorRetryIntervalMs = 60_000; // per 1 minute after error
 
-        var currentInterval = ACTIVE_INTERVAL_MS;
+        var currentInterval = activeIntervalMs;
         var consecutiveNoChanges = 0;
 
         var emailService = _emailServices.FirstOrDefault(x => x.GetProvider() == acc.Provider);
@@ -131,7 +133,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                 {
                     // Reset to active polling
                     consecutiveNoChanges = 0;
-                    currentInterval = ACTIVE_INTERVAL_MS;
+                    currentInterval = activeIntervalMs;
 
                     // observable collection does not like it when we add email from different threads 
                     await Application.Current.Dispatcher.InvokeAsync(async () =>
@@ -150,7 +152,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                     consecutiveNoChanges++;
                     if (consecutiveNoChanges > 5)
                     {
-                        currentInterval = IDLE_INTERVAL_MS;
+                        currentInterval = AppSettings.IncreasePollingTimeIfIdleForTooLong ? idleIntervalMs : AppSettings.AutoRefreshTime.Milliseconds;
                     }
                 }
 
@@ -169,7 +171,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                 });
 
                 // Wait before retry
-                await Task.Delay(ERROR_RETRY_INTERVAL_MS, cancellationToken);
+                await Task.Delay(errorRetryIntervalMs, cancellationToken);
             }
         }
 
