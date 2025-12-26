@@ -53,7 +53,7 @@
                                     Margin="12,0,0,0"
                                     VerticalAlignment="Center"
                                     Foreground="Gray"
-                                    Text="{Binding Provider, StringFormat=from Provider({0})}" />
+                                    Text="{Binding Provider}" />
                             </Grid>
                         </Border>
                     </DataTemplate>
