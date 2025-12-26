@@ -225,7 +225,6 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
         // Fetch and store older messages
 
-        List<Email> emails = [];
 
         foreach (var msgRef in response.Messages)
         {
@@ -238,7 +237,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                         x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
                     continue;
 
-                emails.Add(email);
+                acc.Emails.Add(email);
             }
             catch (Exception ex)
             {
@@ -247,7 +246,6 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
 
         }
-        emails.ForEach(x => acc.Emails.Add(x));
         await storageService.StoreEmailAsync(acc);
         return true;
     }
