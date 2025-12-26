@@ -62,11 +62,12 @@
                     Grid.Row="2"
                     Background="Transparent"
                     BorderThickness="0"
-                    ItemsSource="{Binding SelectedAccount.OwnedLabels}"
+                    ItemsSource="{Binding SelectedAccount.OwnedLabels, FallbackValue=null}"
                     ScrollViewer.CanContentScroll="True"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                     SelectedItem="{Binding Filters.SelectedLabel}"
+                    SelectionMode="Single"
                     VirtualizingPanel.IsVirtualizing="True"
                     VirtualizingPanel.ScrollUnit="Pixel"
                     VirtualizingPanel.VirtualizationMode="Recycling">

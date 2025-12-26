@@ -233,7 +233,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
     public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
     {
-        using var service = await CreateGmailService(acc);
+        using var service = await CreateGmailService(acc, forceCheckInternet: true);
 
         logger.LogInformation("Sending email for {email} with subject: {sub}", acc.Email, email.Subject);
 
@@ -295,10 +295,10 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
     #region Helper
 
-    private async Task<GmailService> CreateGmailService(Account acc)
+    private async Task<GmailService> CreateGmailService(Account acc, bool forceCheckInternet = false)
     {
         logger.LogInformation("Getting gmail service for {}", acc.Email);
-        if (!await InternetHelper.HasInternetConnection())
+        if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");
             throw new NoInternetException();
