@@ -55,6 +55,16 @@
             }
         }
 
+        public static bool BackgroundMessageSync
+        {
+            get => Properties.Settings.Default.BackgroundMessageSync;
+            set
+            {
+                Properties.Settings.Default.BackgroundMessageSync = value;
+                Properties.Settings.Default.Save();
+            }
+        }
+
         public static bool UseBertPhishingDetector
         {
             get => Properties.Settings.Default.UseBERTPhishingDetector;

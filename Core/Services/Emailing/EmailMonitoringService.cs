@@ -32,6 +32,8 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
 
     public void StartMonitor(Account acc)
     {
+        if (!AppSettings.BackgroundMessageSync) return;
+
 
         lock (_lock)
         {
