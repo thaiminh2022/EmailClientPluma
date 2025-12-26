@@ -7,6 +7,8 @@ using MailKit.Security;
 using MimeKit;
 using Org.BouncyCastle.Crypto;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace EmailClientPluma.Core.Services.Emailing
 {
@@ -18,6 +20,10 @@ namespace EmailClientPluma.Core.Services.Emailing
 
         Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30);
         Task<bool> FetchOlderHeadersAsync(Account acc, int window, CancellationToken token = default);
+
+
+
+        Task FetchAttachmentsAsync(Account account, Email email);
     }
     internal class EmailService : IEmailService
     {
@@ -347,40 +353,44 @@ namespace EmailClientPluma.Core.Services.Emailing
 
             await _storageService.UpdateEmailBodyAsync(email);
 
-            //ATTACHMENTS
-
             var attachments = new List<Attachment>();
 
-            if (bodyParts.Attachments != null)
+            // Fetch the full message to access attachments
+
+            foreach (var entity in bodyParts.Attachments)
             {
-                foreach (var attachment in bodyParts.Attachments)
+                // entity is BodyPartBasic, not MimePart
+                var fileName = entity.FileName;
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    var entity = await folder.GetBodyPartAsync(uniqueID, attachment);
-
-                    var mimePartPath = attachment.PartSpecifier;
-
-
-                    if (entity is MimePart mimePart)
+                    var attach = new Attachment
                     {
-                        Attachment attach = new Attachment
-                        {
-                            OwnerEmailID = email.MessageIdentifiers.EmailId,
-                            FileName = mimePart.FileName,
-                            MimeType = mimePart.ContentType.MimeType,
-                            Size = mimePart.Content?.Stream.CanSeek == true ? mimePart.Content.Stream.Length : null,
-                            ImapUid = email.MessageIdentifiers.ImapUid,
-                            ImapUidValidity = email.MessageIdentifiers.ImapUidValidity,
-                            FolderFullName = email.MessageIdentifiers.FolderFullName,
-                            MimePartPath = mimePartPath
-                        };
-                        attachments.Add(attach);
-                    }
+                        OwnerEmailID = email.MessageIdentifiers.EmailId,
+                        FileName = fileName,
+                        MimeType = entity.ContentType?.MimeType,
+                        Size = entity.Octets, // Octets is uint, may need to cast to long?
+                        ImapUid = email.MessageIdentifiers.ImapUid,
+                        ImapUidValidity = email.MessageIdentifiers.ImapUidValidity,
+                        FolderFullName = email.MessageIdentifiers.FolderFullName,
+                        MimePartPath = entity.PartSpecifier // Use PartSpecifier for later fetching
+                    };
+
+                    attachments.Add(attach);
                 }
             }
 
-            email.MessageParts.Attachments = attachments;
-            if(attachments.Count > 0) 
+
+            // Save or process attachments
+            if (attachments.Count > 0)
+            {
                 await _storageService.StoreAttachmentsAsync(email, attachments);
+                attachments = (await _storageService.GetAttachmentsAsync(email)).ToList();
+
+                email.MessageParts.Attachments = attachments;
+                await FetchAttachmentsInternal(imap, email);
+            }
+
+            
         }
 
            
@@ -425,14 +435,25 @@ namespace EmailClientPluma.Core.Services.Emailing
 
         #region Attachments
 
-        public async Task FetchAttachmentsAsync(Account acc,Email email)
+        public async Task FetchAttachmentsAsync(Account account, Email email)
+        {
+            using var imap = await ConnectImapAsync(account);
+            try
+            {
+                await FetchAttachmentsInternal(imap, email);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.Error(ex.Message);
+            }
+        }
+
+        private async Task FetchAttachmentsInternal(ImapClient imap, Email email)
         {
             foreach (var attachment in email.MessageParts.Attachments)
             {
-                if (attachment.FilePath != null)
+                if (attachment.Content != null)
                     continue; // already fetched
-
-                using var imap = await ConnectImapAsync(acc);
 
                 var folder = await imap.GetFolderAsync(attachment.FolderFullName);
                 await folder.OpenAsync(FolderAccess.ReadOnly);
@@ -468,6 +489,8 @@ namespace EmailClientPluma.Core.Services.Emailing
                         memoryStream.Position = 0; // rewind to start
                         await memoryStream.CopyToAsync(fileStream);
                     }
+
+                    await Helper.EventDownloadAttachmentTest(attachment);
                 }
             }
         }

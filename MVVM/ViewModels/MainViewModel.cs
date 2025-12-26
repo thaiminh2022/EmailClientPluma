@@ -124,7 +124,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             if (_selectedEmail.BodyFetched)
             {
-                _emailService.FetchAttachmentsAsync(_selectedAccount, _selectedEmail);
+                await _emailService.FetchAttachmentsAsync(_selectedAccount, _selectedEmail);
                 Mouse.OverrideCursor = null;
                 CheckPhishing();
                 return;

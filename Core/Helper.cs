@@ -5,6 +5,8 @@ using Microsoft.Win32;
 using MimeKit;
 using Org.BouncyCastle.Utilities;
 using System.IO;
+using System.Net.Mail;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Windows.Media;
 
@@ -112,7 +114,7 @@ namespace EmailClientPluma.Core
             }
         }
 
-        public static async Task EventDownloadAttachmentAsync(Attachment att)
+        public static async Task EventDownloadAttachmentAsync(Models.Attachment att)
         {
             SaveFileDialog sfd = new SaveFileDialog
             {
@@ -125,6 +127,19 @@ namespace EmailClientPluma.Core
 
             byte[] storedBytes = await File.ReadAllBytesAsync(att.FilePath);
             await File.WriteAllBytesAsync(sfd.FileName, storedBytes);
+        }
+
+        public static async Task EventDownloadAttachmentTest(Models.Attachment att)
+        {
+            var filePath = Path.Combine(
+                Helper.DataFolder,
+                "Attachments",
+                att.FileName
+                
+            );
+
+            byte[] storedBytes = await File.ReadAllBytesAsync(att.FilePath);
+            await File.WriteAllBytesAsync(filePath, storedBytes);
         }
     }
 }
