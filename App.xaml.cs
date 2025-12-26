@@ -19,7 +19,7 @@ namespace EmailClientPluma;
 /// </summary>
 public partial class App : Application
 {
-    private IWindowFactory? factory;
+    private readonly IWindowFactory? factory;
     public App()
     {
         var services = new ServiceCollection();
@@ -28,6 +28,8 @@ public partial class App : Application
         AddServices(services);
 
         Services = services.BuildServiceProvider();
+        factory = Services.GetService(typeof(IWindowFactory)) as IWindowFactory;
+
     }
 
     private void AddLogging(ServiceCollection services)
@@ -94,9 +96,6 @@ public partial class App : Application
         services.AddTransient<StartViewModel>();
 
         services.AddSingleton<MainViewModel>();
-
-        Services = services.BuildServiceProvider();
-        factory = Services.GetService(typeof(IWindowFactory)) as IWindowFactory;
     }
 
     public IServiceProvider Services { get; }
