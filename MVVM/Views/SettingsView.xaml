@@ -74,7 +74,8 @@
                                 <TextBlock Width="200" Text="Auto refresh (seconds)" />
                                 <TextBox Width="100" Text="60" />
                             </DockPanel>
-                            <CheckBox Content="Background message sync" />
+                            <CheckBox Content="Background message sync" IsChecked="True" />
+                            <CheckBox Content="Increase polling time when idle for too long" IsChecked="True" />
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -83,36 +84,31 @@
             <!--  ACCOUNTS  -->
             <TabItem Header="Accounts">
                 <StackPanel Margin="20">
+                    <Button Margin="0,5">Add Account</Button>
                     <GroupBox
                         BorderBrush="{DynamicResource TextBrush}"
                         BorderThickness="1"
-                        Header="Google Account">
+                        Header="Google Accounts">
                         <StackPanel Margin="10">
-                            <Button Width="250" Content="Add Google Account" />
-                            <DockPanel Margin="5">
-                                <TextBlock
-                                    Width="300"
-                                    VerticalAlignment="Center"
-                                    Text="example@gmail.com" />
+                            <StackPanel Orientation="Horizontal">
                                 <Button Content="Remove" />
+                            </StackPanel>
+                            <DockPanel Margin="5">
+                                <TextBlock Text="example@gmail.com" />
                             </DockPanel>
                         </StackPanel>
                     </GroupBox>
-                </StackPanel>
-            </TabItem>
-
-
-            <!--  MONITORING  -->
-            <TabItem Header="Monitoring">
-                <StackPanel Margin="20">
                     <GroupBox
                         BorderBrush="{DynamicResource TextBrush}"
                         BorderThickness="1"
-                        Header="Email Monitoring">
+                        Header="Microsoft Accounts">
                         <StackPanel Margin="10">
-                            <CheckBox Content="Enable real-time monitoring" />
-                            <CheckBox Content="Show toast notifications" />
-                            <CheckBox Content="Play sound on new mail" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Remove" />
+                            </StackPanel>
+                            <DockPanel Margin="5">
+                                <TextBlock Text="example@gmail.com" />
+                            </DockPanel>
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
@@ -126,15 +122,41 @@
                         BorderThickness="1"
                         Header="Phishing Protection">
                         <StackPanel Margin="10">
-                            <CheckBox Content="Enable phishing detector" IsChecked="True" />
+                            <CheckBox Content="Use phishing detector" IsChecked="True" />
+                            <CheckBox Content="Use BERT phishing detector" IsChecked="True" />
                         </StackPanel>
                     </GroupBox>
 
 
                 </StackPanel>
             </TabItem>
-
-
+            <!--  STORAGE  -->
+            <TabItem Header="Storage">
+                <StackPanel Margin="20">
+                    <GroupBox
+                        BorderBrush="{DynamicResource TextBrush}"
+                        BorderThickness="1"
+                        Header="Local database">
+                        <StackPanel Margin="10">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Margin="0">Open data folder</Button>
+                            </StackPanel>
+                            <Button Margin="0,5">Clear database</Button>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox
+                        BorderBrush="{DynamicResource TextBrush}"
+                        BorderThickness="1"
+                        Header="Log files">
+                        <StackPanel Margin="10">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Margin="0">Open data folder</Button>
+                            </StackPanel>
+                            <Button Margin="0,5">Clear log files</Button>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>
