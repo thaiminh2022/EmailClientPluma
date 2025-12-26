@@ -76,11 +76,21 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                 if (newMessageIds.Count == 0)
                     return;
 
+                List<Email> newMessages = [];
                 // Fetch these specific messages
                 foreach (var messageId in newMessageIds)
                 {
                     var msg = await service.Users.Messages.Get("me", messageId).ExecuteAsync();
-                    await ProcessAndStoreMessage(acc, msg);
+                    var email = ProcessMessage(acc, msg);
+
+                    if (email is not null)
+                        newMessages.Add(email);
+                }
+
+                foreach (var msg in newMessages)
+                {
+                    await storageService.StoreEmailAsync(acc, msg);
+                    acc.Emails.Add(msg);
                 }
 
                 return;
@@ -97,15 +107,28 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
         }
 
+
         // Process messages from list response
         if (response?.Messages != null)
         {
+            List<Email> newMessages = [];
+
             foreach (var msgRef in response.Messages)
             {
                 // Fetch full message details
                 var msg = await service.Users.Messages.Get("me", msgRef.Id).ExecuteAsync();
-                await ProcessAndStoreMessage(acc, msg);
+                var email = ProcessMessage(acc, msg);
+
+                if (email is not null)
+                    newMessages.Add(email);
             }
+
+            newMessages.ForEach(x =>
+            {
+                acc.Emails.Add(x);
+            });
+            await storageService.StoreEmailAsync(acc);
+
         }
     }
 
@@ -201,6 +224,9 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         await storageService.UpdatePaginationAndNextTokenAsync(acc);
 
         // Fetch and store older messages
+
+        List<Email> emails = [];
+
         foreach (var msgRef in response.Messages)
         {
             try
@@ -212,7 +238,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                         x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
                     continue;
 
-                acc.Emails.Add(email);
+                emails.Add(email);
             }
             catch (Exception ex)
             {
@@ -221,7 +247,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
 
         }
-
+        emails.ForEach(x => acc.Emails.Add(x));
         await storageService.StoreEmailAsync(acc);
         return true;
     }
@@ -312,15 +338,10 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         });
     }
 
-    private async Task ProcessAndStoreMessage(Account acc, Message msg)
+    private Email? ProcessMessage(Account acc, Message msg)
     {
         var email = CreateEmailFromMessage(acc, msg);
-
-        if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
-            return;
-
-        acc.Emails.Add(email);
-        await storageService.StoreEmailAsync(acc, email);
+        return acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId) ? null : email;
     }
 
     private string DecodeBase64Url(string base64Url)
