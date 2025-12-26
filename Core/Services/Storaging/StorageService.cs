@@ -105,6 +105,9 @@ namespace EmailClientPluma.Core.Services.Storaging
             {
                 var labels = await _labelStorage.GetLabelsAsync(mail);
                 mail.Labels = new(labels);
+
+                var attachments = await _attachmentStorage.GetAttachmentsAsync(mail);
+                mail.MessageParts.Attachments = attachments;
             }
 
             return emails;

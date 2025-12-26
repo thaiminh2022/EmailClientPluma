@@ -229,11 +229,12 @@ namespace EmailClientPluma.Core.Services.Emailing
 
                 if (acc.Emails.Any(x => Helper.IsEmailEqual(x, email)))
                     continue;
-
-                acc.Emails.Add(email);
+               
 
                 // store emails
                 await _storageService.StoreEmailAsync(acc, email);
+
+                acc.Emails.Add(email);
 
 
             }
@@ -479,18 +480,19 @@ namespace EmailClientPluma.Core.Services.Emailing
                     using var memoryStream = new MemoryStream();
                     await mimePart.Content.DecodeToAsync(memoryStream);
 
-                    var directory = Path.GetDirectoryName(attachment.FilePath);
+                    //change to FilePath or FusedFilePath here
+                    var directory = Path.GetDirectoryName(attachment.FusedFilePath);
                     if (!Directory.Exists(directory))
                         Directory.CreateDirectory(directory);
 
-                    // write the stream to the file
-                    using (var fileStream = new FileStream(attachment.FilePath, FileMode.Create, FileAccess.Write))
+                    // write the stream to the file (and change to FilePath or FusedFilePath here too)
+                    using (var fileStream = new FileStream(attachment.FusedFilePath, FileMode.Create, FileAccess.Write))
                     {
                         memoryStream.Position = 0; // rewind to start
                         await memoryStream.CopyToAsync(fileStream);
                     }
 
-                    await Helper.EventDownloadAttachmentTest(attachment);
+                    await Helper.EventTakeOutAttachmentAsync(attachment);
                 }
             }
         }

@@ -114,32 +114,21 @@ namespace EmailClientPluma.Core
             }
         }
 
-        public static async Task EventDownloadAttachmentAsync(Models.Attachment att)
+        public static async Task EventTakeOutAttachmentAsync(Models.Attachment att)
         {
             SaveFileDialog sfd = new SaveFileDialog
             {
                 FileName = att.FileName,
-                Filter = $"{att.FileName}|*.*"
+                //Filter = $"{att.FileName}|*.*"
             };
 
             if (sfd.ShowDialog() != true)
                 return;
 
-            byte[] storedBytes = await File.ReadAllBytesAsync(att.FilePath);
-            await File.WriteAllBytesAsync(sfd.FileName, storedBytes);
-        }
+           
 
-        public static async Task EventDownloadAttachmentTest(Models.Attachment att)
-        {
-            var filePath = Path.Combine(
-                Helper.DataFolder,
-                "Attachments",
-                att.FileName
-                
-            );
 
-            byte[] storedBytes = await File.ReadAllBytesAsync(att.FilePath);
-            await File.WriteAllBytesAsync(filePath, storedBytes);
+            File.Move(att.FusedFilePath, sfd.FileName,true);
         }
     }
 }

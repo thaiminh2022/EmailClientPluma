@@ -102,8 +102,28 @@ namespace EmailClientPluma.Core.Models
                 AttachmentID.ToString()
             );
 
-        public byte[]? Content =>
-            File.Exists(FilePath) ? File.ReadAllBytes(FilePath) : null;
+        public string FusedFileName => $"{AttachmentID}{Path.GetExtension(FileName)}";
+        public string FusedFilePath =>
+            Path.Combine(
+                Helper.DataFolder,
+                IsOutgoing ? "OutgoingAttachments" : "Attachments",
+                FusedFileName
+            );
+
+        public byte[]? Content
+        {
+            get
+            {
+                if(File.Exists(FilePath))
+                    return File.ReadAllBytes(FilePath);
+                else if(File.Exists(FusedFilePath))
+                    return File.ReadAllBytes(FusedFilePath);
+                else
+                    return null;
+            }
+        }
+          
+
         
     }
         
