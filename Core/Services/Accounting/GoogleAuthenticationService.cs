@@ -45,6 +45,11 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
         }
         
         var tempId = Guid.NewGuid().ToString();
+
+        // add a maximum timeout for authentication flow
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        var token = cts.Token;
+
         try
         {
             logger.LogInformation("Initializing authentication for google");
@@ -53,7 +58,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
                 GoogleClientSecrets.FromFile(ClientSecret).Secrets,
                 Scopes,
                 tempId,
-                CancellationToken.None,
+                token,
                 _dataStore);
 
             if (credentials is null)
@@ -67,7 +72,11 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
                 HttpClientInitializer = credentials
             });
 
-            var userInfo = await oauth2.Userinfo.Get().ExecuteAsync();
+            // userinfo timeout
+            using var userInfoCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            userInfoCts.CancelAfter(TimeSpan.FromSeconds(15));
+
+            var userInfo = await oauth2.Userinfo.Get().ExecuteAsync(userInfoCts.Token);
             if (userInfo == null)
             {
                 logger.LogError("Cannot find user {mail} info via OAUTH2", credentials.UserId);
@@ -159,11 +168,14 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
         // can't silent login so doing interactive
         try
         {
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+            var token = cts.Token;
+
             var credentials = await GoogleWebAuthorizationBroker.AuthorizeAsync(
                 GoogleClientSecrets.FromFile(ClientSecret).Secrets,
                 Scopes,
                 acc.ProviderUID,
-                CancellationToken.None,
+                token,
                 _dataStore
             );
             if (credentials is null)
