@@ -2,6 +2,7 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
 
@@ -23,12 +24,13 @@ internal class LabelEditorViewModel : ObserableObject, IRequestClose
 
 
     private EmailLabel? _selectedLabel;
-
+    private readonly ILogger<LabelEditorViewModel> _logger;
 
     // --- Constructor ---
-    public LabelEditorViewModel(IAccountService accountService, IStorageService storageService)
+    public LabelEditorViewModel(IAccountService accountService, IStorageService storageService, ILogger<LabelEditorViewModel> logger)
     {
         _storageService = storageService;
+        _logger = logger;
         Accounts = accountService.GetAccounts();
 
         // Default select first account if available
@@ -110,12 +112,18 @@ internal class LabelEditorViewModel : ObserableObject, IRequestClose
             return;
         }
 
-        // Persist new labels
-        await _storageService.StoreLabelAsync(SelectedAccount);
+        try
+        {
+            // Persist new labels
+            await _storageService.StoreLabelAsync(SelectedAccount);
+            foreach (var label in _deletedLabels) await _storageService.DeleteLabelAsync(label);
+            RequestClose?.Invoke(this, true);
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
 
-        foreach (var label in _deletedLabels) await _storageService.DeleteLabelAsync(label);
-
-        RequestClose?.Invoke(this, true);
     }
 
     private void CancelChanges(object? obj)
@@ -125,9 +133,10 @@ internal class LabelEditorViewModel : ObserableObject, IRequestClose
             RequestClose?.Invoke(this, false);
             return;
         }
+        _logger.LogInformation("User cancel, reverting changes");
 
         foreach (var label in _newLabels) SelectedAccount.OwnedLabels.Remove(label);
-
+        MessageBoxHelper.Warning("Canceled labels changes, restart app to update info");
         RequestClose?.Invoke(this, true);
     }
 

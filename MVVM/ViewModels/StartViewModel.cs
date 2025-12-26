@@ -1,10 +1,10 @@
 ﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
+using EmailClientPluma.MVVM.Views;
 using System.Collections.ObjectModel;
 using System.Windows;
-using EmailClientPluma.Core.Services;
-using EmailClientPluma.MVVM.Views;
 
 
 namespace EmailClientPluma.MVVM.ViewModels
@@ -35,7 +35,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 {
                     mvm.SelectedAccount = value;
                 }
-                
+
                 Application.Current.MainWindow = mainView;
                 RequestClose?.Invoke(this, true);
 

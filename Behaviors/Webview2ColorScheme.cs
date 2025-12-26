@@ -1,7 +1,7 @@
-﻿using Microsoft.Web.WebView2.Core;
-using System.Windows;
-using EmailClientPluma.Core;
+﻿using EmailClientPluma.Core;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+using System.Windows;
 
 namespace EmailClientPluma.Behaviors
 {
@@ -62,7 +62,7 @@ namespace EmailClientPluma.Behaviors
                 _ => CoreWebView2PreferredColorScheme.Auto,
             };
 
-           
+
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Me.SendMail;
 using Microsoft.Graph.Models;
@@ -9,21 +11,21 @@ using Newtonsoft.Json;
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
-internal class OutlookApiEmailService : IEmailService
+internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageService storageService, ILogger<OutlookApiEmailService> logger)
+    : IEmailService
 {
     private const int INITIAL_HEADER_WINDOW = 20;
-    private readonly IStorageService _storageService;
-    private readonly IMicrosoftClientApp _clientApp;
 
-    public OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageService storageService)
+    private async Task<GraphServiceClient> GetGraphService(Account acc)
     {
-        _clientApp = clientApp;
-        _storageService = storageService;
-    }
+        logger.LogInformation("Getting graph service for {}", acc.Email);
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
 
-    private GraphServiceClient GetGraphService(Account acc)
-    {
-        var provider = new MsalAccessTokenProvider(_clientApp.PublicClient, _clientApp.Scopes, acc.ProviderUID);
+        var provider = new MsalAccessTokenProvider(clientApp.PublicClient, clientApp.Scopes, acc.ProviderUID);
         var tokenProvider = new BaseBearerTokenAuthenticationProvider(provider);
         return new GraphServiceClient(tokenProvider);
     }
@@ -48,7 +50,8 @@ internal class OutlookApiEmailService : IEmailService
 
     public async Task FetchEmailHeaderAsync(Account acc)
     {
-        var graphClient = GetGraphService(acc);
+        logger.LogInformation("Staring fetching email for: {email}", acc.Email);
+        var graphClient = await GetGraphService(acc);
         var (_, lastSync) = ParseAccountTokens(acc.PaginationToken, acc.LastSyncToken);
 
 
@@ -57,21 +60,24 @@ internal class OutlookApiEmailService : IEmailService
             if (lastSync is not null)
             {
                 // incremental
+                logger.LogInformation("Incremental fetching for {email}", acc.Email);
                 await FetchIncremental(acc, graphClient, lastSync.Value);
             }
             else
             {
                 // initial
+                logger.LogInformation("User {email} is a first time fetcher", acc.Email);
                 await FetchInitial(acc, graphClient);
             }
 
 
             acc.NoMoreOlderEmail = string.IsNullOrEmpty(acc.PaginationToken);
-            await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+            await storageService.UpdatePaginationAndNextTokenAsync(acc);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            MessageBoxHelper.Error("Cannot fetch your account message");
+            logger.LogError(ex, "Cannot fetch email for {email}", acc.Email);
+            throw new EmailFetchException(inner: ex);
         }
     }
 
@@ -127,7 +133,7 @@ internal class OutlookApiEmailService : IEmailService
                     continue;
 
                 acc.Emails.Add(email);
-                await _storageService.StoreEmailAsync(acc, email);
+                await storageService.StoreEmailAsync(acc, email);
             }
         }
 
@@ -142,7 +148,7 @@ internal class OutlookApiEmailService : IEmailService
                     continue;
 
                 acc.Emails.Add(email);
-                await _storageService.StoreEmailAsync(acc, email);
+                await storageService.StoreEmailAsync(acc, email);
             }
         }
 
@@ -204,7 +210,7 @@ internal class OutlookApiEmailService : IEmailService
                 // New email
                 var newEmail = CreateEmailFromGraph(acc, msg);
                 acc.Emails.Add(newEmail);
-                await _storageService.StoreEmailAsync(acc, newEmail);
+                await storageService.StoreEmailAsync(acc, newEmail);
             }
 
         }
@@ -224,7 +230,7 @@ internal class OutlookApiEmailService : IEmailService
                 // New email
                 var newEmail = CreateEmailFromGraph(acc, msg, true);
                 acc.Emails.Add(newEmail);
-                await _storageService.StoreEmailAsync(acc, newEmail);
+                await storageService.StoreEmailAsync(acc, newEmail);
             }
 
         }
@@ -312,13 +318,22 @@ internal class OutlookApiEmailService : IEmailService
 
     public async Task FetchEmailBodyAsync(Account acc, Email email)
     {
-        var client = GetGraphService(acc);
+        logger.LogInformation("Fetching body for {mail} with subject {subject}", acc.Email, email.MessageParts.Subject);
+        var client = await GetGraphService(acc);
 
         // Get specific message with body
-        var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
-            .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
+        try
+        {
+            var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
+                .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
 
-        email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
+            email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Body fetching failed for {email} with subject {subject}", acc.Email, email.MessageParts.Subject);
+            throw new EmailFetchException(inner: ex);
+        }
     }
 
     public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
@@ -369,16 +384,25 @@ internal class OutlookApiEmailService : IEmailService
             SentDateTime = email.Date
         };
 
-        var client = GetGraphService(acc);
-        await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+        var client = await GetGraphService(acc);
+        try
         {
-            Message = message,
-            SaveToSentItems = true,
-        });
+            await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+            {
+                Message = message,
+                SaveToSentItems = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            throw new EmailSendException(inner: ex);
+        }
+
     }
 
     public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
     {
+
         var candidates = acc.Emails
             .Where(e => !e.BodyFetched)
             .OrderByDescending(e => e.MessageParts.Date)
@@ -388,7 +412,8 @@ internal class OutlookApiEmailService : IEmailService
         if (candidates.Count == 0)
             return;
 
-        var client = GetGraphService(acc);
+        var client = await GetGraphService(acc);
+        logger.LogInformation("Fetching recent body around for {email} with {n} zone", acc.Email, candidates.Count);
 
         foreach (var candidate in candidates)
         {
@@ -401,12 +426,13 @@ internal class OutlookApiEmailService : IEmailService
                     });
 
                 candidate.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
-                await _storageService.UpdateEmailBodyAsync(candidate);
+                await storageService.UpdateEmailBodyAsync(candidate);
             }
             catch (Exception ex)
             {
-                // keep going for others
-                MessageBoxHelper.Error(ex.Message);
+                // ignore, for logging only
+                logger.LogError(ex, "Error fetching recent bodies for {email}", acc.Email);
+                throw new EmailFetchException(inner: ex);
             }
         }
     }
@@ -415,24 +441,36 @@ internal class OutlookApiEmailService : IEmailService
     {
         if (acc.NoMoreOlderEmail)
             return false;
+        logger.LogInformation("Fetching older headers for {email}", acc.Email);
 
         var (pag, _) = ParseAccountTokens(acc.PaginationToken, acc.LastSyncToken);
         if (pag is null)
             return false;
 
-        var client = GetGraphService(acc);
+        var client = await GetGraphService(acc);
 
         var pagTok = new PaginationTok();
 
         if (pag.Value.InboxNextLink is not null)
         {
             // inbox
-            var pageInbox = await client.Me.MailFolders["inbox"].Messages
-                .WithUrl(pag.Value.InboxNextLink)
-                .GetAsync(cancellationToken: token);
+            MessageCollectionResponse? pageInbox;
+            try
+            {
+                logger.LogInformation("Getting token for inbox");
+                pageInbox = await client.Me.MailFolders["inbox"].Messages
+                    .WithUrl(pag.Value.InboxNextLink)
+                    .GetAsync(cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting token for {tok}", acc.Email);
+                throw new EmailTokenException(inner: ex);
+            }
 
             if (pageInbox?.Value is null || pageInbox.Value.Count == 0)
             {
+                logger.LogWarning("No more fetching since no more older email");
                 acc.NoMoreOlderEmail = true;
                 return false;
             }
@@ -445,7 +483,7 @@ internal class OutlookApiEmailService : IEmailService
                     continue;
 
                 acc.Emails.Add(email);
-                await _storageService.StoreEmailAsync(acc, email);
+                await storageService.StoreEmailAsync(acc, email);
             }
 
             pagTok.InboxNextLink = pageInbox.OdataNextLink;
@@ -454,10 +492,22 @@ internal class OutlookApiEmailService : IEmailService
 
         if (pag.Value.SentNextLink is not null)
         {
+
             // sent
-            var pageSent = await client.Me.MailFolders["sentitems"].Messages
-                .WithUrl(pag.Value.SentNextLink)
-                .GetAsync(cancellationToken: token);
+            MessageCollectionResponse? pageSent;
+            try
+            {
+                logger.LogInformation("Getting token for sent");
+                pageSent = await client.Me.MailFolders["sentitems"].Messages
+                    .WithUrl(pag.Value.SentNextLink)
+                    .GetAsync(cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting token for {tok}", acc.Email);
+                throw new EmailTokenException(inner: ex);
+            }
+
 
             if (pageSent?.Value is not null && pageSent.Value.Count != 0)
             {
@@ -469,7 +519,7 @@ internal class OutlookApiEmailService : IEmailService
                         continue;
 
                     acc.Emails.Add(email);
-                    await _storageService.StoreEmailAsync(acc, email);
+                    await storageService.StoreEmailAsync(acc, email);
                 }
             }
 
@@ -480,7 +530,7 @@ internal class OutlookApiEmailService : IEmailService
         acc.PaginationToken = JsonConvert.SerializeObject(pagTok);
         acc.NoMoreOlderEmail = string.IsNullOrEmpty(pagTok.InboxNextLink) && string.IsNullOrEmpty(pagTok.SentNextLink);
 
-        await _storageService.UpdatePaginationAndNextTokenAsync(acc);
+        await storageService.UpdatePaginationAndNextTokenAsync(acc);
         return true;
     }
 

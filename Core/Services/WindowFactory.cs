@@ -1,5 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Windows;
 
@@ -12,19 +13,13 @@ internal interface IWindowFactory
         where TViewModel : class;
 }
 
-internal class WindowFactory : IWindowFactory
+internal class WindowFactory(IServiceProvider serviceProvider, ILogger<WindowFactory> logger) : IWindowFactory
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    public WindowFactory(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
-
     TView IWindowFactory.CreateWindow<TView, TViewModel>()
     {
-        var vm = _serviceProvider.GetRequiredService<TViewModel>();
+        logger.LogInformation("Creating window type {type} and data context {dataContext}", typeof(TView), typeof(TViewModel));
+
+        var vm = serviceProvider.GetRequiredService<TViewModel>();
         var window = new TView
         {
             DataContext = vm

@@ -53,6 +53,11 @@ Generated\ Files/
 [Bb]uild[Ll]og.*
 *.trx
 
+# JetBrains Rider / IntelliJ
+.idea/
+*.idea/
+*.im
+
 # NUnit
 *.VisualState.xml
 TestResult.xml

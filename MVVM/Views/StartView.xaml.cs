@@ -1,9 +1,6 @@
-﻿using EmailClientPluma.MVVM.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
-using System.Windows;
-using EmailClientPluma.Core;
-using System.Windows.Controls;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
+using System.Windows;
 namespace EmailClientPluma.MVVM.Views
 {
     /// <summary>

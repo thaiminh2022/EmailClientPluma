@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using Microsoft.Extensions.Logging;
 using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Emailing;
@@ -9,32 +10,29 @@ internal interface IEmailMonitoringService
     void StopMonitor(Account acc);
 }
 
-internal class EmailMonitoringService : IEmailMonitoringService
+internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, ILogger<EmailMonitoringService> logger) : IEmailMonitoringService
 {
     private readonly object _lock = new();
     private readonly Dictionary<string, AccountMonitor> _monitors = [];
-    private readonly List<IEmailService> _emailServices;
-
-    public EmailMonitoringService(IEnumerable<IEmailService> emailServices)
-    {
-        _emailServices = [.. emailServices];
-    }
+    private readonly List<IEmailService> _emailServices = [.. emailServices];
 
     public void StopMonitor(Account acc)
     {
         lock (_lock)
         {
-            if (_monitors.TryGetValue(acc.ProviderUID, out var monitor))
-            {
-                monitor.Cancellation.Cancel();
-                monitor.Cancellation.Dispose();
-                _monitors.Remove(acc.ProviderUID);
-            }
+            if (!_monitors.TryGetValue(acc.ProviderUID, out var monitor)) return;
+
+            monitor.Cancellation.Cancel();
+            monitor.Cancellation.Dispose();
+            _monitors.Remove(acc.ProviderUID);
+
+            logger.LogInformation("Stop monitoring for {email} with provider {prod}", acc.Email, acc.Provider);
         }
     }
 
     public void StartMonitor(Account acc)
     {
+
         lock (_lock)
         {
             if (_monitors.ContainsKey(acc.ProviderUID))
@@ -43,17 +41,20 @@ internal class EmailMonitoringService : IEmailMonitoringService
             var monitor = new AccountMonitor(acc.Provider);
             _monitors.Add(acc.ProviderUID, monitor);
 
+            logger.LogInformation("Start monitoring for {email} with provider {prod}", acc.Email, acc.Provider);
+
             // SPAWN A THREAD (tiểu trình) to monitor
             // Hệ Điều Hành bài tiến trình =))
             _ = StartMonitorAsync(acc, monitor).ContinueWith(task =>
             {
-                if (task.IsFaulted)
+                if (!task.IsFaulted) return;
+
+
+                logger.LogError(task.Exception, "Cannot start monitoring for {email}", acc.Email);
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        MessageBoxHelper.Error($"Monitoring failed for {acc.Email}: {task.Exception?.InnerException?.Message}");
-                    });
-                }
+                    MessageBoxHelper.Error($"Không thể cập nhật trực tiếp cho tài khoản {acc.Email}, sử dụng nút refresh");
+                });
             });
         }
     }

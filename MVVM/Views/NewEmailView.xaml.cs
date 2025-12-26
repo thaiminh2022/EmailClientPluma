@@ -11,5 +11,5 @@ public partial class NewEmailView : Window
     {
         InitializeComponent();
     }
-  
+
 }

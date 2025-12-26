@@ -1,7 +1,7 @@
-﻿using System.Windows;
+﻿using EmailClientPluma.Core;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using EmailClientPluma.Core;
 
 namespace EmailClientPluma.MVVM.Views
 {
@@ -69,7 +69,7 @@ namespace EmailClientPluma.MVVM.Views
         {
             AccountSettingsPopup.IsOpen = !AccountSettingsPopup.IsOpen;
         }
-   
+
 
         private void EmailList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

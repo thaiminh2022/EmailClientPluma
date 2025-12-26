@@ -1,4 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
@@ -21,7 +23,7 @@ internal interface IMicrosoftClientApp
     Task SignOutAsync(Account acc);
 }
 
-internal class MicrosoftAuthenticationService : IAuthenticationService, IMicrosoftClientApp
+internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationService> logger) : IAuthenticationService, IMicrosoftClientApp
 {
     public string ClientId { get; } = "19ea33aa-6d46-4fb9-b094-d53801280a34";
     public string Tenant { get; } = "common";
@@ -48,22 +50,40 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
 
     public async Task SignOutAsync(Account acc)
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+
+        logger.LogInformation("Account logout for microsoft");
         var accounts = await PublicClient.GetAccountsAsync();
         var microsoftAccount = accounts.FirstOrDefault(x => x.HomeAccountId.Identifier == acc.ProviderUID);
 
         if (microsoftAccount is not null)
         {
-            await PublicClient.RemoveAsync(microsoftAccount);
+            try
+            {
+                await PublicClient.RemoveAsync(microsoftAccount);
+                logger.LogInformation("Account {mail} finish log out", acc.Email);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Logout failed, account {mail} still exists", acc.Email);
+                throw new RemoveAccountException(inner: ex);
+
+            }
         }
         else
         {
-            MessageBoxHelper.Info("Account already sign out, delete info only");
+            logger.LogWarning("Account {mail} already logout", acc.Email);
         }
     }
 
 
     private IntPtr GetWindow()
     {
+        logger.LogInformation("Getting window interop for custom microsoft login");
         return new WindowInteropHelper(Application.Current.MainWindow!).Handle;
     }
 
@@ -82,6 +102,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
         var cacheHelper = CreateCacheHelperAsync().GetAwaiter().GetResult();
         cacheHelper.RegisterCache(client.UserTokenCache);
 
+        logger.LogInformation("Public Client Init Successfully");
         return client;
     }
 
@@ -93,7 +114,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
                 MsalCacheHelper.UserRootDirectory)
             .Build();
 
-        MsalCacheHelper cacheHelper = await MsalCacheHelper.CreateAsync(
+        var cacheHelper = await MsalCacheHelper.CreateAsync(
             storageProperties,
             new TraceSource("MSAL.CacheTrace")).ConfigureAwait(false);
         return cacheHelper;
@@ -106,6 +127,12 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
 
     public async Task<AuthResponce?> AuthenticateAsync()
     {
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+
         try
         {
             var result = await PublicClient.AcquireTokenInteractive(Scopes)
@@ -115,7 +142,12 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
             var key = result.Account.HomeAccountId.Identifier;
             var userInfo = await AcquireUserInfo(result.AccessToken);
 
-            if (userInfo is null) return null;
+            if (userInfo is null)
+            {
+                logger.LogError("Cannot acquire user info");
+                return null;
+            }
+
 
             return new AuthResponce(key,
                 userInfo.Value.Mail ?? result.Account.Username,
@@ -123,20 +155,16 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
                 Provider.Microsoft,
                 new Credentials(string.Empty, string.Empty));
         }
-        catch (MsalClientException)
+        catch (MsalClientException ex)
         {
-            MessageBoxHelper.Info("Microsoft authentication canceled");
+            logger.LogError(ex, "Microsoft login failed");
+            throw new AuthFailedException(inner: ex);
         }
-        catch (MsalServiceException)
+        catch (MsalServiceException ex)
         {
-            MessageBoxHelper.Info("Cannot get Microsoft authentication info");
+            logger.LogError(ex, "Microsoft login failed");
+            throw new AuthFailedException(inner: ex);
         }
-        catch (Exception ex)
-        {
-            MessageBoxHelper.Error(ex);
-        }
-
-        return null;
     }
     private struct UserProfile
     {
@@ -167,14 +195,20 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.Error("Getting user info error: ", ex);
+            logger.LogError(ex, "Cannot get user info via http request");
             return null;
         }
     }
 
     public async Task<bool> ValidateAsync(Account acc)
     {
-        AuthenticationResult? res;
+        if (!await InternetHelper.HasInternetConnection())
+        {
+            logger.LogError("No internet connection");
+            throw new NoInternetException();
+        }
+
+        AuthenticationResult? res = null;
         IAccount? microsoftAccount = null;
 
         try
@@ -185,6 +219,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
             if (microsoftAccount is null)
             {
                 // do interactive login
+                logger.LogWarning("Cannot find microsoft account {mail}, user interactive instead", acc.Email);
             }
             else
             {
@@ -194,6 +229,7 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
 
                 if (res is not null)
                 {
+                    logger.LogInformation("Silent refresh success for {mail}", acc.Email);
                     return true;
                 }
             }
@@ -201,22 +237,32 @@ internal class MicrosoftAuthenticationService : IAuthenticationService, IMicroso
         catch (MsalUiRequiredException)
         {
             // interactive login
+            logger.LogWarning("Silent refresh failed for {mail}. Trying interactive", acc.Email);
         }
 
-        if (microsoftAccount is null)
+        try
         {
-            res = await PublicClient.AcquireTokenInteractive(Scopes)
-                .WithPrompt(Prompt.SelectAccount)
-                .ExecuteAsync();
+            if (microsoftAccount is null)
+            {
+                res = await PublicClient.AcquireTokenInteractive(Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .ExecuteAsync();
+            }
+            else
+            {
+                res = await PublicClient.AcquireTokenInteractive(Scopes)
+                    .WithPrompt(Prompt.SelectAccount)
+                    .WithAccount(microsoftAccount)
+                    .ExecuteAsync();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            res = await PublicClient.AcquireTokenInteractive(Scopes)
-                .WithPrompt(Prompt.SelectAccount)
-                .WithAccount(microsoftAccount)
-                .ExecuteAsync();
-        }
+            //throw new AuthFailedException(inner: ex);
+            //this is for logging
 
+            logger.LogError(ex, "Interactive logging failed for {email}", acc.Email);
+        }
         return res is not null;
     }
 }

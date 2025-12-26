@@ -1,12 +1,16 @@
-﻿using EmailClientPluma.Core.Services;
+﻿using EmailClientPluma.Core;
+using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using EmailClientPluma.MVVM.ViewModels;
 using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
+using System.IO;
 using System.Windows;
-using StorageService = EmailClientPluma.Core.Services.Storaging.StorageService;
 
 namespace EmailClientPluma;
 
@@ -15,11 +19,47 @@ namespace EmailClientPluma;
 /// </summary>
 public partial class App : Application
 {
-    private IWindowFactory? factory;
+    private readonly IWindowFactory? factory;
     public App()
     {
         var services = new ServiceCollection();
 
+        AddLogging(services);
+        AddServices(services);
+
+        Services = services.BuildServiceProvider();
+        factory = Services.GetService(typeof(IWindowFactory)) as IWindowFactory;
+
+    }
+
+    private void AddLogging(ServiceCollection services)
+    {
+        var runId = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .WriteTo.Debug()
+            .WriteTo.Async(config => config.File(
+                path: Path.Combine(Helper.LogFolder, $"app-{runId}.log"),
+                retainedFileCountLimit: 14,
+                fileSizeLimitBytes: 10_000_000,
+                rollOnFileSizeLimit: true,
+                shared: true,
+                outputTemplate:
+                "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"
+                ))
+            .CreateLogger();
+        services.AddLogging(config =>
+        {
+            config.ClearProviders();
+            config.AddSerilog(Log.Logger, dispose: true);
+        });
+    }
+
+    private static void AddServices(ServiceCollection services)
+    {
         // authentication
         services.AddSingleton<IAuthenticationService, GoogleAuthenticationService>();
         services.AddSingleton<MicrosoftAuthenticationService>(); // or AddScoped/AddTransient
@@ -41,11 +81,11 @@ public partial class App : Application
 
         services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
 
+        services.AddSingleton<IEmailFilterService, EmailFilterService>();
+
         // window
         services.AddSingleton<IWindowFactory, WindowFactory>();
 
-        // Binh's property
-        services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
         // windows
         services.AddTransient<NewEmailViewModel>();
@@ -56,12 +96,15 @@ public partial class App : Application
         services.AddTransient<StartViewModel>();
 
         services.AddSingleton<MainViewModel>();
-
-        Services = services.BuildServiceProvider();
-        factory = Services.GetService(typeof(IWindowFactory)) as IWindowFactory;
     }
 
     public IServiceProvider Services { get; }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        Log.CloseAndFlush();
+        base.OnExit(e);
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {

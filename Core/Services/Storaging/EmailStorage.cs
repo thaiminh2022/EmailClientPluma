@@ -1,26 +1,22 @@
 ﻿using Dapper;
 using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using System.Globalization;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 
-internal class EmailStorage
+internal class EmailStorage(string connectionString, ILogger<StorageService> logger)
 {
-    private readonly string _connectionString;
-
-    public EmailStorage(string connectionString)
-    {
-        _connectionString = connectionString;
-    }
-
     private SqliteConnection CreateConnection()
     {
-        return new SqliteConnection(_connectionString);
+        return new SqliteConnection(connectionString);
     }
 
     public async Task StoreEmailsInternal(Account acc, List<Email> mails)
     {
+        logger.LogInformation("Start storing emails for {email}", acc.Email);
         const string sql = """
                            INSERT INTO EMAILS (
                                PROVIDER_MESSAGE_ID,
@@ -75,6 +71,7 @@ internal class EmailStorage
         {
             foreach (var m in mails)
             {
+                logger.LogInformation("Storing email with subject {subject}", m.MessageParts.Subject);
                 var msgPart = m.MessageParts;
                 var msgId = m.MessageIdentifiers;
 
@@ -105,12 +102,14 @@ internal class EmailStorage
         }
         catch (Exception ex)
         {
-            MessageBoxHelper.Error("Storing email exception: ", ex);
+            logger.LogCritical(ex, "CANNOT STORE EMAIL, THIS IS A PROGRAM ERROR");
+            throw new WriteEmailException(inner: ex);
         }
     }
 
     public async Task<List<Email>> GetEmailsAsync(Account acc)
     {
+        logger.LogInformation("Getting email for {email}", acc.Email);
         await using var connection = CreateConnection();
         var sql = """
                   SELECT  
@@ -134,47 +133,56 @@ internal class EmailStorage
                       FROM EMAILS
                   WHERE OWNER_ID = @OwnerId
                   """;
-        var rows = await connection.QueryAsync<EmailRow>(sql, new { OwnerId = acc.ProviderUID });
-        var emails = rows.Select(r =>
-        {
-            DateTimeOffset? date = null;
-            if (!string.IsNullOrEmpty(r.DATE))
-                date = DateTimeOffset.Parse(
-                    r.DATE,
-                    null,
-                    DateTimeStyles.RoundtripKind);
 
-            return new Email(
-                new Email.Identifiers
+        try
+        {
+            var rows = await connection.QueryAsync<EmailRow>(sql, new { OwnerId = acc.ProviderUID });
+            var emails = rows.Select(r =>
+            {
+                DateTimeOffset? date = null;
+                if (!string.IsNullOrEmpty(r.DATE))
                 {
-                    EmailId = r.EMAIL_ID,
-                    ProviderMessageId = r.PROVIDER_MESSAGE_ID,
-                    ProviderThreadId = r.PROVIDER_THREAD_ID,
-                    ProviderHistoryId = r.PROVIDER_HISTORY_ID,
-                    InternetMessageId = r.INTERNET_MESSAGE_ID,
-                    FolderFullName = r.FOLDER_FULLNAME,
-                    Provider = Enum.Parse<Provider>(r.PROVIDER),
-                    OwnerAccountId = r.OWNER_ID,
-                    InReplyTo = r.IN_REPLY_TO,
-                    Flags = (EmailFlags)r.FLAGS,
-                    ImapUid = r.IMAP_UID,
-                    ImapUidValidity = r.IMAP_UID_VALIDITY
-                },
-                new Email.DataParts
-                {
-                    Subject = r.SUBJECT,
-                    Body = r.BODY,
-                    From = r.FROM_ADDRESS,
-                    To = r.TO_ADDRESS,
-                    Date = date
+                    date = DateTimeOffset.Parse(r.DATE, null, DateTimeStyles.RoundtripKind);
                 }
-            );
-        }).ToList();
-        return emails;
+
+                return new Email(
+                    new Email.Identifiers
+                    {
+                        EmailId = r.EMAIL_ID,
+                        ProviderMessageId = r.PROVIDER_MESSAGE_ID,
+                        ProviderThreadId = r.PROVIDER_THREAD_ID,
+                        ProviderHistoryId = r.PROVIDER_HISTORY_ID,
+                        InternetMessageId = r.INTERNET_MESSAGE_ID,
+                        FolderFullName = r.FOLDER_FULLNAME,
+                        Provider = Enum.Parse<Provider>(r.PROVIDER),
+                        OwnerAccountId = r.OWNER_ID,
+                        InReplyTo = r.IN_REPLY_TO,
+                        Flags = (EmailFlags)r.FLAGS,
+                        ImapUid = r.IMAP_UID,
+                        ImapUidValidity = r.IMAP_UID_VALIDITY
+                    },
+                    new Email.DataParts
+                    {
+                        Subject = r.SUBJECT,
+                        Body = r.BODY,
+                        From = r.FROM_ADDRESS,
+                        To = r.TO_ADDRESS,
+                        Date = date
+                    }
+                );
+            }).ToList();
+            return emails;
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "CANNOT READ EMAIL, THIS IS A PROGRAM ERROR");
+            throw new ReadEmailException(inner: ex);
+        }
     }
 
     public async Task UpdateEmailBodyAsync(Email email)
     {
+        logger.LogInformation("Finding body for this email with subject {subject}", email.MessageParts.Subject);
         var sql = """
                   UPDATE EMAILS
                   SET BODY = @Body
@@ -184,11 +192,19 @@ internal class EmailStorage
 
         await using var connection = CreateConnection();
 
-        await connection.ExecuteAsync(sql, new
+        try
         {
-            email.MessageIdentifiers.EmailId,
-            MessageId = email.MessageIdentifiers.InternetMessageId,
-            email.MessageParts.Body
-        });
+            await connection.ExecuteAsync(sql, new
+            {
+                email.MessageIdentifiers.EmailId,
+                MessageId = email.MessageIdentifiers.InternetMessageId,
+                email.MessageParts.Body
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "CANNOT WRITE EMAIL, THIS IS A PROGRAM ERROR");
+            throw new WriteEmailException(inner: ex);
+        }
     }
 }

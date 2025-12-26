@@ -4,6 +4,7 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
@@ -15,13 +16,15 @@ internal class MainViewModel : ObserableObject, IRequestClose
 {
     public AppTheme CurrentTheme => AppSettings.CurrentTheme;
 
+    private readonly ILogger<MainViewModel> _logger;
     public MainViewModel(IAccountService accountService, IWindowFactory windowFactory,
         IEnumerable<IEmailService> emailServices,
-        IEmailFilterService emailFilterService)
+        IEmailFilterService emailFilterService, ILogger<MainViewModel> logger)
     {
         _accountService = accountService;
         _emailServices = [.. emailServices];
         _filterService = emailFilterService;
+        _logger = logger;
 
         SettingsView.DarkModeChanged += (_, _) =>
         {
@@ -37,7 +40,6 @@ internal class MainViewModel : ObserableObject, IRequestClose
         SelectedAccount = Accounts.FirstOrDefault();
 
         // COMMANDS
-
         ComposeCommand = new RelayCommand(_ =>
         {
             var newEmailWindow = windowFactory.CreateWindow<NewEmailView, NewEmailViewModel>();
@@ -68,7 +70,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
         SettingCommand = new RelayCommand(_ =>
         {
             var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
-            newEmailWindow.Show();
+            newEmailWindow.ShowDialog();
         });
 
         WhichProvCmd = new RelayCommand(_ =>
@@ -85,7 +87,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
             if (result is null or false) return;
 
             await _accountService.RemoveAccountAsync(SelectedAccount);
-            
+
             SelectedAccount = null;
 
             if (Accounts.Count == 0)
@@ -118,6 +120,10 @@ internal class MainViewModel : ObserableObject, IRequestClose
                     if (!gotMore || _currentPage + 1 >= TotalPages)
                         return;
                 }
+                catch (Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
+                }
                 finally
                 {
                     Mouse.OverrideCursor = null;
@@ -143,6 +149,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
             if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
             vm.SelectedAccount = SelectedAccount;
             labelEditorWindow.ShowDialog();
+
         }, _ => _selectedAccount is not null);
 
         EditEmailLabelCommand = new RelayCommand(_ =>
@@ -156,6 +163,22 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
             emailLabelEditorWindow.ShowDialog();
         }, _ => SelectedEmail is not null && SelectedAccount is not null);
+
+        RefreshEmailCommand = new RelayCommandAsync(async _ =>
+        {
+            if (SelectedAccount is null)
+                return;
+            var emailService = GetServiceByProvider(SelectedAccount.Provider);
+            try
+            {
+                await emailService.FetchEmailHeaderAsync(SelectedAccount);
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.Error(ex.Message);
+            }
+
+        }, _ => SelectedAccount is not null);
     }
 
     // This should not be matter because this is for UI type hinting
@@ -216,9 +239,15 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
             CommandManager.InvalidateRequerySuggested();
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            _logger.LogWarning(ex, "Filter operation canceled, this should be normal behavior");
             // normal exit
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "ERROR WHILE FILTERING EMAIL");
+            MessageBoxHelper.Error("Error while filtering email: ", ex.Message);
         }
     }
 
@@ -289,22 +318,31 @@ internal class MainViewModel : ObserableObject, IRequestClose
     {
         if (_selectedAccount is null)
             return;
+        try
+        {
+            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
 
-        var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+            if (!isValid || _selectedAccount.FirstTimeHeaderFetched)
+            {
+                return;
+            }
 
-        if (!isValid || _selectedAccount.FirstTimeHeaderFetched)
+            var emailService = GetServiceByProvider(_selectedAccount.Provider);
+            await emailService.FetchEmailHeaderAsync(_selectedAccount);
+
+            _selectedAccount.FirstTimeHeaderFetched = true;
+
+            await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
         {
             Mouse.OverrideCursor = null;
-            return;
         }
 
-        var emailService = GetServiceByProvider(_selectedAccount.Provider);
-        await emailService.FetchEmailHeaderAsync(_selectedAccount);
-
-        _selectedAccount.FirstTimeHeaderFetched = true;
-        Mouse.OverrideCursor = null;
-
-        await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
     }
 
     #endregion
@@ -328,34 +366,37 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     private async Task FetchEmailBody()
     {
-        if (_selectedAccount is null || _selectedEmail is null)
+        try
         {
-            Mouse.OverrideCursor = null;
-            return;
-        }
+            if (_selectedAccount is null || _selectedEmail is null)
+                return;
 
-        if (_selectedEmail.BodyFetched)
-        {
-            Mouse.OverrideCursor = null;
+            if (_selectedEmail.BodyFetched)
+            {
+                CheckPhishing();
+                return;
+            }
+
+            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+
+            if (!isValid)
+                return;
+
+            var emailService = GetServiceByProvider(_selectedAccount.Provider);
+            await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             CheckPhishing();
-            return;
+
         }
-
-        var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-        if (!isValid)
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
         {
             Mouse.OverrideCursor = null;
-            return;
         }
 
-        var emailService = GetServiceByProvider(_selectedAccount.Provider);
-        await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail)
-            .ContinueWith(_ => { CheckPhishing(); });
-
-        Mouse.OverrideCursor = null;
         return;
-
         void CheckPhishing()
         {
             var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
