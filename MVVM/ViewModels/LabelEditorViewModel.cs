@@ -2,10 +2,9 @@
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Windows.Media;
-using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
@@ -26,7 +25,7 @@ internal class LabelEditorViewModel : ObserableObject, IRequestClose
 
     private EmailLabel? _selectedLabel;
     private readonly ILogger<LabelEditorViewModel> _logger;
-    
+
     // --- Constructor ---
     public LabelEditorViewModel(IAccountService accountService, IStorageService storageService, ILogger<LabelEditorViewModel> logger)
     {

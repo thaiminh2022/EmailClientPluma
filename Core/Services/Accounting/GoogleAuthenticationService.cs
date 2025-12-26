@@ -1,4 +1,5 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using EmailClientPluma.Core.Services.Storaging;
 using Google;
 using Google.Apis.Auth.OAuth2;
@@ -6,9 +7,8 @@ using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Oauth2.v2;
 using Google.Apis.Services;
-using System.Net;
-using EmailClientPluma.Core.Models.Exceptions;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -43,7 +43,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         var tempId = Guid.NewGuid().ToString();
 
         // add a maximum timeout for authentication flow
@@ -126,7 +126,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         logger.LogInformation("Validation init for account: {mail}", acc.Email);
         // reconstruct user credentials to check
         var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
@@ -156,7 +156,7 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
             {
                 //throw new AuthRefreshException(inner: ex);
                 // trying to do interactive
-                
+
                 logger.LogError("Cannot refresh token for account {email}, trying interactive", acc.Email);
             }
         }

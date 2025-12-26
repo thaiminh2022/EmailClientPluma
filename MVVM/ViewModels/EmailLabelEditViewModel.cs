@@ -94,7 +94,7 @@ internal class EmailLabelEditViewModel : ObserableObject, IRequestClose
                 if (_selectedEmail.Labels.Contains(label))
                 {
                     if (labelView.IsSelected) continue;
-                    
+
                     // Remove label
                     _selectedEmail.Labels.Remove(label);
                     await _storageService.DeleteEmailLabelAsync(label, _selectedEmail);
@@ -116,7 +116,7 @@ internal class EmailLabelEditViewModel : ObserableObject, IRequestClose
         {
             MessageBoxHelper.Error(ex.Message);
         }
-        
+
     }
 }
 

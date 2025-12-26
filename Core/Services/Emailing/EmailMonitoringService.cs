@@ -1,6 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
-using System.Windows;
 using Microsoft.Extensions.Logging;
+using System.Windows;
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
@@ -21,18 +21,18 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
         lock (_lock)
         {
             if (!_monitors.TryGetValue(acc.ProviderUID, out var monitor)) return;
-            
+
             monitor.Cancellation.Cancel();
             monitor.Cancellation.Dispose();
             _monitors.Remove(acc.ProviderUID);
-                
+
             logger.LogInformation("Stop monitoring for {email} with provider {prod}", acc.Email, acc.Provider);
         }
     }
 
     public void StartMonitor(Account acc)
     {
-        
+
         lock (_lock)
         {
             if (_monitors.ContainsKey(acc.ProviderUID))
@@ -42,14 +42,14 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
             _monitors.Add(acc.ProviderUID, monitor);
 
             logger.LogInformation("Start monitoring for {email} with provider {prod}", acc.Email, acc.Provider);
-            
+
             // SPAWN A THREAD (tiểu trình) to monitor
             // Hệ Điều Hành bài tiến trình =))
             _ = StartMonitorAsync(acc, monitor).ContinueWith(task =>
             {
                 if (!task.IsFaulted) return;
-                
-                
+
+
                 logger.LogError(task.Exception, "Cannot start monitoring for {email}", acc.Email);
                 Application.Current.Dispatcher.Invoke(() =>
                 {

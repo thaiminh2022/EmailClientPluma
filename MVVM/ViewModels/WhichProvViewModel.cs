@@ -20,11 +20,11 @@ namespace EmailClientPluma.MVVM.ViewModels
                     await accountService.AddAccountAsync(Provider.Google);
                     RequestClose?.Invoke(this, true);
                 }
-                catch ( Exception ex)
+                catch (Exception ex)
                 {
                     MessageBoxHelper.Error(ex.Message);
                 }
-    
+
             });
 
             AddAccountMicrosoftCommand = new RelayCommandAsync(async _ =>
@@ -45,7 +45,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-        public WhichProvViewModel() {}
+        public WhichProvViewModel() { }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     }
 }

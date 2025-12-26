@@ -24,7 +24,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         var provider = new MsalAccessTokenProvider(clientApp.PublicClient, clientApp.Scopes, acc.ProviderUID);
         var tokenProvider = new BaseBearerTokenAuthenticationProvider(provider);
         return new GraphServiceClient(tokenProvider);
@@ -397,12 +397,12 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         {
             throw new EmailSendException(inner: ex);
         }
-  
+
     }
 
     public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
     {
-        
+
         var candidates = acc.Emails
             .Where(e => !e.BodyFetched)
             .OrderByDescending(e => e.MessageParts.Date)
@@ -464,7 +464,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
             }
             catch (Exception ex)
             {
-                 logger.LogError(ex, "Error getting token for {tok}", acc.Email);
+                logger.LogError(ex, "Error getting token for {tok}", acc.Email);
                 throw new EmailTokenException(inner: ex);
             }
 
@@ -507,7 +507,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 logger.LogError(ex, "Error getting token for {tok}", acc.Email);
                 throw new EmailTokenException(inner: ex);
             }
-       
+
 
             if (pageSent?.Value is not null && pageSent.Value.Count != 0)
             {

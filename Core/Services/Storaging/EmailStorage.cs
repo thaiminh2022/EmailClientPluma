@@ -1,10 +1,9 @@
 ﻿using Dapper;
 using EmailClientPluma.Core.Models;
-using Microsoft.Data.Sqlite;
-using System.Globalization;
 using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using Serilog;
+using System.Globalization;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 
@@ -145,7 +144,7 @@ internal class EmailStorage(string connectionString, ILogger<StorageService> log
                 {
                     date = DateTimeOffset.Parse(r.DATE, null, DateTimeStyles.RoundtripKind);
                 }
-                
+
                 return new Email(
                     new Email.Identifiers
                     {

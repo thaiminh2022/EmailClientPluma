@@ -1,4 +1,4 @@
-﻿using System.IO;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
@@ -7,10 +7,10 @@ using EmailClientPluma.MVVM.ViewModels;
 using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Windows;
-using EmailClientPluma.Core;
 using Serilog;
 using Serilog.Events;
+using System.IO;
+using System.Windows;
 
 namespace EmailClientPluma;
 
@@ -35,7 +35,7 @@ public partial class App : Application
     private void AddLogging(ServiceCollection services)
     {
         var runId = DateTime.Now.ToString("yyyyMMdd-HHmmss");
-        
+
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -80,7 +80,7 @@ public partial class App : Application
         services.AddSingleton<IEmailService, OutlookApiEmailService>();
 
         services.AddSingleton<IEmailMonitoringService, EmailMonitoringService>();
-        
+
         services.AddSingleton<IEmailFilterService, EmailFilterService>();
 
         // window

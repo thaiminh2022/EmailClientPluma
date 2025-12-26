@@ -3,7 +3,6 @@ using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.Core.Services.Storaging;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using EmailClientPluma.Core.Models.Exceptions;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 

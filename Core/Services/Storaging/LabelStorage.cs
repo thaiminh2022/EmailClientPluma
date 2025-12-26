@@ -48,7 +48,7 @@ internal class LabelStorage(string connectionString, ILogger<StorageService> log
     public async Task DeleteLabelAsync(EmailLabel label)
     {
         logger.LogInformation("Deleting label with name {name}", label.Name);
-        
+
         await using var connection = CreateConnection();
         await connection.OpenAsync();
 
@@ -68,13 +68,13 @@ internal class LabelStorage(string connectionString, ILogger<StorageService> log
             logger.LogCritical(ex, "CANNOT DELETE LABELS FULLY, THIS IS A PROGRAM EXCEPTION");
             throw new RemoveLabelException(inner: ex);
         }
-        
+
     }
 
     public async Task StoreLabelAsync(Account acc)
     {
         logger.LogInformation("Storing labels for {email}", acc.Email);
-        
+
         await using var connection = CreateConnection();
         await connection.OpenAsync();
 
@@ -135,7 +135,7 @@ internal class LabelStorage(string connectionString, ILogger<StorageService> log
     public async Task StoreLabelsAsync(Email mail)
     {
         logger.LogInformation("Storing labels for mail with subject {subject}", mail.MessageParts.Subject);
-        
+
         await using var connection = CreateConnection();
         await connection.OpenAsync();
 

@@ -53,7 +53,7 @@ internal class AccountStorage(GoogleDataStore tokenStore, string connectionStrin
             }
             catch (Exception ex)
             {
-                logger.LogCritical(ex , "READING ACCOUNT FAILED, THIS IS DUE TO PROGRAM ERROR");
+                logger.LogCritical(ex, "READING ACCOUNT FAILED, THIS IS DUE TO PROGRAM ERROR");
                 throw new ReadAccountException(inner: ex);
             }
         }
@@ -67,7 +67,7 @@ internal class AccountStorage(GoogleDataStore tokenStore, string connectionStrin
         await using var connection = CreateConnection();
 
         logger.LogInformation("Storing info for {email}", account.Email);
-        
+
         var sql = """
                   INSERT INTO ACCOUNTS
                       (PROVIDER_UID, PROVIDER, EMAIL, DISPLAY_NAME, PAGINATION_TOKEN, LAST_SYNC_TOKEN)
@@ -124,7 +124,7 @@ internal class AccountStorage(GoogleDataStore tokenStore, string connectionStrin
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex ,"CANNOT STORE TOKEN INFOS FOR {email}, THIS IS A PROGRAM ERROR", account.Email);
+            logger.LogCritical(ex, "CANNOT STORE TOKEN INFOS FOR {email}, THIS IS A PROGRAM ERROR", account.Email);
             throw new WriteAccountException();
         }
     }
@@ -158,7 +158,7 @@ internal class AccountStorage(GoogleDataStore tokenStore, string connectionStrin
         }
         catch (Exception ex)
         {
-            logger.LogCritical( ex ,"CANNOT DELETE USER, THIS IS A PROGRAM ERROR");
+            logger.LogCritical(ex, "CANNOT DELETE USER, THIS IS A PROGRAM ERROR");
             throw new WriteAccountException(inner: ex);
         }
     }

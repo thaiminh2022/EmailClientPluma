@@ -1,6 +1,6 @@
 using EmailClientPluma.Core.Models;
-using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
+using System.Collections.ObjectModel;
 
 namespace EmailClientPluma.Core.Services.Storaging;
 

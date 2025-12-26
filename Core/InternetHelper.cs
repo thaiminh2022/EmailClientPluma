@@ -50,13 +50,13 @@ public static class InternetHelper
                 return (InternetStatus.HttpError, res.StatusCode);
 
             var body = await res.Content.ReadAsStringAsync(ct);
-            
+
             if (!body.Contains(ExpectedBody, StringComparison.OrdinalIgnoreCase))
                 return (InternetStatus.CaptivePortalOrRedirect, res.StatusCode);
 
             return (InternetStatus.Ok, res.StatusCode);
         }
-        catch (TaskCanceledException) 
+        catch (TaskCanceledException)
         {
             return (InternetStatus.Timeout, null);
         }
@@ -65,9 +65,9 @@ public static class InternetHelper
             return (InternetStatus.TlsError, null);
         }
         catch (HttpRequestException ex) when (ex.InnerException is System.Net.Sockets.SocketException
-                                              {
-                                                  SocketErrorCode: System.Net.Sockets.SocketError.HostNotFound
-                                              })
+        {
+            SocketErrorCode: System.Net.Sockets.SocketError.HostNotFound
+        })
         {
             return (InternetStatus.DnsError, null);
         }

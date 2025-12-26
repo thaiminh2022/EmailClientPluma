@@ -4,12 +4,11 @@ using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using EmailClientPluma.MVVM.Views;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
@@ -68,11 +67,11 @@ internal class MainViewModel : ObserableObject, IRequestClose
         }, _ => SelectedAccount is not null && SelectedEmail is not null &&
                 SelectedEmail.MessageParts.From != SelectedAccount.Email);
 
-            SettingCommand = new RelayCommand(_ =>
-            {
-                var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
-                newEmailWindow.ShowDialog();
-            });
+        SettingCommand = new RelayCommand(_ =>
+        {
+            var newEmailWindow = windowFactory.CreateWindow<SettingsView, SettingsViewModel>();
+            newEmailWindow.ShowDialog();
+        });
 
         WhichProvCmd = new RelayCommand(_ =>
         {
@@ -88,7 +87,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
             if (result is null or false) return;
 
             await _accountService.RemoveAccountAsync(SelectedAccount);
-            
+
             SelectedAccount = null;
 
             if (Accounts.Count == 0)
@@ -150,7 +149,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
             if (labelEditorWindow.DataContext is not LabelEditorViewModel vm) return;
             vm.SelectedAccount = SelectedAccount;
             labelEditorWindow.ShowDialog();
-            
+
         }, _ => _selectedAccount is not null);
 
         EditEmailLabelCommand = new RelayCommand(_ =>
@@ -164,10 +163,10 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
             emailLabelEditorWindow.ShowDialog();
         }, _ => SelectedEmail is not null && SelectedAccount is not null);
-        
+
         RefreshEmailCommand = new RelayCommandAsync(async _ =>
         {
-            if (SelectedAccount is null) 
+            if (SelectedAccount is null)
                 return;
             var emailService = GetServiceByProvider(SelectedAccount.Provider);
             try
@@ -179,7 +178,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 MessageBoxHelper.Error(ex.Message);
             }
 
-        },_ => SelectedAccount is not null);
+        }, _ => SelectedAccount is not null);
     }
 
     // This should not be matter because this is for UI type hinting
@@ -343,7 +342,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             Mouse.OverrideCursor = null;
         }
-       
+
     }
 
     #endregion

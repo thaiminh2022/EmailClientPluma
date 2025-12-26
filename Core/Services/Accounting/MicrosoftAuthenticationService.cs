@@ -1,4 +1,6 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
@@ -8,8 +10,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows;
 using System.Windows.Interop;
-using EmailClientPluma.Core.Models.Exceptions;
-using Microsoft.Extensions.Logging;
 
 namespace EmailClientPluma.Core.Services.Accounting;
 
@@ -55,7 +55,7 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         logger.LogInformation("Account logout for microsoft");
         var accounts = await PublicClient.GetAccountsAsync();
         var microsoftAccount = accounts.FirstOrDefault(x => x.HomeAccountId.Identifier == acc.ProviderUID);
@@ -132,7 +132,7 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         try
         {
             var result = await PublicClient.AcquireTokenInteractive(Scopes)
@@ -207,7 +207,7 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         AuthenticationResult? res = null;
         IAccount? microsoftAccount = null;
 
@@ -260,7 +260,7 @@ internal class MicrosoftAuthenticationService(ILogger<MicrosoftAuthenticationSer
         {
             //throw new AuthFailedException(inner: ex);
             //this is for logging
-            
+
             logger.LogError(ex, "Interactive logging failed for {email}", acc.Email);
         }
         return res is not null;

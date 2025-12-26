@@ -1,14 +1,14 @@
 ﻿using EmailClientPluma.Core.Models;
+using EmailClientPluma.Core.Models.Exceptions;
 using EmailClientPluma.Core.Services.Storaging;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 using System.IO;
 using System.Text;
-using EmailClientPluma.Core.Models.Exceptions;
-using Microsoft.Extensions.Logging;
 using MessagePart = Google.Apis.Gmail.v1.Data.MessagePart;
 
 
@@ -52,7 +52,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         else
         {
             logger.LogInformation("Incremental fetching for {email}", acc.Email);
-            
+
             // Incremental fetch
             try
             {
@@ -138,8 +138,8 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
         if (candidates.Count == 0)
             return;
-        
-        
+
+
         logger.LogInformation("Fetching recent body around for {email} with {n} zone", acc.Email, candidates.Count);
         using var service = await CreateGmailService(acc);
 
@@ -166,7 +166,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             return false;
 
         logger.LogInformation("Fetching older headers for {email}", acc.Email);
-        
+
         using var service = await CreateGmailService(acc);
 
         var request = service.Users.Messages.List("me");
@@ -236,7 +236,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         using var service = await CreateGmailService(acc);
 
         logger.LogInformation("Sending email for {email} with subject: {sub}", acc.Email, email.Subject);
-        
+
         // Create RFC 2822 formatted email
         var rawEmail = CreateRfc2822Email(acc, email);
         var base64UrlEmail = EncodeBase64Url(rawEmail);
@@ -303,7 +303,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             logger.LogError("No internet connection");
             throw new NoInternetException();
         }
-        
+
         var credentials = GoogleCredential.FromAccessToken(acc.Credentials.SessionToken);
         return new GmailService(new BaseClientService.Initializer
         {

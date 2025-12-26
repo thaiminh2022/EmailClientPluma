@@ -1,6 +1,6 @@
 ﻿namespace EmailClientPluma.Core
 {
-    internal static class AppSettings  
+    internal static class AppSettings
     {
         public static AppTheme CurrentTheme
         {
