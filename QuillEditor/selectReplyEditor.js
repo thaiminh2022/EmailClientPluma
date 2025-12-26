@@ -125,24 +125,30 @@ document.addEventListener("mousedown", (e) => {
     }
 });
 
-// Example reply action
+
 bubble.addEventListener("click", () => {
     const text = lastSelection.trim();
     const lines = text.split(/\r?\n/);
 
-    // Where to insert (end of editor)
     let index = quill.getLength() - 1;
 
     lines.forEach((line) => {
-        // insert the line + newline
-        quill.insertText(index, line + "\n");
-        // format that line as blockquote
-        quill.formatLine(index, line.length + 1, "blockquote", true);
-        index += line.length + 1;
+        // (tùy bạn) có cần thêm dấu > " " hay không — thực ra không cần.
+        // Nếu muốn giữ dấu > "..." thì ok:
+        const content = `> "${line}"`;
+
+        // Insert text thường
+        quill.insertText(index, content);
+
+        // Insert newline với blockquote attr (QUAN TRỌNG)
+        quill.insertText(index + content.length, "\n", { blockquote: true });
+
+        index += content.length + 1;
     });
 
-    // Add a blank line after the quote
-    quill.insertText(quill.getLength() - 1, "\n");
+    // blank line sau quote
+    quill.insertText(index, "\n");
+    quill.setSelection(quill.getLength() - 1, 0);
     quill.focus();
 
     window.getSelection().removeAllRanges();
