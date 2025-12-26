@@ -49,7 +49,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 return;
 
             if (success == true) MessageBoxHelper.Info("Message was sent");
-        }, _ => Accounts.Count > 0);
+        }, _ => Accounts.Count >= 0);
 
         ReplyCommand = new RelayCommand(_ =>
         {

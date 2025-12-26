@@ -3,20 +3,22 @@ using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Emailing;
 using System.Collections.ObjectModel;
+using System.IO;
+using Microsoft.Win32;
 
 namespace EmailClientPluma.MVVM.ViewModels;
+
+class ViewAttachments
+{
+    public required string FileName { get; init; }
+    public required long Size { get; init; }
+    public string SizeText => $"{Math.Round(Size/1_000_000f, 2)}MB";
+}
+
 
 internal class NewEmailViewModel : ObserableObject, IRequestClose
 {
     private readonly List<IEmailService> _emailServices;
-    private string? _inReplyTo;
-    private bool _isEnable = true;
-    private string? _replyTo;
-    private Email? _replyToEmail;
-    private Account? _selectedAccount;
-    private string? _subject;
-    private string? _toAddresses;
-
 
     public AppTheme CurrentAppTheme => AppSettings.CurrentTheme;
 
@@ -29,6 +31,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     public NewEmailViewModel(IAccountService accountService, IEnumerable<IEmailService> emailServices)
     {
         _emailServices = [.. emailServices];
+        Attachments = [];
         Accounts = accountService.GetAccounts();
 
         SendCommand = new RelayCommandAsync(async _ =>
@@ -66,11 +69,61 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             }
         });
 
-        CancelCommand = new RelayCommand(_ => { RequestClose?.Invoke(this, null); });
+        AddAttachmentCommand = new RelayCommand(_ =>
+        {
+            var dialog = new OpenFileDialog();
+            if (dialog.ShowDialog() is not true) return;
+            
+            
+            var fileInfo = new FileInfo(dialog.FileName);
+            Attachments.Add(new ViewAttachments
+            {
+                FileName = fileInfo.Name,
+                Size = fileInfo.Length,
+            });
+
+            RecalculateSize();
+        });
+
+        RemoveSelectedAttachmentCommand = new RelayCommand(_ =>
+        {
+            if (SelectedAttachment is null) return;
+
+            Attachments.Remove(SelectedAttachment);
+
+            RecalculateSize();
+
+
+        });
+
     }
 
-    public ObservableCollection<Account> Accounts { get; set; }
+    private void RecalculateSize()
+    {
+        var totalSize = Attachments.Sum(x => x.Size);
+        TotalAttachmentSizeText = $"{Math.Round(totalSize / 1_000_000f, 2)}MB";
+        AttachmentsCountText = Attachments.Count.ToString();
 
+        OnPropertyChanges(nameof(TotalAttachmentSizeText));
+        OnPropertyChanges(nameof(AttachmentsCountText));
+    }
+
+    public event EventHandler<bool?>? RequestClose;
+
+    public void SetupReply(Account acc, Email email)
+    {
+        SelectedAccount = acc;
+        ToAddresses = email.MessageParts.From;
+        Subject = $"Re: {email.MessageParts.Subject}";
+        _inReplyTo = email.MessageIdentifiers.ProviderMessageId;
+        _replyTo = email.MessageParts.From;
+        IsEnable = false;
+        ReplyToEmail = email;
+    }
+
+
+    #region Accounts
+    public ObservableCollection<Account> Accounts { get; set; }
     public Account? SelectedAccount
     {
         get => _selectedAccount;
@@ -80,10 +133,25 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             OnPropertyChanges();
         }
     }
+    #endregion
 
+    #region Commands
     public RelayCommandAsync SendCommand { get; set; }
-    public RelayCommand CancelCommand { get; set; }
+    public RelayCommand AddAttachmentCommand { get; set; }
+    public RelayCommand RemoveSelectedAttachmentCommand { get; set; }
 
+
+    #endregion
+
+    #region Email Body
+
+    private string? _inReplyTo;
+    private bool _isEnable = true;
+    private string? _replyTo;
+    private Email? _replyToEmail;
+    private Account? _selectedAccount;
+    private string? _subject;
+    private string? _toAddresses;
 
     public string? ToAddresses
     {
@@ -139,18 +207,28 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
         }
     }
 
-    public event EventHandler<bool?>? RequestClose;
+    #endregion
 
-    public void SetupReply(Account acc, Email email)
+    #region  Attachments
+
+    public ObservableCollection<ViewAttachments> Attachments { get; set; }
+    public ViewAttachments? _selectedAttachment;
+    public ViewAttachments? SelectedAttachment
     {
-        SelectedAccount = acc;
-        ToAddresses = email.MessageParts.From;
-        Subject = $"Re: {email.MessageParts.Subject}";
-        _inReplyTo = email.MessageIdentifiers.ProviderMessageId;
-        _replyTo = email.MessageParts.From;
-        IsEnable = false;
-        ReplyToEmail = email;
+        get => _selectedAttachment;
+        set
+        {
+            _selectedAttachment = value;
+            OnPropertyChanges();
+        }
     }
+
+    public string AttachmentsCountText { get; set; } = "0";
+    public string TotalAttachmentSizeText { get; set; } = "0";
+
+    #endregion
+
+
 
     // This should not be matter because this is for UI type hinting
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
