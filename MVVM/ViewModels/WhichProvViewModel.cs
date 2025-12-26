@@ -1,4 +1,5 @@
-﻿using EmailClientPluma.Core;
+﻿using System.Windows.Input;
+using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 
 using EmailClientPluma.Core.Services.Accounting;
@@ -17,12 +18,17 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 try
                 {
+                    Mouse.OverrideCursor = Cursors.Wait;
                     await accountService.AddAccountAsync(Provider.Google);
                     RequestClose?.Invoke(this, true);
                 }
                 catch (Exception ex)
                 {
                     MessageBoxHelper.Error(ex.Message);
+                }
+                finally
+                {
+                    Mouse.OverrideCursor = null;
                 }
 
             });
@@ -31,12 +37,17 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 try
                 {
+                    Mouse.OverrideCursor = Cursors.Wait;
                     await accountService.AddAccountAsync(Provider.Microsoft);
                     RequestClose?.Invoke(this, true);
                 }
                 catch (Exception ex)
                 {
                     MessageBoxHelper.Error(ex.Message);
+                }
+                finally
+                {
+                    Mouse.OverrideCursor = null;
                 }
             });
         }
