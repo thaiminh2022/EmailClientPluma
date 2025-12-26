@@ -5,36 +5,176 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:EmailClientPluma.MVVM.ViewModels"
-    Title="WhichProvView"
-    Width="341"
-    Height="376"
+    Title="Choose your email provider"
+    Width="420"
+    Height="360"
+    WindowStartupLocation="CenterOwner"
+    ResizeMode="NoResize"
     mc:Ignorable="d">
-    <Window.Resources>
-        <Style BasedOn="{StaticResource GBTB}" TargetType="TextBlock" />
-    </Window.Resources>
 
     <Window.DataContext>
-        <viewmodels:WhichProvViewModel />
+        <viewmodels:WhichProvViewModel/>
     </Window.DataContext>
+    <Window.Resources>
+        <!-- Basic typography -->
+        <Style TargetType="TextBlock" BasedOn="{StaticResource GBTB}" />
+
+        <!-- Provider button: card-like, hover, pressed -->
+        <Style x:Key="ProviderButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12"
+                            SnapsToDevicePixels="True">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="1.5" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.92" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Simple circular icon container -->
+        <Style x:Key="ProviderIconBubble" TargetType="Border">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="CornerRadius" Value="17" />
+            <Setter Property="Background" Value="{DynamicResource SubtleBrush}" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
     <Grid Background="{DynamicResource BackgroundBrush}">
-        <TextBlock
-            Margin="0,20,0,0"
-            HorizontalAlignment="Center"
-            FontSize="24"
-            FontWeight="Bold"
-            Text="Select Your Email Provider" />
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Button
-                Width="156"
-                Height="40"
-                Margin="0,0,0,20"
-                Command="{Binding AddAccountGoogleCommand}"
-                Content="Google" />
-            <Button
-                Width="159"
-                Height="40"
-                Command="{Binding AddAccountMicrosoftCommand}"
-                Content="Microsoft" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Margin="24,20,24,10">
+            <TextBlock FontSize="22" FontWeight="SemiBold" Text="Add an email account" />
+            <TextBlock
+                Margin="0,6,0,0"
+                Opacity="0.75"
+                TextWrapping="Wrap"
+                Text="Choose a provider to sign in. You can add more accounts later in Settings." />
         </StackPanel>
+
+        <!-- Card container -->
+        <Border
+            Grid.Row="1"
+            Margin="24,0,24,0"
+            Padding="18"
+            Background="{DynamicResource PanelBrush}"
+            CornerRadius="16"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1">
+            <StackPanel>
+
+                <Button
+                    Style="{StaticResource ProviderButtonStyle}"
+                    Command="{Binding AddAccountGoogleCommand}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource ProviderIconBubble}">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                VerticalAlignment="Center"
+                                Source="Images/Provider/google.png"
+                                Stretch="Uniform" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Google" />
+                            <TextBlock Opacity="0.75" FontSize="12" Text="Gmail / Google Workspace" />
+                        </StackPanel>
+
+                        <TextBlock
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Opacity="0.6"
+                            Text="›" />
+                    </Grid>
+                </Button>
+
+                <Rectangle Height="10" Opacity="0" />
+
+                <Button
+                    Style="{StaticResource ProviderButtonStyle}"
+                    Command="{Binding AddAccountMicrosoftCommand}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource ProviderIconBubble}">
+                            <Image
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Source="Images/Provider/microsoft.png"
+                                Stretch="Uniform" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Microsoft" />
+                            <TextBlock Opacity="0.75" FontSize="12" Text="Outlook / Microsoft 365 (Graph)" />
+                            
+                        </StackPanel>
+
+                        <TextBlock
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Opacity="0.6"
+                            Text="›" />
+                    </Grid>
+                </Button>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+        <TextBlock
+            Grid.Row="2"
+            Margin="24,12,24,18"
+            Opacity="0.65"
+            FontSize="12"
+            TextWrapping="Wrap"
+            Text="We open the provider sign-in page in your browser. Close the window anytime to cancel." />
     </Grid>
 </Window>

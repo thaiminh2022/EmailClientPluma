@@ -54,7 +54,7 @@ internal class WebView2SelectEditor
         {
             from = msp.From,
             to = msp.To,
-            date = msp.Date
+            date = msp.DateDisplay
         });
 
         await wv.CoreWebView2.ExecuteScriptAsync($"window.setEmailContent({subject}, {meta}, {body})");
