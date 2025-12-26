@@ -55,6 +55,7 @@ Generated\ Files/
 
 # JetBrains Rider / IntelliJ
 .idea/
+*.idea/
 *.im
 
 # NUnit
