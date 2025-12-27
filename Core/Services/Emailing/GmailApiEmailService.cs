@@ -76,11 +76,21 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                 if (newMessageIds.Count == 0)
                     return;
 
+                List<Email> newMessages = [];
                 // Fetch these specific messages
                 foreach (var messageId in newMessageIds)
                 {
                     var msg = await service.Users.Messages.Get("me", messageId).ExecuteAsync();
-                    await ProcessAndStoreMessage(acc, msg);
+                    var email = ProcessMessage(acc, msg);
+
+                    if (email is not null)
+                        newMessages.Add(email);
+                }
+
+                foreach (var msg in newMessages)
+                {
+                    await storageService.StoreEmailAsync(acc, msg);
+                    acc.Emails.Add(msg);
                 }
 
                 return;
@@ -97,15 +107,28 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
         }
 
+
         // Process messages from list response
         if (response?.Messages != null)
         {
+            List<Email> newMessages = [];
+
             foreach (var msgRef in response.Messages)
             {
                 // Fetch full message details
                 var msg = await service.Users.Messages.Get("me", msgRef.Id).ExecuteAsync();
-                await ProcessAndStoreMessage(acc, msg);
+                var email = ProcessMessage(acc, msg);
+
+                if (email is not null)
+                    newMessages.Add(email);
             }
+
+            newMessages.ForEach(x =>
+            {
+                acc.Emails.Add(x);
+            });
+            await storageService.StoreEmailAsync(acc);
+
         }
     }
 
@@ -118,12 +141,57 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         {
             var msg = await service.Users.Messages.Get("me", email.MessageIdentifiers.ProviderMessageId).ExecuteAsync();
             email.MessageParts.Body = ExtractBodyFromMessage(msg);
+            var attachmentRefs = ExtractAttachmentRefs(msg);
+
+            // add attachment data, but not download, only download when clicked
+            foreach (var attRef in attachmentRefs)
+            {
+                email.MessageParts.Attachments.Add(new Attachment
+                {
+                    FileName = attRef.FileName,
+                    FilePath = null,
+                    ContentType = attRef.MimeType,
+                    ProviderAttachmentId = attRef.AttachmentId,
+                    SizeBytes = attRef.Size ?? 0,
+                    OwnerEmailId = email.MessageIdentifiers.EmailId
+                });
+            }
+
             await storageService.UpdateEmailBodyAsync(email);
+            await storageService.StoreAttachmentRefAsync(email);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Body fetching failed for {email} with subject {subject}", acc.Email, email.MessageParts.Subject);
             throw new EmailFetchException(inner: ex);
+        }
+    }
+
+    public async Task FetchEmailAttachmentsAsync(Account acc, Email email)
+    {
+        logger.LogInformation("Fetching attachment for {mail} with subject {subject}", acc.Email, email.MessageParts.Subject);
+        using var service = await CreateGmailService(acc);
+
+        try
+        {
+            foreach (var att in email.MessageParts.Attachments)
+            {
+                var attachment = await service.Users.Messages.Attachments
+                    .Get("me", email.MessageIdentifiers.ProviderMessageId, att.ProviderAttachmentId)
+                    .ExecuteAsync();
+
+
+                if (attachment is null) continue;
+                var data = DecodeBase64UrlToBytes(attachment.Data);
+
+                var path = await storageService.UpdateAttachmentContentAsync(email, att, data);
+                att.FilePath = path;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Attachment fetching failed for {email} with subject {subject}", acc.Email, email.MessageParts.Subject);
+            throw new AttachmentFetchingException(inner: ex);
         }
     }
 
@@ -150,7 +218,26 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                 var msg = await service.Users.Messages.Get("me", candidate.MessageIdentifiers.ProviderMessageId)
                     .ExecuteAsync();
                 candidate.MessageParts.Body = ExtractBodyFromMessage(msg);
+
+                var attachmentRefs = ExtractAttachmentRefs(msg);
+
+                // add attachment data, but not download, only download when clicked
+                foreach (var attRef in attachmentRefs)
+                {
+                    candidate.MessageParts.Attachments.Add(new Attachment
+                    {
+                        FileName = attRef.FileName,
+                        FilePath = null,
+                        ContentType = attRef.MimeType,
+                        ProviderAttachmentId = attRef.AttachmentId,
+                        SizeBytes = attRef.Size ?? 0,
+                        OwnerEmailId = candidate.MessageIdentifiers.EmailId
+
+                    });
+                }
+
                 await storageService.UpdateEmailBodyAsync(candidate);
+                await storageService.StoreAttachmentRefAsync(candidate);
             }
         }
         catch (Exception ex)
@@ -201,6 +288,8 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         await storageService.UpdatePaginationAndNextTokenAsync(acc);
 
         // Fetch and store older messages
+
+
         foreach (var msgRef in response.Messages)
         {
             try
@@ -221,7 +310,6 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
 
         }
-
         await storageService.StoreEmailAsync(acc);
         return true;
     }
@@ -243,7 +331,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
         var gmailMessage = new Message
         {
-            Raw = base64UrlEmail
+            Raw = base64UrlEmail,
         };
         try
         {
@@ -267,27 +355,45 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
     {
         var message = new MimeMessage();
         var address = MailboxAddress.Parse(acc.Email);
-        address.Name = acc.DisplayName;
-        message.From.Add(address);
-        message.Subject = email.Subject;
+        address.Name = acc.DisplayName; // name
+        message.From.Add(address); // from
+        message.Subject = email.Subject; // subject
 
-        if (!string.IsNullOrEmpty(email.InReplyTo))
+        if (!string.IsNullOrEmpty(email.InReplyTo)) // in reply to
             message.InReplyTo = email.InReplyTo;
 
-        if (!string.IsNullOrEmpty(email.ReplyTo))
+        if (!string.IsNullOrEmpty(email.ReplyTo)) // reply to
             foreach (var item in email.ReplyTo.Split(','))
                 message.ReplyTo.Add(InternetAddress.Parse(item.Trim()));
 
+        // to
         foreach (var item in email.To.Split(',')) message.To.Add(InternetAddress.Parse(item.Trim()));
 
+        // building body
         var bodyBuilder = new BodyBuilder
         {
             HtmlBody = email.Body
         };
 
-        message.Body = bodyBuilder.ToMessageBody();
-        message.Date = email.Date ?? DateTimeOffset.Now;
+        // attachments
+        foreach (var file in email.Attachments)
+        {
+            if (!File.Exists(file.FilePath))
+            {
+                var ex = new AttachmentReadForSendingException();
+                logger.LogError(ex, "{file} no longer not exists, ignoring", file.FileName);
+                throw ex;
+            }
+            bodyBuilder.Attachments.Add(file.FilePath);
+        }
 
+        message.Body = bodyBuilder.ToMessageBody(); // body
+        message.Date = email.Date ?? DateTimeOffset.Now; // date
+
+
+
+
+        // encoding
         using var memoryStream = new MemoryStream();
         message.WriteTo(memoryStream);
         return Encoding.UTF8.GetString(memoryStream.ToArray());
@@ -297,7 +403,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
     private async Task<GmailService> CreateGmailService(Account acc, bool forceCheckInternet = false)
     {
-        logger.LogInformation("Getting gmail service for {}", acc.Email);
+        logger.LogInformation("Getting gmail service for {mail}", acc.Email);
         if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");
@@ -312,18 +418,19 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         });
     }
 
-    private async Task ProcessAndStoreMessage(Account acc, Message msg)
+    private Email? ProcessMessage(Account acc, Message msg)
     {
         var email = CreateEmailFromMessage(acc, msg);
-
-        if (acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId))
-            return;
-
-        acc.Emails.Add(email);
-        await storageService.StoreEmailAsync(acc, email);
+        return acc.Emails.Any(x => x.MessageIdentifiers.ProviderMessageId == email.MessageIdentifiers.ProviderMessageId) ? null : email;
     }
 
-    private string DecodeBase64Url(string base64Url)
+    private string DecodeBase64UrlToUtf8(string base64Url)
+    {
+        var bytes = DecodeBase64UrlToBytes(base64Url);
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    private byte[] DecodeBase64UrlToBytes(string base64Url)
     {
         // Gmail uses base64url encoding (RFC 4648)
         var base64 = base64Url.Replace('-', '+').Replace('_', '/');
@@ -336,8 +443,9 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         }
 
         var data = Convert.FromBase64String(base64);
-        return Encoding.UTF8.GetString(data);
+        return data;
     }
+
 
     private MessagePart? FindPartByMimeType(IList<MessagePart> parts, string mimeType)
     {
@@ -346,24 +454,66 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             if (part.MimeType == mimeType)
                 return part;
 
-            if (part.Parts != null)
-            {
-                var found = FindPartByMimeType(part.Parts, mimeType);
-                if (found != null)
-                    return found;
-            }
+            if (part.Parts == null) continue;
+
+
+            var found = FindPartByMimeType(part.Parts, mimeType);
+            if (found != null)
+                return found;
         }
 
         return null;
     }
 
+
+    public sealed record GmailAttachmentRef(
+        string FileName,
+        string MimeType,
+        string? AttachmentId,
+        long? Size
+        );
+
+
+    private List<GmailAttachmentRef> ExtractAttachmentRefs(Message message)
+    {
+        List<GmailAttachmentRef> result = [];
+        if (message.Payload is null) return result;
+
+
+        GetAttachment(message.Payload);
+        return result;
+
+        void GetAttachment(MessagePart part)
+        {
+            if (!string.IsNullOrWhiteSpace(part.Filename))
+            {
+                result.Add(new GmailAttachmentRef
+                (
+                    part.Filename,
+                    part.MimeType ?? "application/octet-stream",
+                    part.Body?.AttachmentId,
+                    part.Body?.Size
+                ));
+            }
+
+            if (part.Parts is null)
+            {
+                return;
+            }
+            foreach (var child in part.Parts)
+            {
+                GetAttachment(child);
+            }
+        }
+    }
     private string ExtractBodyFromMessage(Message message)
     {
         if (message.Payload == null)
             return "(No Body)";
 
         // Check if body is directly in payload
-        if (!string.IsNullOrEmpty(message.Payload.Body?.Data)) return DecodeBase64Url(message.Payload.Body.Data);
+        if (!string.IsNullOrEmpty(message.Payload.Body?.Data))
+            return DecodeBase64UrlToUtf8(message.Payload.Body.Data);
 
         // Check parts for HTML or text
         if (message.Payload.Parts != null)
@@ -371,12 +521,12 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             // Prefer HTML
             var htmlPart = FindPartByMimeType(message.Payload.Parts, "text/html");
             if (htmlPart != null && !string.IsNullOrEmpty(htmlPart.Body?.Data))
-                return DecodeBase64Url(htmlPart.Body.Data);
+                return DecodeBase64UrlToUtf8(htmlPart.Body.Data);
 
             // Fallback to plain text
             var textPart = FindPartByMimeType(message.Payload.Parts, "text/plain");
             if (textPart != null && !string.IsNullOrEmpty(textPart.Body?.Data))
-                return DecodeBase64Url(textPart.Body.Data);
+                return DecodeBase64UrlToUtf8(textPart.Body.Data);
         }
 
         return "(No Body)";

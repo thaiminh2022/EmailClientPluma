@@ -1,8 +1,7 @@
-﻿using System.Windows.Input;
-using EmailClientPluma.Core;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
-
 using EmailClientPluma.Core.Services.Accounting;
+using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {

@@ -1,5 +1,4 @@
-﻿using EmailClientPluma.Core.Models;
-using System.IO;
+﻿using System.IO;
 using System.Windows.Media;
 
 namespace EmailClientPluma.Core;
@@ -10,6 +9,7 @@ internal static class Helper
     public static string MsalCachePath => Path.Combine(DataFolder, "msal-cache.bin");
     public static string DatabasePath => Path.Combine(DataFolder, "pluma.db");
     public static string LogFolder => GetLogFolder();
+    public static string AttachmentsFolder => GetAttachmentFolder();
 
 
     private static string GetDataFolder()
@@ -28,10 +28,12 @@ internal static class Helper
         return path;
     }
 
-    public static bool IsEmailEqual(Email a, Email b)
+    private static string GetAttachmentFolder()
     {
-        return string.Equals(a.MessageIdentifiers.OwnerAccountId, b.MessageIdentifiers.OwnerAccountId) &&
-               string.Equals(a.MessageIdentifiers.ProviderMessageId, b.MessageIdentifiers.ProviderMessageId);
+        var path = Path.Combine(Environment.GetFolderPath(
+            Environment.SpecialFolder.MyDocuments), "PlumaAttachments");
+        Directory.CreateDirectory(path);
+        return path;
     }
 
     public static Color ColorFromArgb(int argb)
