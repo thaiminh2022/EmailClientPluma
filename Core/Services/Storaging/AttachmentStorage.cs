@@ -50,8 +50,8 @@ namespace EmailClientPluma.Core.Services.Storaging
 
             var tx = await conn.BeginTransactionAsync();
             var sql = """
-                      INSERT INTO ATTACHMENTS (OWNER_EMAIL_ID, FILE_NAME, FILE_PATH, PROVIDER_ATTACHMENT_ID, CONTENT_TYPE, SIZE_BYTES)
-                      VALUES (@OwnerEmailid, @FileName, @FilePath, @ProviderAttachmentId, @ContentType, @SizeBytes)
+                      INSERT OR IGNORE INTO ATTACHMENTS (OWNER_EMAIL_ID, FILE_NAME, FILE_PATH, PROVIDER_ATTACHMENT_ID, CONTENT_TYPE, SIZE_BYTES)
+                      VALUES (@OwnerEmailId, @FileName, @FilePath, @ProviderAttachmentId, @ContentType, @SizeBytes)
                       RETURNING ID
                       """;
 
@@ -101,6 +101,7 @@ namespace EmailClientPluma.Core.Services.Storaging
             await File.WriteAllBytesAsync(dest, data);
 
             await using var conn = CreateConnection();
+            await conn.OpenAsync();
             var tx = await conn.BeginTransactionAsync();
             var sql = """
                       UPDATE ATTACHMENTS SET FILE_PATH = @FilePath
@@ -110,7 +111,8 @@ namespace EmailClientPluma.Core.Services.Storaging
             await conn.ExecuteAsync(sql, new
             {
                 Id = attachment.Id,
-                EmailOwnerId = attachment.OwnerEmailId
+                EmailOwnerId = attachment.OwnerEmailId,
+                FilePath = dest,
             }, transaction: tx);
             await tx.CommitAsync();
             attachment.FilePath = dest;

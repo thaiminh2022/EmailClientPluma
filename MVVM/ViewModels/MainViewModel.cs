@@ -329,9 +329,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
             var emailService = GetServiceByProvider(_selectedAccount.Provider);
             await emailService.FetchEmailHeaderAsync(_selectedAccount);
-
             _selectedAccount.FirstTimeHeaderFetched = true;
-
             await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
         }
         catch (Exception ex)
