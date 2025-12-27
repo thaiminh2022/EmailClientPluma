@@ -198,7 +198,7 @@
                         Background="Transparent"
                         BorderThickness="0"
                         ItemsSource="{Binding Attachments}"
-                        ScrollViewer.CanContentScroll="True"
+                        ScrollViewer.CanContentScroll="False"
                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
                         SelectedItem="{Binding SelectedAttachment}">

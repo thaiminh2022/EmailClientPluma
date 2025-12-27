@@ -168,6 +168,7 @@
                         <RowDefinition Height="auto" />
                         <RowDefinition Height="auto" />
                         <RowDefinition Height="*" />
+                        <RowDefinition Height="auto" />
                     </Grid.RowDefinitions>
 
                     <!--  Toolbar  -->
@@ -314,8 +315,76 @@
                         Grid.Row="2"
                         Margin="0,10,0,0"
                         Background="White">
-                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" behaviors:Webview2ColorScheme.PreferredScheme="{Binding CurrentTheme}" />
+                        <wv2:WebView2 behaviors:WebView2Html.Html="{Binding SelectedEmail.MessageParts.Body}" behaviors:Webview2ColorScheme.PreferredScheme="Light" />
                     </Border>
+                    <!--  Attachments  -->
+                    <Border
+                        Grid.Row="3"
+                        Margin="5"
+                        Padding="5"
+                        Background="{DynamicResource PanelBackgroundBrush}"
+                        BorderBrush=" Transparent">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock
+                                    Margin="0,0,5,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold">
+                                    Attachments
+                                </TextBlock>
+                                <Button Content="Open" />
+                            </StackPanel>
+                            <ListBox
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ItemsSource="{Binding Attachments}"
+                                ScrollViewer.CanContentScroll="False"
+                                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                SelectedItem="{Binding SelectedAttachment}">
+                                <!--  Horizontal flow  -->
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel Margin="0,10" Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <!--  Chip template  -->
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <!--  Chip content  -->
+                                        <StackPanel
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            ToolTip="{Binding FileName}">
+                                            <TextBlock
+                                                Margin="0,0,8,0"
+                                                VerticalAlignment="Center"
+                                                FontSize="14"
+                                                Foreground="{DynamicResource TextBrush}"
+                                                Opacity="0.8"
+                                                Text="📎" />
+                                            <TextBlock
+                                                MaxWidth="100"
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Foreground="{DynamicResource TextBrush}"
+                                                Text="{Binding FileName}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                Margin="8,0,0,0"
+                                                VerticalAlignment="Center"
+                                                FontSize="12"
+                                                Foreground="{DynamicResource TextBrush}"
+                                                Opacity="0.7"
+                                                Text="{Binding SizeText}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+
                 </Grid>
             </Border>
         </Grid>
