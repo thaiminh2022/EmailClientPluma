@@ -151,7 +151,7 @@ internal class StorageService : IStorageService
 
     public async Task<IEnumerable<Attachment>> GetAttachmentAsync(Email mail)
     {
-       return await _attachmentStorage.GetAttachmentAsync(mail);
+        return await _attachmentStorage.GetAttachmentAsync(mail);
     }
 
     public async Task StoreAttachmentRefAsync(Email mail)

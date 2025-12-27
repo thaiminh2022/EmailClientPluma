@@ -386,7 +386,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             }
             bodyBuilder.Attachments.Add(file.FilePath);
         }
-        
+
         message.Body = bodyBuilder.ToMessageBody(); // body
         message.Date = email.Date ?? DateTimeOffset.Now; // date
 
@@ -512,7 +512,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             return "(No Body)";
 
         // Check if body is directly in payload
-        if (!string.IsNullOrEmpty(message.Payload.Body?.Data)) 
+        if (!string.IsNullOrEmpty(message.Payload.Body?.Data))
             return DecodeBase64UrlToUtf8(message.Payload.Body.Data);
 
         // Check parts for HTML or text

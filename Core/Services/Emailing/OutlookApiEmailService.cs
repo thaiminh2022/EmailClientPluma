@@ -374,7 +374,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         // Get specific message with body
         try
         {
-            foreach(var attachment in email.MessageParts.Attachments)
+            foreach (var attachment in email.MessageParts.Attachments)
             {
                 if (attachment.ProviderAttachmentId is null) continue;
 
@@ -581,7 +581,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 {
                     var ex = new AttachmentReadForSendingException();
                     logger.LogError(ex, "{name} does not exists", attachment.FileName);
-                    
+
                     throw ex;
                 }
 
@@ -684,7 +684,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         {
             throw new InvalidOperationException($"Failed to upload attachment: {attachment.FileName}");
         }
-            
+
     }
 
     public Provider GetProvider()

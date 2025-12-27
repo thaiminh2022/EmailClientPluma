@@ -489,7 +489,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
     public RelayCommand NewLabelCommand { get; set; }
     public RelayCommand EditEmailLabelCommand { get; set; }
 
-    public RelayCommand OpenAttachmentCommand{ get; set; }
+    public RelayCommand OpenAttachmentCommand { get; set; }
 
     #endregion
 

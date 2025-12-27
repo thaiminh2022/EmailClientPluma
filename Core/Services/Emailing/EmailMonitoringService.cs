@@ -159,7 +159,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                     }
                 }
 
-    
+
             }
             catch (OperationCanceledException)
             {
@@ -170,7 +170,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     logger.LogError(ex, "Polling error");
-                     MessageBoxHelper.Error($"Polling error for {acc.Email}: {ex.Message}");
+                    MessageBoxHelper.Error($"Polling error for {acc.Email}: {ex.Message}");
                     // quiet retry
                 });
 

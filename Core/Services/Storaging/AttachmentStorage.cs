@@ -1,8 +1,8 @@
-﻿using System.IO;
-using Dapper;
+﻿using Dapper;
 using EmailClientPluma.Core.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace EmailClientPluma.Core.Services.Storaging
 {
@@ -17,7 +17,7 @@ namespace EmailClientPluma.Core.Services.Storaging
         {
             await using var conn = CreateConnection();
             await conn.OpenAsync();
-            
+
             var sql = """
                       SELECT ID, OWNER_EMAIL_ID, FILE_NAME, FILE_PATH, PROVIDER_ATTACHMENT_ID, CONTENT_TYPE, SIZE_BYTES
                       FROM ATTACHMENTS
@@ -68,7 +68,7 @@ namespace EmailClientPluma.Core.Services.Storaging
                 }, transaction: tx);
 
                 attachment.Id = id;
-                attachment.OwnerEmailId =mail.MessageIdentifiers.EmailId;
+                attachment.OwnerEmailId = mail.MessageIdentifiers.EmailId;
             }
             await tx.CommitAsync();
         }
