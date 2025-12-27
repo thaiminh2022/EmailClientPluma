@@ -333,7 +333,7 @@
                                     FontWeight="Bold">
                                     Attachments
                                 </TextBlock>
-                                <Button Content="Open" />
+                                <Button Command="{Binding OpenAttachmentCommand}" Content="Open" />
                             </StackPanel>
                             <ListBox
                                 Background="Transparent"

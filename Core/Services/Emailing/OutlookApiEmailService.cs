@@ -22,7 +22,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 
     private async Task<GraphServiceClient> GetGraphService(Account acc, bool forceCheckInternet = false)
     {
-        logger.LogInformation("Getting graph service for {}", acc.Email);
+        logger.LogInformation("Getting graph service for {mail}", acc.Email);
         if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");
@@ -263,7 +263,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 
     private Email CreateEmailFromGraph(Account acc, Message msg, bool fromSent = false)
     {
-        // Flags (best-effort mapping; Graph doesn't have Gmail-like labels)
+        // Flags 
         var flags = EmailFlags.None;
 
         if (fromSent)
@@ -274,13 +274,10 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         if (msg.IsRead == true)
             flags |= EmailFlags.Seen;
 
-        // Optional: mark drafts if available (Graph Message has IsDraft in many SDK versions)
         if (msg.IsDraft == true)
             flags |= EmailFlags.Draft;
 
         // NOTE: "Sent" is usually inferred by folder (Sent Items) rather than a flag on Message.
-        // Since you are fetching from Inbox, we keep Sent off.
-
         var identifiers = new Email.Identifiers
         {
             OwnerAccountId = acc.ProviderUID,
@@ -312,7 +309,6 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 
         var e = new Email(identifiers, data);
 
-        // Labels: you can tune these to match your UI semantics
         e.Labels.Add(EmailLabel.All);
         e.Labels.Add(fromSent ? EmailLabel.Sent : EmailLabel.Inbox);
 

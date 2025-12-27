@@ -7,6 +7,8 @@ using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 
@@ -179,6 +181,21 @@ internal class MainViewModel : ObserableObject, IRequestClose
             }
 
         }, _ => SelectedAccount is not null);
+
+        OpenAttachmentCommand = new RelayCommand(async _ =>
+        {
+            if (_selectedAttachment is null || !_selectedAttachment.ContentFetched) return;
+
+            if (!File.Exists(_selectedAttachment.FilePath))
+                return;
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"/select,\"{_selectedAttachment.FilePath}\"",
+                UseShellExecute = true
+            });
+        }, _ => _selectedAttachment is not null);
     }
 
     // This should not be matter because this is for UI type hinting
@@ -463,6 +480,8 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     public RelayCommand NewLabelCommand { get; set; }
     public RelayCommand EditEmailLabelCommand { get; set; }
+
+    public RelayCommand OpenAttachmentCommand{ get; set; }
 
     #endregion
 
