@@ -1,78 +1,153 @@
-# EmailClientPluma
+# 📧 EmailClientPluma
 
-An email client (like Gmail, Outlook) for a school project.
+An email client (similar to Gmail or Outlook) built with **C# and WPF** for a **school project**.
 
-## Developing
+---
 
-### Dependencies
+## 📑 Table of Contents
 
-- git
-- c# with WPF
-- Visual Studio
+* [For Professor](#-for-professor)
 
-### Cloning the project
+  * [Project Objective](#-project-objective)
+  * [Key Features](#-key-features)
+  * [Technologies Used](#-technologies-used)
+  * [How to Run](#️-how-to-run)
+  * [Application Data Locations](#-application-data-locations)
+* [For Developers](#-for-developers)
+
+  * [Prerequisites](#-prerequisites)
+  * [Clone & Setup](#-clone--setup)
+  * [Development Workflow](#-development-workflow)
+  * [Secrets Configuration](#-secrets-configuration)
+  * [Merge Conflicts](#-merge-conflicts)
+
+---
+
+## 👨‍🏫 For Professor
+
+> **Important:** Since this application is built with **WPF**, please test it on a **Windows environment**.
+
+### 🎯 Project Objective
+
+**EmailClientPluma** is a desktop-based email client designed to demonstrate:
+
+* Understanding of **desktop application development** using WPF
+* Application of the **MVVM architectural pattern**
+* Integration with **email provider APIs** (e.g., Google, Microsoft)
+* Email phishing detection using a **BERT-based model**
+
+---
+
+### 🧩 Key Features
+
+* Multiple email account support
+* Send, receive, and read emails
+* Attachment handling (add, view, delete)
+* Local data persistence using **SQLite**
+* Basic error handling and logging
+* Email phishing detection
+
+---
+
+### 🛠 Technologies Used
+
+* **Language:** C# (.NET)
+* **UI Framework:** WPF
+* **Architecture:** MVVM
+* **Database:** SQLite
+* **Version Control:** Git & GitHub
+
+---
+
+### ▶️ How to Run
+
+1. Open the solution in **Visual Studio**
+2. Restore all NuGet packages
+3. Configure the required `secret.json` file (see *For Developers* section)
+
+   * If you are running the **ZIP version provided via Google Drive**, the `secret.json` file is already included
+4. Build and run the project
+
+---
+
+### 📂 Application Data Locations
+
+* **Database & logs:**
+  `%AppData%/Pluma`
+  `%AppData%/Pluma/log`
+
+* **Downloaded attachments:**
+  `Documents/PlumaAttachment`
+
+---
+
+## 👨‍💻 For Developers
+
+### 🔧 Prerequisites
+
+* Git
+* Visual Studio 2022 or later (with WPF workload)
+* .NET SDK
+
+---
+
+### 📦 Clone & Setup
 
 ```bash
 git clone https://github.com/thaiminh2022/EmailClientPluma.git
-```
-
-After cloning the project, check out the development branch
-
-```bash
 cd EmailClientPluma
 git checkout dev
 ```
 
-### Adding features
+---
 
-To start developing, create a branch of your feature through the GUI or through commands, then check out the branch you
-just created
+### 🌱 Development Workflow
+
+Create a feature branch from `dev`:
 
 ```bash
-git checkout -b <MY-BRANCH-NAME>
+git checkout -b <your-branch-name>
 ```
 
-Happy developing!!! 😏
-
-### Uploading your branch (Create a pull request)
-
-- When you finish developing, create a pull request to the GitHub repository for code review
-
-> [!IMPORTANT]
-> PLEASE CREATE A PULL REQUEST TO THE DEV BRANCH
-
-> [!Note]
-> Make sure you are in your branch and commit before pushing
-
-#### Committing
+Commit and push your changes:
 
 ```bash
 git add .
-git commit -m "QUICK_DESCRIPTION"
+git commit -m "Short, descriptive commit message"
+git push origin <your-branch-name>
 ```
 
-#### Pull request
+Create a **Pull Request targeting the `dev` branch** and notify **@thaiminh2022** for review.
 
-```bash
-git push origin <YOUR_BRANCH>
+---
+
+### 🔐 Secrets Configuration
+
+This project uses private credentials that are **not tracked by Git**.
+Although these credentials are used in a desktop application, this setup follows Google’s recommended approach for installed apps.
+
+Create the following directory structure:
+
+```
+EmailClientPluma/
+├─ secrets/
+│  └─ secret.json
 ```
 
-- Go to the GitHub repo and create a pull request to the DEV branch
-- Notify __me (thaiminh2022)__ when you do so.
+Obtain `secret.json` from the team’s **Google Drive**.
 
-### (optional) Resolve merge conflict
+> ⚠️ **Never commit `secret.json` to the repository**
 
-- Your code may conflict with others
-- Resolve manually in your editor or through GitHub GUI
+---
 
-## Authorization feature
+### ⚔️ Merge Conflicts
 
-- Create a "secrets" folder in the project's root, inside put the secret.json file
-- Get your secret.json on the team's Google Drive
+If merge conflicts occur:
 
-> [!Note]
-> Project structure should look like this:
-> EmailClientPluma (root)
-> - secrets
-    >
-- secret.json
+* Resolve them locally using **Visual Studio** or another Git client
+* Alternatively, resolve conflicts via the **GitHub web interface**
+* Commit the resolved changes and push again
+
+---
+
+Happy developing 😏
