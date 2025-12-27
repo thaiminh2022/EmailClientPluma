@@ -358,7 +358,6 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             _selectedEmail = value;
 
-            Mouse.OverrideCursor = Cursors.Wait;
             _ = FetchEmailBody();
             OnPropertyChanges();
         }
@@ -366,26 +365,25 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     private async Task FetchEmailBody()
     {
+        Mouse.OverrideCursor = Cursors.Wait;
+
         try
         {
             if (_selectedAccount is null || _selectedEmail is null)
                 return;
 
-            if (_selectedEmail.BodyFetched)
+
+            if (!_selectedEmail.BodyFetched)
             {
-                CheckPhishing();
-                return;
+                var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+                if (!isValid) return;
+
+                var emailService = GetServiceByProvider(_selectedAccount.Provider);
+
+                await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             }
 
-            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-            if (!isValid)
-                return;
-
-            var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             CheckPhishing();
-
         }
         catch (Exception ex)
         {
@@ -404,6 +402,23 @@ internal class MainViewModel : ObserableObject, IRequestClose
             var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
             if (check is PhishDetector.SuspiciousLevel.None or PhishDetector.SuspiciousLevel.Minor) return;
             MessageBoxHelper.Warning("Cảnh báo phishing: ", check.ToString());
+        }
+    }
+
+    private Attachment? _selectedAttachment;
+
+    public Attachment? SelectedAttachment
+    {
+        get => _selectedAttachment;
+        set
+        {
+            _selectedAttachment = value;
+            if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
+            if (_selectedAttachment.ContentFetched) return;
+            
+            
+            var emailService = GetServiceByProvider(_selectedAccount.Provider);
+            emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
         }
     }
 

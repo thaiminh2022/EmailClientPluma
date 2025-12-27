@@ -286,7 +286,7 @@
                                 Grid.Row="4"
                                 Grid.Column="1"
                                 Margin="0,4,0,0"
-                                ItemsSource="{Binding SelectedEmail.Labels}">
+                                ItemsSource="{Binding SelectedEmail.Labels, FallbackValue=null}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <WrapPanel Orientation="Horizontal" />
@@ -338,7 +338,7 @@
                             <ListBox
                                 Background="Transparent"
                                 BorderThickness="0"
-                                ItemsSource="{Binding Attachments}"
+                                ItemsSource="{Binding SelectedEmail.MessageParts.Attachments}"
                                 ScrollViewer.CanContentScroll="False"
                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
@@ -377,7 +377,7 @@
                                                 FontSize="12"
                                                 Foreground="{DynamicResource TextBrush}"
                                                 Opacity="0.7"
-                                                Text="{Binding SizeText}" />
+                                                Text="{Binding SizeDisplayMb}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

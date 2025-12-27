@@ -21,6 +21,10 @@ internal interface IStorageService
     Task StoreLabelsAsync(Email mail);
     Task DeleteLabelAsync(EmailLabel label);
     Task DeleteEmailLabelAsync(EmailLabel label, Email email);
+
+    Task<IEnumerable<Attachment>> GetAttachmentAsync(Email mail);
+    Task StoreAttachmentRefAsync(Email mail);
+    Task<string> UpdateAttachmentContentAsync(Email mail, Attachment attachment, byte[] data); // returning path
 }
 
 internal class StorageService : IStorageService
@@ -28,6 +32,7 @@ internal class StorageService : IStorageService
     private readonly AccountStorage _accountStorage;
     private readonly EmailStorage _emailStorage;
     private readonly LabelStorage _labelStorage;
+    private readonly AttachmentStorage _attachmentStorage;
 
     public StorageService(ILogger<StorageService> logger)
     {
@@ -37,6 +42,7 @@ internal class StorageService : IStorageService
         _accountStorage = new AccountStorage(tokenStore, connectionString, logger);
         _emailStorage = new EmailStorage(connectionString, logger);
         _labelStorage = new LabelStorage(connectionString, logger);
+        _attachmentStorage = new AttachmentStorage(connectionString, logger);
 
         var migrator = new StorageMigrator(connectionString);
         migrator.Migrate();
@@ -136,6 +142,26 @@ internal class StorageService : IStorageService
     public async Task DeleteEmailLabelAsync(EmailLabel label, Email email)
     {
         await _labelStorage.DeleteEmailLabelAsync(label, email);
+    }
+
+
+    #endregion
+
+    #region Attachments
+
+    public async Task<IEnumerable<Attachment>> GetAttachmentAsync(Email mail)
+    {
+        await _attachmentStorage.GetAttachmentAsync(mail);
+    }
+
+    public async Task StoreAttachmentRefAsync(Email mail)
+    {
+        await _attachmentStorage.StoreAttachmentRefAsync(mail);
+    }
+
+    public async Task<string> UpdateAttachmentContentAsync(Email mail, Attachment attachment, byte[] data)
+    {
+        return await _attachmentStorage.UpdateAttachmentContentAsync(mail, attachment, data);
     }
 
     #endregion

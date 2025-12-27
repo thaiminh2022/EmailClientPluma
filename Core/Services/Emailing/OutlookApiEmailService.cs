@@ -4,10 +4,14 @@ using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.Core.Services.Storaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-using Microsoft.Graph.Me.SendMail;
+using Microsoft.Graph.Me.Messages.Item.Attachments.CreateUploadSession;
 using Microsoft.Graph.Models;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Newtonsoft.Json;
+using System.IO;
+using Account = EmailClientPluma.Core.Models.Account;
+using Attachment = EmailClientPluma.Core.Models.Attachment;
+using Message = Microsoft.Graph.Models.Message;
 
 namespace EmailClientPluma.Core.Services.Emailing;
 
@@ -53,7 +57,6 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         logger.LogInformation("Staring fetching email for: {email}", acc.Email);
         var graphClient = await GetGraphService(acc);
         var (_, lastSync) = ParseAccountTokens(acc.PaginationToken, acc.LastSyncToken);
-
 
         try
         {
@@ -325,9 +328,40 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         try
         {
             var msg = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
-                .GetAsync(config => { config.QueryParameters.Select = ["body"]; });
+                .GetAsync(config =>
+                {
+                    config.QueryParameters.Select = ["body", "hasAttachments"];
+                });
 
             email.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
+            await storageService.UpdateEmailBodyAsync(email);
+
+
+            if (msg?.HasAttachments is false) return;
+
+            var atts = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
+                .Attachments.GetAsync(config =>
+                {
+                    config.QueryParameters.Select = ["id", "name", "size", "contentType", "@odata.type"];
+                });
+
+            atts?.Value?.ForEach(x =>
+            {
+                if (x is not FileAttachment)
+                    return;
+
+                email.MessageParts.Attachments.Add(new Attachment
+                {
+                    FileName = x.Name,
+                    ContentType = x.ContentType ?? @"application/octet-stream",
+                    FilePath = null,
+                    SizeBytes = x.Size ?? 0,
+                    ProviderAttachmentId = x.Id,
+                    OwnerEmailId = email.MessageIdentifiers.EmailId
+                });
+            });
+            await storageService.StoreAttachmentRefAsync(email);
+
         }
         catch (Exception ex)
         {
@@ -336,68 +370,39 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
         }
     }
 
-    public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
+    public async Task FetchEmailAttachmentsAsync(Account acc, Email email)
     {
-        var fromRecipient = new Recipient()
-        {
-            EmailAddress = new EmailAddress()
-            {
-                Address = email.From,
-                Name = acc.DisplayName
-            }
+        logger.LogInformation("Fetching attachment for {mail} with subject {subject}", acc.Email, email.MessageParts.Subject);
+        var client = await GetGraphService(acc);
 
-        };
-
-        var toRecipients = email.To.Split(",").Select(mail => new Recipient()
-        {
-            EmailAddress = new EmailAddress()
-            {
-                Address = mail
-            }
-        }).ToList();
-
-
-        List<Recipient> replyToRecipients = [];
-
-        if (email.ReplyTo is not null)
-        {
-            replyToRecipients.Add(new Recipient()
-            {
-                EmailAddress = new EmailAddress()
-                {
-                    Address = email.ReplyTo
-                }
-            });
-        }
-
-        var message = new Message
-        {
-            Subject = email.Subject,
-            Body = new ItemBody()
-            {
-                ContentType = BodyType.Html,
-                Content = email.Body,
-            },
-            From = fromRecipient,
-            ToRecipients = toRecipients,
-            ReplyTo = replyToRecipients,
-            SentDateTime = email.Date
-        };
-
-        var client = await GetGraphService(acc, forceCheckInternet:true);
+        // Get specific message with body
         try
         {
-            await client.Me.SendMail.PostAsync(new SendMailPostRequestBody()
+            foreach(var attachment in email.MessageParts.Attachments)
             {
-                Message = message,
-                SaveToSentItems = true,
-            });
+                if (attachment.ProviderAttachmentId is null) continue;
+
+                var att = await client.Me
+                    .Messages[email.MessageIdentifiers.ProviderMessageId]
+                    .Attachments[attachment.ProviderAttachmentId]
+                    .GetAsync(config =>
+                    {
+                        config.QueryParameters.Select = ["contentBytes"];
+                    });
+
+                if (att is not FileAttachment file) continue;
+                if (file.ContentBytes is null) continue;
+
+                var path = await storageService.UpdateAttachmentContentAsync(email, attachment, file.ContentBytes);
+                attachment.FilePath = path;
+            }
+
         }
         catch (Exception ex)
         {
-            throw new EmailSendException(inner: ex);
+            logger.LogError(ex, "Attachment fetching failed for {email} with subject {subject}", acc.Email, email.MessageParts.Subject);
+            throw new AttachmentFetchingException(inner: ex);
         }
-
     }
 
     public async Task PrefetchRecentBodiesAsync(Account acc, int maxToPrefetch = 30)
@@ -422,11 +427,37 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 var msg = await client.Me.Messages[candidate.MessageIdentifiers.ProviderMessageId]
                     .GetAsync(cfg =>
                     {
-                        cfg.QueryParameters.Select = ["body"];
+                        cfg.QueryParameters.Select = ["body", "hasAttachments"];
                     });
 
                 candidate.MessageParts.Body = msg?.Body?.Content ?? "(No Body)";
                 await storageService.UpdateEmailBodyAsync(candidate);
+
+
+                if (msg?.HasAttachments is false) return;
+
+                var atts = await client.Me.Messages[candidate.MessageIdentifiers.ProviderMessageId]
+                    .Attachments.GetAsync(config =>
+                    {
+                        config.QueryParameters.Select = ["id", "name", "size", "contentType", "@odata.type"];
+                    });
+
+                atts?.Value?.ForEach(x =>
+                {
+                    if (x is not FileAttachment)
+                        return;
+
+                    candidate.MessageParts.Attachments.Add(new Attachment
+                    {
+                        FileName = x.Name,
+                        ContentType = x.ContentType ?? @"application/octet-stream",
+                        FilePath = null,
+                        SizeBytes = x.Size ?? 0,
+                        ProviderAttachmentId = x.Id,
+                        OwnerEmailId = candidate.MessageIdentifiers.EmailId
+                    });
+                });
+                await storageService.StoreAttachmentRefAsync(candidate);
             }
             catch (Exception ex)
             {
@@ -532,6 +563,132 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 
         await storageService.UpdatePaginationAndNextTokenAsync(acc);
         return true;
+    }
+
+
+    public async Task SendEmailAsync(Account acc, Email.OutgoingEmail email)
+    {
+        var client = await GetGraphService(acc, forceCheckInternet: true);
+        try
+        {
+            // create a draft
+            var draft = await CreateDraftAsync(client, acc, email);
+            if (draft?.Id is null)
+            {
+                throw new EmailSendException();
+            }
+
+            // add attachments to draft
+            foreach (var attachment in email.Attachments)
+            {
+                if (!File.Exists(attachment.FilePath))
+                {
+                    var ex = new AttachmentReadForSendingException();
+                    logger.LogError(ex, "{name} does not exists", attachment.FileName);
+                    
+                    throw ex;
+                }
+
+                await UploadAttachmentAsync(client, attachment, draft.Id, CancellationToken.None);
+            }
+
+            // send
+            await client.Me.Messages[draft.Id].Send.PostAsync();
+        }
+        catch (Exception ex) when (ex is not EmailSendException or AttachmentReadForSendingException)
+        {
+            throw new EmailSendException(inner: ex);
+        }
+
+    }
+
+    private async Task<Message?> CreateDraftAsync(GraphServiceClient client, Account acc, Email.OutgoingEmail email)
+    {
+        List<Recipient> replyToRecipients = [];
+
+        if (email.ReplyTo is not null)
+        {
+            replyToRecipients.Add(new Recipient()
+            {
+                EmailAddress = new EmailAddress()
+                {
+                    Address = email.ReplyTo
+                }
+            });
+        }
+
+
+        var draft = new Message
+        {
+            Subject = email.Subject,
+            Body = new ItemBody
+            {
+                ContentType = BodyType.Html,
+                Content = email.Body ?? string.Empty
+            },
+            From = new Recipient()
+            {
+                EmailAddress = new EmailAddress()
+                {
+                    Address = email.From,
+                    Name = acc.DisplayName
+                }
+
+            },
+            SentDateTime = DateTime.Now,
+            ToRecipients = email.To
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => new Recipient
+                {
+                    EmailAddress = new EmailAddress { Address = x.Trim() }
+                })
+                .ToList(),
+            ReplyTo = replyToRecipients
+        };
+
+        return await client.Me.Messages.PostAsync(draft);
+    }
+
+    private async Task UploadAttachmentAsync(GraphServiceClient graph,
+        Attachment attachment,
+        string draftId,
+        CancellationToken ct)
+    {
+        await using var stream = File.OpenRead(attachment.FilePath);
+
+        var attachmentItem = new AttachmentItem
+        {
+            AttachmentType = AttachmentType.File,
+            Name = attachment.FileName,
+            Size = stream.Length
+        };
+
+        var uploadSession = await graph.Me
+            .Messages[draftId]
+            .Attachments
+            .CreateUploadSession
+            .PostAsync(
+                new CreateUploadSessionPostRequestBody()
+                {
+                    AttachmentItem = attachmentItem
+                },
+                cancellationToken: ct);
+
+        // 320 KB chunks are recommended by Microsoft
+        const int chunkSize = 320 * 1024;
+
+        var uploader = new LargeFileUploadTask<AttachmentItem>(
+            uploadSession,
+            stream,
+            chunkSize);
+
+        var result = await uploader.UploadAsync(cancellationToken: ct);
+
+        if (!result.UploadSucceeded)
+        {
+            throw new InvalidOperationException($"Failed to upload attachment: {attachment.FileName}");
+        }
+            
     }
 
     public Provider GetProvider()

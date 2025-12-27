@@ -8,13 +8,6 @@ using Microsoft.Win32;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
-class ViewAttachments
-{
-    public required string FileName { get; init; }
-    public required long Size { get; init; }
-    public string SizeText => $"{Math.Round(Size/1_000_000f, 2)}MB";
-}
-
 
 internal class NewEmailViewModel : ObserableObject, IRequestClose
 {
@@ -50,8 +43,10 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
                 From = SelectedAccount.Email,
                 To = ToAddresses,
                 Date = DateTime.Now,
-                InReplyTo = _inReplyTo
+                InReplyTo = _inReplyTo,
+                Attachments = Attachments,
             };
+
 
             try
             {
@@ -71,16 +66,46 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
 
         AddAttachmentCommand = new RelayCommand(_ =>
         {
-            var dialog = new OpenFileDialog();
-            if (dialog.ShowDialog() is not true) return;
-            
-            
-            var fileInfo = new FileInfo(dialog.FileName);
-            Attachments.Add(new ViewAttachments
+            var dialog = new OpenFileDialog
             {
-                FileName = fileInfo.Name,
-                Size = fileInfo.Length,
-            });
+                Title = "Select attachments",
+                Multiselect = true,
+                CheckFileExists = true,
+                CheckPathExists = true
+            };
+            if (dialog.ShowDialog() is not true) return;
+
+
+            foreach (var path in dialog.FileNames)
+            {
+                // Avoid duplicates
+                if (Attachments.Any(a =>
+                        string.Equals(a.FilePath, path, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                FileInfo fi;
+                try
+                {
+                    fi = new FileInfo(path);
+                    if (!fi.Exists) continue;
+                }
+                catch
+                {
+                    // path invalid / permission issues
+                    continue;
+                }
+
+                var fileName = fi.Name;
+                var contentType = GuessContentType(fi.Extension);
+
+                Attachments.Add(new Attachment
+                {
+                    FilePath = path,
+                    FileName = fileName,
+                    ContentType = contentType,
+                    SizeBytes = fi.Length,
+                });
+            }
 
             RecalculateSize();
         });
@@ -88,19 +113,15 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
         RemoveSelectedAttachmentCommand = new RelayCommand(_ =>
         {
             if (SelectedAttachment is null) return;
-
             Attachments.Remove(SelectedAttachment);
-
             RecalculateSize();
-
-
         });
 
     }
 
     private void RecalculateSize()
     {
-        var totalSize = Attachments.Sum(x => x.Size);
+        var totalSize = Attachments.Sum(x => x.SizeBytes);
         TotalAttachmentSizeText = $"{Math.Round(totalSize / 1_000_000f, 2)}MB";
         AttachmentsCountText = Attachments.Count.ToString();
 
@@ -211,9 +232,9 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
 
     #region  Attachments
 
-    public ObservableCollection<ViewAttachments> Attachments { get; set; }
-    public ViewAttachments? _selectedAttachment;
-    public ViewAttachments? SelectedAttachment
+    public ObservableCollection<Attachment> Attachments { get; set; }
+    private Attachment? _selectedAttachment;
+    public Attachment? SelectedAttachment
     {
         get => _selectedAttachment;
         set
@@ -235,4 +256,39 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
     public NewEmailViewModel()
     {
     }
+
+    private static string GuessContentType(string? ext)
+    {
+        if (string.IsNullOrWhiteSpace(ext)) return "application/octet-stream";
+        ext = ext.Trim().ToLowerInvariant();
+        if (!ext.StartsWith(".")) ext = "." + ext;
+
+        return ext switch
+        {
+            ".txt" => "text/plain",
+            ".html" or ".htm" => "text/html",
+            ".json" => "application/json",
+            ".xml" => "application/xml",
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            ".zip" => "application/zip",
+            ".rar" => "application/vnd.rar",
+            ".7z" => "application/x-7z-compressed",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" => "application/vnd.ms-excel",
+            ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".ppt" => "application/vnd.ms-powerpoint",
+            ".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".mp4" => "video/mp4",
+            _ => "application/octet-stream"
+        };
+    }
+
 }

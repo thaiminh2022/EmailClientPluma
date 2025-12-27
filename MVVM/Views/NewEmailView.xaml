@@ -237,7 +237,7 @@
                                         FontSize="12"
                                         Foreground="{DynamicResource TextBrush}"
                                         Opacity="0.7"
-                                        Text="{Binding SizeText}" />
+                                        Text="{Binding SizeDisplayMb}" />
                                 </StackPanel>
 
                             </DataTemplate>
