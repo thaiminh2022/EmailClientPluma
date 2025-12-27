@@ -342,7 +342,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
             var atts = await client.Me.Messages[email.MessageIdentifiers.ProviderMessageId]
                 .Attachments.GetAsync(config =>
                 {
-                    config.QueryParameters.Select = ["id", "name", "size", "contentType", "@odata.type"];
+                    config.QueryParameters.Select = ["id", "name", "size", "contentType"];
                 });
 
             atts?.Value?.ForEach(x =>
@@ -439,7 +439,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 var atts = await client.Me.Messages[candidate.MessageIdentifiers.ProviderMessageId]
                     .Attachments.GetAsync(config =>
                     {
-                        config.QueryParameters.Select = ["id", "name", "size", "contentType", "@odata.type"];
+                        config.QueryParameters.Select = ["id", "name", "size", "contentType"];
                     });
 
                 atts?.Value?.ForEach(x =>

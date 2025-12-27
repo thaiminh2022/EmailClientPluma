@@ -418,7 +418,15 @@ internal class MainViewModel : ObserableObject, IRequestClose
             
             
             var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
+            try
+            {
+                emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
+
+            }
+            catch (Exception ex)
+            {
+                MessageBoxHelper.Error(ex.Message);
+            }
         }
     }
 
