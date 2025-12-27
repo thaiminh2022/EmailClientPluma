@@ -128,12 +128,18 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
         }
 
         logger.LogInformation("Validation init for account: {mail}", acc.Email);
-        // reconstruct user credentials to check
         var tokenRes = await _dataStore.GetAsync<TokenResponse>(acc.ProviderUID);
 
-        if (tokenRes.IsStale)
+        if (acc.ValidatedThisRun && !tokenRes.IsStale)
         {
-            logger.LogInformation("{mail} token is staled", acc.Email);
+            logger.LogInformation("Token is not staled");
+            return true;
+        }
+
+        if (!acc.ValidatedThisRun || tokenRes.IsStale)
+        {
+
+            logger.LogWarning("{mail} token is staled or first validation", acc.Email);
             var flow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer
             {
                 ClientSecrets = GoogleClientSecrets.FromFile(ClientSecret).Secrets,
@@ -143,12 +149,16 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
 
             try
             {
+
                 if (await userCredentials.RefreshTokenAsync(CancellationToken.None))
                 {
                     acc.Credentials.SessionToken = userCredentials.Token.AccessToken;
                     acc.Credentials.RefreshToken = userCredentials.Token.RefreshToken;
                     await _dataStore.StoreAsync(acc.ProviderUID, userCredentials.Token);
+                    logger.LogInformation("Refresh success");
 
+
+                    acc.ValidatedThisRun = true;
                     return true;
                 }
             }
@@ -157,13 +167,10 @@ internal class GoogleAuthenticationService(ILogger<GoogleAuthenticationService> 
                 //throw new AuthRefreshException(inner: ex);
                 // trying to do interactive
 
-                logger.LogError("Cannot refresh token for account {email}, trying interactive", acc.Email);
+                logger.LogError(ex, "Cannot refresh token for account {email}, trying interactive", acc.Email);
             }
         }
-        else
-        {
-            return true;
-        }
+
 
         // can't silent login so doing interactive
         try

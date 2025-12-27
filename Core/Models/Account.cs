@@ -10,6 +10,7 @@ internal class Account
     // NOT STORED
     public bool FirstTimeHeaderFetched = false;
     public bool NoMoreOlderEmail = false;
+    public bool ValidatedThisRun = false;
 
 
     public Account(string providerUid, string email, string displayName, Provider provider, Credentials credentials)

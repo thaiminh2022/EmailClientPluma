@@ -18,7 +18,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
 
     private async Task<GraphServiceClient> GetGraphService(Account acc, bool forceCheckInternet = false)
     {
-        logger.LogInformation("Getting graph service for {}", acc.Email);
+        logger.LogInformation("Getting graph service for {mail}", acc.Email);
         if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");

@@ -297,7 +297,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
 
     private async Task<GmailService> CreateGmailService(Account acc, bool forceCheckInternet = false)
     {
-        logger.LogInformation("Getting gmail service for {}", acc.Email);
+        logger.LogInformation("Getting gmail service for {mail}", acc.Email);
         if (!await InternetHelper.HasInternetConnection(forceCheckInternet))
         {
             logger.LogError("No internet connection");
