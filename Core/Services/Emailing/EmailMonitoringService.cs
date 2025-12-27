@@ -116,6 +116,9 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
         {
             try
             {
+                // Wait before next poll
+                await Task.Delay(currentInterval, cancellationToken);
+
                 // Store current email count
                 var knownMessageIds = acc.Emails
                     .Select(e => e.MessageIdentifiers.ProviderMessageId)
@@ -156,8 +159,7 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
                     }
                 }
 
-                // Wait before next poll
-                await Task.Delay(currentInterval, cancellationToken);
+    
             }
             catch (OperationCanceledException)
             {
@@ -167,7 +169,9 @@ internal class EmailMonitoringService(IEnumerable<IEmailService> emailServices, 
             {
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    MessageBoxHelper.Error($"Polling error for {acc.Email}: {ex.Message}");
+                    logger.LogError(ex, "Polling error");
+                     MessageBoxHelper.Error($"Polling error for {acc.Email}: {ex.Message}");
+                    // quiet retry
                 });
 
                 // Wait before retry
