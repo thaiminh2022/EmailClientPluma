@@ -113,7 +113,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 Mouse.OverrideCursor = Cursors.Wait;
                 try
                 {
-                    var emailService = GetServiceByProvider(SelectedAccount.Provider);
+                    var emailService = GetEmailService(SelectedAccount.Provider);
                     var gotMore = await emailService.FetchOlderHeadersAsync(SelectedAccount, _pageSize);
 
                     // Rebuild pages after loading older headers
@@ -170,9 +170,9 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             if (SelectedAccount is null)
                 return;
-            var emailService = GetServiceByProvider(SelectedAccount.Provider);
             try
             {
+                var emailService = GetEmailService(SelectedAccount.Provider);
                 await emailService.FetchEmailHeaderAsync(SelectedAccount);
             }
             catch (Exception ex)
@@ -274,7 +274,8 @@ internal class MainViewModel : ObserableObject, IRequestClose
     private readonly List<IEmailService> _emailServices;
     private readonly IEmailFilterService _filterService;
 
-    private IEmailService GetServiceByProvider(Provider prod)
+
+    private IEmailService GetEmailService(Provider prod)
     {
         var service = _emailServices.Find(x => x.GetProvider() == prod);
         return service ?? throw new NotImplementedException("Service not implemented");
@@ -344,10 +345,9 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 return;
             }
 
-            var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            await emailService.FetchEmailHeaderAsync(_selectedAccount);
+            await GetEmailService(_selectedAccount.Provider).FetchEmailHeaderAsync(_selectedAccount);
             _selectedAccount.FirstTimeHeaderFetched = true;
-            await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+            await GetEmailService(_selectedAccount.Provider).PrefetchRecentBodiesAsync(_selectedAccount);
         }
         catch (Exception ex)
         {
@@ -393,8 +393,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
                 if (!isValid) return;
 
-                var emailService = GetServiceByProvider(_selectedAccount.Provider);
-
+                var emailService = GetEmailService(_selectedAccount.Provider);
                 await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             }
 
@@ -428,20 +427,29 @@ internal class MainViewModel : ObserableObject, IRequestClose
         set
         {
             _selectedAttachment = value;
-            if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
-            if (_selectedAttachment.ContentFetched) return;
-            
-            
-            var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            try
-            {
-                emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
+            Mouse.OverrideCursor = Cursors.Wait;
+            _ = FetchEmailAttachment();
+        }
+    }
 
-            }
-            catch (Exception ex)
-            {
-                MessageBoxHelper.Error(ex.Message);
-            }
+    public async Task FetchEmailAttachment()
+    {
+        if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
+        if (_selectedAttachment.ContentFetched) return;
+        var emailService = GetEmailService(_selectedAccount.Provider);
+        try
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
+            await emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
+
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
         }
     }
 
