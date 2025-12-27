@@ -1,16 +1,16 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
-using System.Windows;
-using System.Windows.Data;
-using EmailClientPluma.Core;
+﻿using EmailClientPluma.Core;
 using EmailClientPluma.Core.Models;
 using EmailClientPluma.Core.Services;
 using EmailClientPluma.Core.Services.Accounting;
 using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Data;
 
 namespace EmailClientPluma.MVVM.ViewModels
 {
@@ -40,12 +40,12 @@ namespace EmailClientPluma.MVVM.ViewModels
 
 
         public event EventHandler<bool?>? RequestClose;
-        public RelayCommand AddAccountCommand {get; set;}
-        public RelayCommandAsync RemoveGoogleAccountCommand {get; set;}
+        public RelayCommand AddAccountCommand { get; set; }
+        public RelayCommandAsync RemoveGoogleAccountCommand { get; set; }
         public RelayCommandAsync RemoveMicrosoftAccountCommand { get; set; }
 
-        public RelayCommand OpenDatabaseFolder {get; set;}
-        public RelayCommand OpenLogFolder {get; set;}
+        public RelayCommand OpenDatabaseFolder { get; set; }
+        public RelayCommand OpenLogFolder { get; set; }
         public RelayCommand DeleteLogFolder { get; set; }
         public RelayCommand SaveCommand { get; set; }
 
@@ -55,7 +55,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             Accounts = accountService.GetAccounts();
             GoogleAccounts = new ListCollectionView(Accounts);
             GoogleAccounts.Filter = x => x is Account { Provider: Provider.Google };
-            
+
             MicrosoftAccounts = new ListCollectionView(Accounts);
             MicrosoftAccounts.Filter = x => x is Account { Provider: Provider.Microsoft };
 
@@ -131,7 +131,7 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 logger.LogInformation("Saving new settings");
                 AppSettings.IncreasePollingTimeIfIdleForTooLong = IncreasePollingWhileIdleTooLong ?? AppSettings.IncreasePollingTimeIfIdleForTooLong;
-                AppSettings.UsePhishingDetector  = UsePhishingDetector  ?? AppSettings.UsePhishingDetector ;
+                AppSettings.UsePhishingDetector = UsePhishingDetector ?? AppSettings.UsePhishingDetector;
                 AppSettings.UseBertPhishingDetector = UseBertPhishingDetector ?? AppSettings.UseBertPhishingDetector;
 
                 if (_autoRefreshSecs < 30)
@@ -162,7 +162,7 @@ namespace EmailClientPluma.MVVM.ViewModels
                 RequestClose?.Invoke(this, true);
             });
 
-            
+
         }
         async Task RemoveAccount(Account acc, IAccountService accountService)
         {

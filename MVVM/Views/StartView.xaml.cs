@@ -39,7 +39,7 @@ namespace EmailClientPluma.MVVM.Views
                 var first = AccountsListView.Items[0];
                 var firstAccount = first as Account;
                 string username = firstAccount?.DisplayName ?? "";
-                TitleTextBlock.Text = $"Welcome back, {username}\nWhat would you like to be as today?";
+                TitleTextBlock.Text = $"Welcome back, {username}\nWho are you today?";
             }
         }
 

@@ -77,6 +77,11 @@ internal class Email : ObserableObject
             Date?.ToLocalTime().DateTime.ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
 
         public double EmailSizeInKb { get; set; } = 0;
+
+
+        public ObservableCollection<Attachment> Attachments { get; set; } = [];
+
+
     }
 
     internal class OutgoingEmail : DataParts

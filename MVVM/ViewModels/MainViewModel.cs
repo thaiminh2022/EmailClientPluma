@@ -7,6 +7,8 @@ using EmailClientPluma.MVVM.Views;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 
@@ -49,7 +51,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 return;
 
             if (success == true) MessageBoxHelper.Info("Message was sent");
-        }, _ => Accounts.Count > 0);
+        }, _ => Accounts.Count >= 0);
 
         ReplyCommand = new RelayCommand(_ =>
         {
@@ -111,7 +113,7 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 Mouse.OverrideCursor = Cursors.Wait;
                 try
                 {
-                    var emailService = GetServiceByProvider(SelectedAccount.Provider);
+                    var emailService = GetEmailService(SelectedAccount.Provider);
                     var gotMore = await emailService.FetchOlderHeadersAsync(SelectedAccount, _pageSize);
 
                     // Rebuild pages after loading older headers
@@ -168,9 +170,9 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             if (SelectedAccount is null)
                 return;
-            var emailService = GetServiceByProvider(SelectedAccount.Provider);
             try
             {
+                var emailService = GetEmailService(SelectedAccount.Provider);
                 await emailService.FetchEmailHeaderAsync(SelectedAccount);
             }
             catch (Exception ex)
@@ -179,6 +181,21 @@ internal class MainViewModel : ObserableObject, IRequestClose
             }
 
         }, _ => SelectedAccount is not null);
+
+        OpenAttachmentCommand = new RelayCommand(async _ =>
+        {
+            if (_selectedAttachment is null || !_selectedAttachment.ContentFetched) return;
+
+            if (!File.Exists(_selectedAttachment.FilePath))
+                return;
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"/select,\"{_selectedAttachment.FilePath}\"",
+                UseShellExecute = true
+            });
+        }, _ => _selectedAttachment is not null);
     }
 
     // This should not be matter because this is for UI type hinting
@@ -257,7 +274,8 @@ internal class MainViewModel : ObserableObject, IRequestClose
     private readonly List<IEmailService> _emailServices;
     private readonly IEmailFilterService _filterService;
 
-    private IEmailService GetServiceByProvider(Provider prod)
+
+    private IEmailService GetEmailService(Provider prod)
     {
         var service = _emailServices.Find(x => x.GetProvider() == prod);
         return service ?? throw new NotImplementedException("Service not implemented");
@@ -327,12 +345,9 @@ internal class MainViewModel : ObserableObject, IRequestClose
                 return;
             }
 
-            var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            await emailService.FetchEmailHeaderAsync(_selectedAccount);
-
+            await GetEmailService(_selectedAccount.Provider).FetchEmailHeaderAsync(_selectedAccount);
             _selectedAccount.FirstTimeHeaderFetched = true;
-
-            await emailService.PrefetchRecentBodiesAsync(_selectedAccount);
+            await GetEmailService(_selectedAccount.Provider).PrefetchRecentBodiesAsync(_selectedAccount);
         }
         catch (Exception ex)
         {
@@ -358,7 +373,6 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             _selectedEmail = value;
 
-            Mouse.OverrideCursor = Cursors.Wait;
             _ = FetchEmailBody();
             OnPropertyChanges();
         }
@@ -366,26 +380,24 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     private async Task FetchEmailBody()
     {
+        Mouse.OverrideCursor = Cursors.Wait;
+
         try
         {
             if (_selectedAccount is null || _selectedEmail is null)
                 return;
 
-            if (_selectedEmail.BodyFetched)
+
+            if (!_selectedEmail.BodyFetched)
             {
-                CheckPhishing();
-                return;
+                var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
+                if (!isValid) return;
+
+                var emailService = GetEmailService(_selectedAccount.Provider);
+                await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             }
 
-            var isValid = await _accountService.ValidateAccountAsync(_selectedAccount);
-
-            if (!isValid)
-                return;
-
-            var emailService = GetServiceByProvider(_selectedAccount.Provider);
-            await emailService.FetchEmailBodyAsync(_selectedAccount, _selectedEmail);
             CheckPhishing();
-
         }
         catch (Exception ex)
         {
@@ -404,6 +416,40 @@ internal class MainViewModel : ObserableObject, IRequestClose
             var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
             if (check is PhishDetector.SuspiciousLevel.None or PhishDetector.SuspiciousLevel.Minor) return;
             MessageBoxHelper.Warning("Cảnh báo phishing: ", check.ToString());
+        }
+    }
+
+    private Attachment? _selectedAttachment;
+
+    public Attachment? SelectedAttachment
+    {
+        get => _selectedAttachment;
+        set
+        {
+            _selectedAttachment = value;
+            Mouse.OverrideCursor = Cursors.Wait;
+            _ = FetchEmailAttachment();
+        }
+    }
+
+    public async Task FetchEmailAttachment()
+    {
+        if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
+        if (_selectedAttachment.ContentFetched) return;
+        var emailService = GetEmailService(_selectedAccount.Provider);
+        try
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
+            await emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
+
+        }
+        catch (Exception ex)
+        {
+            MessageBoxHelper.Error(ex.Message);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
         }
     }
 
@@ -442,6 +488,8 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     public RelayCommand NewLabelCommand { get; set; }
     public RelayCommand EditEmailLabelCommand { get; set; }
+
+    public RelayCommand OpenAttachmentCommand { get; set; }
 
     #endregion
 

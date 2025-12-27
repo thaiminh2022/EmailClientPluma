@@ -49,6 +49,13 @@ internal sealed class StorageMigrator(string connectionString)
             SetVersion(connection, 4);
             currentVersion = 4;
         }
+
+        if (currentVersion < 5)
+        {
+            ApplyV5_ATTACHMENT(connection);
+            SetVersion(connection, 5);
+            currentVersion = 5;
+        }
     }
 
     #region // ---------------- v1: base schema ----------------
@@ -275,6 +282,32 @@ internal sealed class StorageMigrator(string connectionString)
 
     #endregion
 
+
+    #region VERSION 5 ATTACHMENT HANDLER
+
+    private void ApplyV5_ATTACHMENT(SqliteConnection connection)
+    {
+        var tx = connection.BeginTransaction();
+
+        var attachmentTableSql = """
+                                 CREATE TABLE IF NOT EXISTS ATTACHMENTS (
+                                     ID                     INTEGER PRIMARY KEY AUTOINCREMENT,
+                                     OWNER_EMAIL_ID         INTEGER NOT NULL,
+                                     FILE_NAME              TEXT,
+                                     FILE_PATH              TEXT,
+                                     PROVIDER_ATTACHMENT_ID TEXT,
+                                     CONTENT_TYPE           TEXT NOT NULL DEFAULT 'APPLICATION/OCTET-STREAM',
+                                     SIZE_BYTES             INTEGER NOT NULL DEFAULT 0,
+
+                                     FOREIGN KEY (OWNER_EMAIL_ID) REFERENCES EMAILS(EMAIL_ID) ON DELETE CASCADE
+                                 );
+
+                                 """;
+        connection.Execute(attachmentTableSql, transaction: tx);
+        tx.Commit();
+    }
+
+    #endregion
 
     #region // ---------------- SchemaVersion helpers ----------------
 

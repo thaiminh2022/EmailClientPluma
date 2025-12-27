@@ -138,7 +138,15 @@ internal class AccountService : IAccountService
             foreach (var acc in accounts)
             {
                 var emails = await _storageService.GetEmailsAsync(acc);
-                acc.Emails = new ObservableCollection<Email>(emails);
+                var emailList = emails.ToList();
+
+                foreach (var mail in emailList)
+                {
+                    var attachments = await _storageService.GetAttachmentAsync(mail);
+                    mail.MessageParts.Attachments = new ObservableCollection<Attachment>(attachments);
+                }
+
+                acc.Emails = new ObservableCollection<Email>(emailList);
 
                 var labels = await _storageService.GetLabelsAsync(acc);
                 acc.OwnedLabels = new ObservableCollection<EmailLabel>(labels);

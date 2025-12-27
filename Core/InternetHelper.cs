@@ -1,9 +1,7 @@
-﻿using Microsoft.Graph.Models;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Security.Authentication;
-using System.Threading;
 
 namespace EmailClientPluma.Core;
 

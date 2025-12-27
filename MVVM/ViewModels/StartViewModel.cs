@@ -16,6 +16,7 @@ namespace EmailClientPluma.MVVM.ViewModels
 
         public RelayCommandAsync AddAccountGoogleCommand { get; }
         public RelayCommandAsync AddAccountMicrosoftCommand { get; }
+        public RelayCommand SkipAddAccountCommand { get; }
 
         public Account? SelectedAccount
         {
@@ -59,9 +60,21 @@ namespace EmailClientPluma.MVVM.ViewModels
             {
                 await accountService.AddAccountAsync(Provider.Microsoft);
             });
+            SkipAddAccountCommand = new RelayCommand(_ =>
+            {
+                var mainView = _factory.CreateWindow<MainView, MainViewModel>();
+                mainView.Show();
+
+                Application.Current.MainWindow = mainView;
+                RequestClose?.Invoke(this, true);
+            });
         }
 
         public event EventHandler<bool?>? RequestClose;
+
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public StartViewModel() { }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     }
 }
