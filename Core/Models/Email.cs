@@ -102,7 +102,7 @@ namespace EmailClientPluma.Core.Models
                 AttachmentID.ToString()
             );
 
-        public string FusedFileName => $"{AttachmentID}{Path.GetExtension(FileName)}";
+        public string FusedFileName => $"{AttachmentID}-{FileName}";
         public string FusedFilePath =>
             Path.Combine(
                 Helper.DataFolder,
