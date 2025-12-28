@@ -34,6 +34,11 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             if (string.IsNullOrEmpty(ToAddresses)) return;
             if (string.IsNullOrEmpty(Subject)) return;
 
+            if (Attachments.Sum(x => x.SizeBytes) > 20_000_000)
+            {
+                MessageBoxHelper.Error("Tổng size các attachment phải nhỏ hơn 20MB");
+                return;
+            }
 
             var email = new Email.OutgoingEmail
             {
@@ -115,7 +120,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             if (SelectedAttachment is null) return;
             Attachments.Remove(SelectedAttachment);
             RecalculateSize();
-        });
+        }, _ => SelectedAttachment is not null);
 
     }
 
