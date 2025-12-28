@@ -29,10 +29,16 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
 
         SendCommand = new RelayCommandAsync(async _ =>
         {
-            if (string.IsNullOrEmpty(Body)) return;
+            if (string.IsNullOrEmpty(Body) && Attachments.Count == 0) return;
             if (SelectedAccount is null) return;
             if (string.IsNullOrEmpty(ToAddresses)) return;
             if (string.IsNullOrEmpty(Subject)) return;
+
+            if(ToAddresses == SelectedAccount.Email)
+            {
+                MessageBoxHelper.Error("Địa chỉ người nhận không được trùng với địa chỉ người gửi");
+                return;
+            }
 
             if (Attachments.Sum(x => x.SizeBytes) > 20_000_000)
             {
