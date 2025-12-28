@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace EmailClientPluma.Core.Models;
 
 internal class Attachment
@@ -8,7 +10,7 @@ internal class Attachment
     public string? FileName { get; init; }
     public string? FilePath { get; set; }
 
-    public bool ContentFetched => !string.IsNullOrWhiteSpace(FilePath);
+    public bool ContentFetched => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
 
     public string? ProviderAttachmentId { get; init; }
 
