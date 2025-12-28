@@ -65,6 +65,9 @@
             }
         }
 
+        // This is unused because Tri does not know how localhost work,
+        // doesn't communicate clearly with team leader and give unrealistic promises to him.
+        // He can't even come up with a valid excuse for me to not put this here
         public static bool UseBertPhishingDetector
         {
             get => Properties.Settings.Default.UseBERTPhishingDetector;
