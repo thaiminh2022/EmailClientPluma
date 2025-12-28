@@ -108,6 +108,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        AppSettings.MigrateSettings();
+
+
         base.OnStartup(e);
         InternetHelper.InstallNetworkChangeHooks();
         var startWindow = factory?.CreateWindow<StartView, StartViewModel>();
