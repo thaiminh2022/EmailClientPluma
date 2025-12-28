@@ -19,7 +19,6 @@ namespace EmailClientPluma.MVVM.ViewModels
         public bool? BackgroundMessageSync { get; set; } = AppSettings.BackgroundMessageSync;
         public bool? IncreasePollingWhileIdleTooLong { get; set; } = AppSettings.IncreasePollingTimeIfIdleForTooLong;
         public bool? UsePhishingDetector { get; set; } = AppSettings.UsePhishingDetector;
-        public bool? UseBertPhishingDetector { get; set; } = AppSettings.UseBertPhishingDetector;
 
         private int _autoRefreshSecs = AppSettings.AutoRefreshTime.Seconds;
 
@@ -43,6 +42,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand AddAccountCommand { get; set; }
         public RelayCommandAsync RemoveGoogleAccountCommand { get; set; }
         public RelayCommandAsync RemoveMicrosoftAccountCommand { get; set; }
+        public RelayCommand OpenAttachmentsFolder { get; set; }
 
         public RelayCommand OpenDatabaseFolder { get; set; }
         public RelayCommand OpenLogFolder { get; set; }
@@ -96,6 +96,22 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Process.Start(psi);
             });
 
+            OpenAttachmentsFolder = new RelayCommand(_ =>
+            {
+                var psi = new ProcessStartInfo()
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"""
+                                 "{Helper.AttachmentsFolder}"
+                                 """,
+                    CreateNoWindow = true,
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Normal
+                };
+                logger.LogInformation("Running process with args: {args}", psi.Arguments);
+                Process.Start(psi);
+            });
+            
             OpenLogFolder = new RelayCommand(_ =>
             {
 
@@ -132,7 +148,6 @@ namespace EmailClientPluma.MVVM.ViewModels
                 logger.LogInformation("Saving new settings");
                 AppSettings.IncreasePollingTimeIfIdleForTooLong = IncreasePollingWhileIdleTooLong ?? AppSettings.IncreasePollingTimeIfIdleForTooLong;
                 AppSettings.UsePhishingDetector = UsePhishingDetector ?? AppSettings.UsePhishingDetector;
-                AppSettings.UseBertPhishingDetector = UseBertPhishingDetector ?? AppSettings.UseBertPhishingDetector;
 
                 if (_autoRefreshSecs < 30)
                 {

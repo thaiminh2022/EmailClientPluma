@@ -413,9 +413,12 @@ internal class MainViewModel : ObserableObject, IRequestClose
         {
             if (!AppSettings.UsePhishingDetector) return;
 
-            var check = PhishDetector.ValidateHtmlContent(_selectedEmail?.MessageParts.Body ?? "");
-            if (check is PhishDetector.SuspiciousLevel.None or PhishDetector.SuspiciousLevel.Minor) return;
-            MessageBoxHelper.Warning("Cảnh báo phishing: ", check.ToString());
+            var body = _selectedEmail?.MessageParts.Body ?? "";
+            var senders = _selectedEmail?.MessageParts.From ?? "";
+
+            var (susLevel, results) = PhishDetector.ValidateHtmlContent(body, senders);
+            if (susLevel is PhishDetector.SuspiciousLevel.None or PhishDetector.SuspiciousLevel.Minor) return;
+            MessageBoxHelper.Warning("Cảnh báo phishing:\n", string.Join("\n", results.Issues));
         }
     }
 

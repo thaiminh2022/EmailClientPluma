@@ -162,12 +162,9 @@
                         BorderThickness="1"
                         Header="Phishing Protection">
                         <StackPanel Margin="10">
-                            <CheckBox Content="Use phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
-                            <CheckBox Content="Use BERT phishing detector" IsChecked="{Binding UseBertPhishingDetector, FallbackValue=True}" />
+                            <CheckBox Content="Use built in phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
                         </StackPanel>
                     </GroupBox>
-
-
                 </StackPanel>
             </TabItem>
             <!--  STORAGE  -->
@@ -176,9 +173,10 @@
                     <GroupBox
                         BorderBrush="{DynamicResource TextBrush}"
                         BorderThickness="1"
-                        Header="Local database">
+                        Header="App Data">
                         <StackPanel Margin="10">
                             <StackPanel Orientation="Horizontal">
+                                <Button Margin="0,0,5,0" Command="{Binding OpenAttachmentsFolder}">Open attachments folder</Button>
                                 <Button Margin="0" Command="{Binding OpenDatabaseFolder}">Open data folder</Button>
                             </StackPanel>
                         </StackPanel>
