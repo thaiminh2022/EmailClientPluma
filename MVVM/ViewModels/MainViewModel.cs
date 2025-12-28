@@ -443,11 +443,12 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
     public async Task FetchEmailAttachment()
     {
-        if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
-        if (_selectedAttachment.ContentFetched) return;
-        var emailService = GetEmailService(_selectedAccount.Provider);
         try
         {
+            if (_selectedAttachment is null || _selectedAccount is null || _selectedEmail is null) return;
+            if (_selectedAttachment.ContentFetched) return;
+            var emailService = GetEmailService(_selectedAccount.Provider);
+
             Mouse.OverrideCursor = Cursors.Wait;
             await emailService.FetchEmailAttachmentsAsync(_selectedAccount, _selectedEmail);
 
