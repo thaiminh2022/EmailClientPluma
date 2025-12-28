@@ -53,12 +53,28 @@ namespace EmailClientPluma.MVVM.ViewModels
 
             AddAccountGoogleCommand = new RelayCommandAsync(async _ =>
             {
-                await accountService.AddAccountAsync(Provider.Google);
+                try
+                {
+
+                    await accountService.AddAccountAsync(Provider.Google);
+                }
+                catch (Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
+                }
             });
 
             AddAccountMicrosoftCommand = new RelayCommandAsync(async _ =>
             {
-                await accountService.AddAccountAsync(Provider.Microsoft);
+                try
+                {
+                    await accountService.AddAccountAsync(Provider.Microsoft);
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBoxHelper.Error(ex.Message);
+                }
             });
             SkipAddAccountCommand = new RelayCommand(_ =>
             {
