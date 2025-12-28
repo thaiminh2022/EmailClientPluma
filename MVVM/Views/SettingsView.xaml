@@ -165,8 +165,6 @@
                             <CheckBox Content="Use built in phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
                         </StackPanel>
                     </GroupBox>
-
-
                 </StackPanel>
             </TabItem>
             <!--  STORAGE  -->
