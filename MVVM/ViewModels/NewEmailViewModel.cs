@@ -5,6 +5,7 @@ using EmailClientPluma.Core.Services.Emailing;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows.Input;
 
 namespace EmailClientPluma.MVVM.ViewModels;
 
@@ -34,7 +35,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             if (string.IsNullOrEmpty(ToAddresses)) return;
             if (string.IsNullOrEmpty(Subject)) return;
 
-            if(ToAddresses == SelectedAccount.Email)
+            if(ToAddresses.Split(',').Contains(ToAddresses))
             {
                 MessageBoxHelper.Error("Địa chỉ người nhận không được trùng với địa chỉ người gửi");
                 return;
@@ -61,6 +62,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
 
             try
             {
+                Mouse.OverrideCursor = Cursors.Wait;
                 var validated = await accountService.ValidateAccountAsync(SelectedAccount);
                 if (validated)
                 {
@@ -72,6 +74,10 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             {
                 MessageBoxHelper.Error(ex.Message);
                 RequestClose?.Invoke(this, false);
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
             }
         });
 
