@@ -162,8 +162,7 @@
                         BorderThickness="1"
                         Header="Phishing Protection">
                         <StackPanel Margin="10">
-                            <CheckBox Content="Use phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
-                            <CheckBox Content="Use BERT phishing detector" IsChecked="{Binding UseBertPhishingDetector, FallbackValue=True}" />
+                            <CheckBox Content="Use built in phishing detector" IsChecked="{Binding UsePhishingDetector, FallbackValue=True}" />
                         </StackPanel>
                     </GroupBox>
 

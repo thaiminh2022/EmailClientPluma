@@ -19,7 +19,6 @@ namespace EmailClientPluma.MVVM.ViewModels
         public bool? BackgroundMessageSync { get; set; } = AppSettings.BackgroundMessageSync;
         public bool? IncreasePollingWhileIdleTooLong { get; set; } = AppSettings.IncreasePollingTimeIfIdleForTooLong;
         public bool? UsePhishingDetector { get; set; } = AppSettings.UsePhishingDetector;
-        public bool? UseBertPhishingDetector { get; set; } = AppSettings.UseBertPhishingDetector;
 
         private int _autoRefreshSecs = AppSettings.AutoRefreshTime.Seconds;
 
@@ -132,7 +131,6 @@ namespace EmailClientPluma.MVVM.ViewModels
                 logger.LogInformation("Saving new settings");
                 AppSettings.IncreasePollingTimeIfIdleForTooLong = IncreasePollingWhileIdleTooLong ?? AppSettings.IncreasePollingTimeIfIdleForTooLong;
                 AppSettings.UsePhishingDetector = UsePhishingDetector ?? AppSettings.UsePhishingDetector;
-                AppSettings.UseBertPhishingDetector = UseBertPhishingDetector ?? AppSettings.UseBertPhishingDetector;
 
                 if (_autoRefreshSecs < 30)
                 {
