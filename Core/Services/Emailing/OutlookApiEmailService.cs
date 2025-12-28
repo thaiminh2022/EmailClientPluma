@@ -384,6 +384,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
             foreach (var attachment in email.MessageParts.Attachments)
             {
                 if (attachment.ProviderAttachmentId is null) continue;
+                if (attachment.ContentFetched) continue;
 
                 var att = await client.Me
                     .Messages[email.MessageIdentifiers.ProviderMessageId]

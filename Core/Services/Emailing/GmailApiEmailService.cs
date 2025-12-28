@@ -182,6 +182,9 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
         {
             foreach (var att in email.MessageParts.Attachments)
             {
+                if (att.ContentFetched)
+                    continue;
+
                 var attachment = await service.Users.Messages.Attachments
                     .Get("me", email.MessageIdentifiers.ProviderMessageId, att.ProviderAttachmentId)
                     .ExecuteAsync();
