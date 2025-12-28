@@ -69,7 +69,6 @@ namespace EmailClientPluma.MVVM.ViewModels
                 try
                 {
                     await accountService.AddAccountAsync(Provider.Microsoft);
-
                 }
                 catch (Exception ex)
                 {

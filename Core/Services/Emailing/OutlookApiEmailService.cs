@@ -346,7 +346,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 if (x is not FileAttachment)
                     return;
 
-                email.MessageParts.Attachments.Add(new Attachment
+                var att = new Attachment
                 {
                     FileName = x.Name,
                     ContentType = x.ContentType ?? @"application/octet-stream",
@@ -354,7 +354,14 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                     SizeBytes = x.Size ?? 0,
                     ProviderAttachmentId = x.Id,
                     OwnerEmailId = email.MessageIdentifiers.EmailId
-                });
+                };
+                if (email.MessageParts.Attachments.Any(att.IsEqualOwnerName))
+                {
+                    return;
+                }
+
+                email.MessageParts.Attachments.Add(att);
+             
             });
             await storageService.StoreAttachmentRefAsync(email);
 
@@ -442,8 +449,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 {
                     if (x is not FileAttachment)
                         return;
-
-                    candidate.MessageParts.Attachments.Add(new Attachment
+                    var att = new Attachment
                     {
                         FileName = x.Name,
                         ContentType = x.ContentType ?? @"application/octet-stream",
@@ -451,7 +457,13 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                         SizeBytes = x.Size ?? 0,
                         ProviderAttachmentId = x.Id,
                         OwnerEmailId = candidate.MessageIdentifiers.EmailId
-                    });
+                    };
+
+                    if (candidate.MessageParts.Attachments.Any(att.IsEqualOwnerName))
+                    {
+                        return;
+                    }
+                    candidate.MessageParts.Attachments.Add(att);
                 });
                 await storageService.StoreAttachmentRefAsync(candidate);
             }

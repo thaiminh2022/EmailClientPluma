@@ -12,6 +12,8 @@ internal static class Helper
     public static string AttachmentsFolder => GetAttachmentFolder();
 
 
+    
+
     private static string GetDataFolder()
     {
         var path = Path.Combine(Environment.GetFolderPath(

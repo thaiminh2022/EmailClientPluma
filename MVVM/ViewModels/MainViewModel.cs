@@ -184,7 +184,13 @@ internal class MainViewModel : ObserableObject, IRequestClose
 
         OpenAttachmentCommand = new RelayCommand(async _ =>
         {
-            if (_selectedAttachment is null || !_selectedAttachment.ContentFetched) return;
+            if (_selectedAttachment is null) return;
+
+            if (!_selectedAttachment.ContentFetched)
+            {
+                MessageBoxHelper.Info("Nội dung attachment này chưa tải xong, hãy chờ tí");
+                return;
+            }
 
             if (!File.Exists(_selectedAttachment.FilePath))
                 return;

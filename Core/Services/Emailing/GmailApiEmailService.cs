@@ -146,7 +146,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
             // add attachment data, but not download, only download when clicked
             foreach (var attRef in attachmentRefs)
             {
-                email.MessageParts.Attachments.Add(new Attachment
+                var att = new Attachment
                 {
                     FileName = attRef.FileName,
                     FilePath = null,
@@ -154,7 +154,13 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                     ProviderAttachmentId = attRef.AttachmentId,
                     SizeBytes = attRef.Size ?? 0,
                     OwnerEmailId = email.MessageIdentifiers.EmailId
-                });
+                };
+
+                if (email.MessageParts.Attachments.Any(att.IsEqualOwnerName))
+                {
+                    continue;
+                }
+                email.MessageParts.Attachments.Add(att);
             }
 
             await storageService.UpdateEmailBodyAsync(email);
@@ -224,7 +230,7 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                 // add attachment data, but not download, only download when clicked
                 foreach (var attRef in attachmentRefs)
                 {
-                    candidate.MessageParts.Attachments.Add(new Attachment
+                    var att = new Attachment
                     {
                         FileName = attRef.FileName,
                         FilePath = null,
@@ -233,7 +239,12 @@ internal class GmailApiEmailService(IStorageService storageService, ILogger<Gmai
                         SizeBytes = attRef.Size ?? 0,
                         OwnerEmailId = candidate.MessageIdentifiers.EmailId
 
-                    });
+                    };
+                    if (candidate.MessageParts.Attachments.Any(att.IsEqualOwnerName))
+                    {
+                        continue;
+                    }
+                    candidate.MessageParts.Attachments.Add(att);
                 }
 
                 await storageService.UpdateEmailBodyAsync(candidate);

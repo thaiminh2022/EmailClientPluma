@@ -18,6 +18,11 @@ internal class Attachment
 
     // helper
     public string SizeDisplayMb => $"{Math.Round(SizeBytes / 1_000_000f, 2)}MB";
+
+    public bool IsEqualOwnerName(Attachment att)
+    {
+        return att.FileName != null && att.FileName.Equals(FileName) && att.OwnerEmailId == OwnerEmailId;
+    }
 }
 
 internal record ATTACHMENT_ROW
