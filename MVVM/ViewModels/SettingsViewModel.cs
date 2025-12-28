@@ -42,6 +42,7 @@ namespace EmailClientPluma.MVVM.ViewModels
         public RelayCommand AddAccountCommand { get; set; }
         public RelayCommandAsync RemoveGoogleAccountCommand { get; set; }
         public RelayCommandAsync RemoveMicrosoftAccountCommand { get; set; }
+        public RelayCommand OpenAttachmentsFolder { get; set; }
 
         public RelayCommand OpenDatabaseFolder { get; set; }
         public RelayCommand OpenLogFolder { get; set; }
@@ -95,6 +96,22 @@ namespace EmailClientPluma.MVVM.ViewModels
                 Process.Start(psi);
             });
 
+            OpenAttachmentsFolder = new RelayCommand(_ =>
+            {
+                var psi = new ProcessStartInfo()
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"""
+                                 "{Helper.AttachmentsFolder}"
+                                 """,
+                    CreateNoWindow = true,
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Normal
+                };
+                logger.LogInformation("Running process with args: {args}", psi.Arguments);
+                Process.Start(psi);
+            });
+            
             OpenLogFolder = new RelayCommand(_ =>
             {
 
