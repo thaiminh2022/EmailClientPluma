@@ -135,13 +135,26 @@
                                         <RowDefinition />
                                         <RowDefinition />
                                     </Grid.RowDefinitions>
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        Foreground="{DynamicResource TextBrush}"
-                                        Text="{Binding MessageParts.DateDisplay}"
-                                        TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock
+                                            Foreground="{DynamicResource TextBrush}"
+                                            Text="{Binding MessageParts.DateDisplay}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Margin="5,0"
+                                            Foreground="{DynamicResource TextBrush}"
+                                            Text="-"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Foreground="{DynamicResource TextBrush}"
+                                            Opacity="0.7"
+                                            Text="{Binding MessageParts.From}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+
                                     <TextBlock
                                         Grid.Row="1"
+                                        Margin="0,3,0,0"
                                         FontSize="14"
                                         FontWeight="SemiBold"
                                         Foreground="{DynamicResource TextBrush}"

@@ -389,10 +389,7 @@ internal class OutlookApiEmailService(IMicrosoftClientApp clientApp, IStorageSer
                 var att = await client.Me
                     .Messages[email.MessageIdentifiers.ProviderMessageId]
                     .Attachments[attachment.ProviderAttachmentId]
-                    .GetAsync(config =>
-                    {
-                        config.QueryParameters.Select = ["contentBytes"];
-                    });
+                    .GetAsync();
 
                 if (att is not FileAttachment file) continue;
                 if (file.ContentBytes is null) continue;

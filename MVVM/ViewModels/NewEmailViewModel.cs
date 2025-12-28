@@ -35,7 +35,7 @@ internal class NewEmailViewModel : ObserableObject, IRequestClose
             if (string.IsNullOrEmpty(ToAddresses)) return;
             if (string.IsNullOrEmpty(Subject)) return;
 
-            if(ToAddresses.Split(',').Contains(ToAddresses))
+            if(ToAddresses.Split(',').Contains(SelectedAccount.Email))
             {
                 MessageBoxHelper.Error("Địa chỉ người nhận không được trùng với địa chỉ người gửi");
                 return;
