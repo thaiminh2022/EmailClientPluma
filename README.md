@@ -34,7 +34,7 @@ An email client (similar to Gmail or Outlook) built with **C# and WPF** for a **
 * Understanding of **desktop application development** using WPF
 * Application of the **MVVM architectural pattern**
 * Integration with **email provider APIs** (e.g., Google, Microsoft)
-* Email phishing detection using a **BERT-based model**
+* Email phishing detection using **Levenshtein distance**
 
 ---
 
